@@ -1,0 +1,68 @@
+#!/bin/bash
+
+## Create a new WordPress block
+##
+## Usage: ddev create-block <block-name>
+
+#ddev-generated
+
+# Exit on errors
+set -e
+
+# Check if block name is provided
+if [ -z "$1" ]; then
+    echo "Usage: ddev create-block <block-name>"
+    exit 1
+fi
+
+# Load environment variables
+if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
+    source /var/www/html/.ddev/.env-kanopi-wp
+fi
+
+# Set default theme path if not defined
+WP_THEME_RELATIVE_PATH="${WP_THEME_RELATIVE_PATH:-wp-content/themes/custom/struts}"
+BLOCKS_PATH="/var/www/html/${WP_THEME_RELATIVE_PATH}/assets/src/blocks"
+
+BLOCK_NAME="$1"
+BLOCK_TITLE="${2:-$BLOCK_NAME}"
+
+# Capitalize each word for the block title (e.g., "todo-list" -> "Todo List")
+FORMATTED_BLOCK_TITLE=$(echo "$BLOCK_NAME" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++)$i=toupper(substr($i,1,1)) tolower(substr($i,2))}1')
+echo "Formatted Block Title: $FORMATTED_BLOCK_TITLE"
+
+TEMPLATE_BLOCK_DIR="/var/www/html/.ddev/config/wp/block-template"
+NEW_BLOCK_DIR="${BLOCKS_PATH}/${BLOCK_NAME}"
+
+# Check if template block directory exists
+if [ ! -d "$TEMPLATE_BLOCK_DIR" ]; then
+    echo "Template block directory does not exist: $TEMPLATE_BLOCK_DIR"
+    exit 1
+fi
+
+# Check if the block directory already exists
+if [ -d "$NEW_BLOCK_DIR" ]; then
+    echo "Block directory already exists: $NEW_BLOCK_DIR"
+    exit 1
+fi
+
+# Create blocks directory if it doesn't exist
+mkdir -p "$BLOCKS_PATH"
+
+# Copy the template block directory
+rsync -av --exclude=".*" "$TEMPLATE_BLOCK_DIR/" "$NEW_BLOCK_DIR/"
+
+# Rename files inside the new block directory
+find "$NEW_BLOCK_DIR" -name '*example-block*' | while read -r FILE; do
+    NEW_FILE=$(echo "$FILE" | sed "s/example-block/${BLOCK_NAME}/g")
+    mv "$FILE" "$NEW_FILE"
+done
+
+# Replace contents of files with the new block name and formatted block title
+find "$NEW_BLOCK_DIR" -type f | while read -r FILE; do
+    sed -i "s/example-block/${BLOCK_NAME}/g" "$FILE"
+    sed -i "s/Name of Block/${FORMATTED_BLOCK_TITLE}/g" "$FILE"
+done
+
+echo "Block created successfully at: ${NEW_BLOCK_DIR}"
+echo "Run 'ddev development' to start the development server and begin working on your block."

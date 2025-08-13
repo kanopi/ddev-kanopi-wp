@@ -1,0 +1,16 @@
+#!/bin/bash
+
+## Run PHP Code Beautifier and Fixer
+##
+## Usage: ddev phpcbf
+
+#ddev-generated
+
+# Load environment variables
+if [ -f .ddev/.env-kanopi-wp ]; then
+    source .ddev/.env-kanopi-wp
+fi
+
+echo "Running PHP Code Beautifier and Fixer..."
+
+ddev exec composer phpcbf

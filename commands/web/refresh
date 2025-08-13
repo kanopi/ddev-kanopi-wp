@@ -1,0 +1,71 @@
+#!/bin/bash
+
+## Refresh the site database from Pantheon
+##
+## Usage: ddev refresh
+
+#ddev-generated
+
+# Abort if anything fails
+set -e
+
+# Load environment variables
+if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
+    source /var/www/html/.ddev/.env-kanopi-wp
+fi
+
+# Check required environment variables
+if [ -z "$PANTHEON_SITE" ]; then
+    echo "PANTHEON_SITE is not set. Please configure .ddev/.env-kanopi-wp"
+    exit 1
+fi
+
+# Set defaults
+PANTHEON_ENV="${PANTHEON_ENV:-dev}"
+DOCROOT="${DOCROOT:-web}"
+
+cd "/var/www/html/${DOCROOT}"
+
+echo "Pulling Database from Pantheon..."
+
+# Check if terminus is available
+if ! command -v terminus &> /dev/null; then
+    echo "Installing Terminus..."
+    curl -O https://raw.githubusercontent.com/pantheon-systems/terminus-installer/master/builds/installer.phar && php installer.phar install
+fi
+
+# Authenticate with Pantheon if needed
+if [ -n "$PANTHEON_TOKEN" ]; then
+    terminus auth:login --machine-token="$PANTHEON_TOKEN"
+fi
+
+# Create database backup and download
+echo "Creating and downloading database backup..."
+terminus backup:create "${PANTHEON_SITE}.${PANTHEON_ENV}" --element=database
+DB_BACKUP_URL=$(terminus backup:get "${PANTHEON_SITE}.${PANTHEON_ENV}" --element=database --field=url)
+
+# Download and import database
+curl -o /tmp/database.sql.gz "$DB_BACKUP_URL"
+gunzip /tmp/database.sql.gz
+wp db import /tmp/database.sql.gz --allow-root
+
+echo "Running search and replace for local domains..."
+BASE_DOMAIN="${PANTHEON_ENV}-${PANTHEON_SITE}.pantheonsite.io"
+LOCAL_DOMAIN="${DDEV_SITENAME}.ddev.site"
+
+wp search-replace "$BASE_DOMAIN" "$LOCAL_DOMAIN" --url="$BASE_DOMAIN" --all-tables --allow-root
+
+# Flush rewrite rules
+wp rewrite flush --allow-root
+
+# Deactivate problematic plugins
+wp plugin deactivate wp-health --allow-root 2>/dev/null || true
+
+# Activate theme
+ddev activate-theme
+
+# Restore admin user
+ddev restore-admin-user
+
+echo "Database refresh completed successfully!"
+echo "Site URL: https://${LOCAL_DOMAIN}"

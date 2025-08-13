@@ -1,0 +1,22 @@
+#!/bin/bash
+
+## Activate the custom theme
+##
+## Usage: ddev activate-theme
+
+#ddev-generated
+
+# Load environment variables
+if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
+    source /var/www/html/.ddev/.env-kanopi-wp
+fi
+
+# Set default theme slug if not defined
+WP_THEME_SLUG="${WP_THEME_SLUG:-struts}"
+
+echo "Activating theme: $WP_THEME_SLUG"
+
+# Activate the theme
+wp theme activate "$WP_THEME_SLUG" --allow-root
+
+echo "Theme '$WP_THEME_SLUG' activated successfully!"

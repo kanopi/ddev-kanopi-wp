@@ -1,0 +1,28 @@
+#!/bin/bash
+
+## Restore the admin user credentials
+##
+## Usage: ddev restore-admin-user
+
+#ddev-generated
+
+# Load environment variables
+if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
+    source /var/www/html/.ddev/.env-kanopi-wp
+fi
+
+# Set defaults
+WP_ADMIN_USER="${WP_ADMIN_USER:-kadmin}"
+WP_ADMIN_PASS="${WP_ADMIN_PASS:-kadmin}"
+WP_ADMIN_EMAIL="${WP_ADMIN_EMAIL:-wordpress@kanopi.com}"
+
+echo "Restoring admin user: $WP_ADMIN_USER"
+
+# Create or update admin user
+wp user create "$WP_ADMIN_USER" "$WP_ADMIN_EMAIL" --role=administrator --user_pass="$WP_ADMIN_PASS" --allow-root 2>/dev/null || \
+wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASS" --user_email="$WP_ADMIN_EMAIL" --allow-root
+
+echo "Admin user restored successfully!"
+echo "Username: $WP_ADMIN_USER"
+echo "Password: $WP_ADMIN_PASS"
+echo "Email: $WP_ADMIN_EMAIL"

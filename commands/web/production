@@ -1,0 +1,44 @@
+#!/bin/bash
+
+## Build production assets for the theme
+##
+## Usage: ddev production
+
+#ddev-generated
+
+# Load environment variables
+if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
+    source /var/www/html/.ddev/.env-kanopi-wp
+fi
+
+# Set default theme path if not defined
+WP_THEME_RELATIVE_PATH="${WP_THEME_RELATIVE_PATH:-wp-content/themes/custom/struts}"
+THEME_PATH="/var/www/html/${WP_THEME_RELATIVE_PATH}"
+
+# Check if theme directory exists
+if [ ! -d "$THEME_PATH" ]; then
+    echo "Theme directory not found: $THEME_PATH"
+    echo "Please ensure your theme is located at the correct path or update WP_THEME_RELATIVE_PATH in .ddev/.env-kanopi-wp"
+    exit 1
+fi
+
+# Check if package.json exists
+if [ ! -f "$THEME_PATH/package.json" ]; then
+    echo "package.json not found in theme directory: $THEME_PATH"
+    echo "Please ensure your theme has a package.json file with npm scripts configured"
+    exit 1
+fi
+
+echo "Building production assets for theme at: $THEME_PATH"
+cd "$THEME_PATH"
+
+# Install dependencies if node_modules doesn't exist
+if [ ! -d "node_modules" ]; then
+    echo "Installing npm dependencies..."
+    npm install
+fi
+
+# Build production assets
+npm run build
+
+echo "Production build completed successfully!"

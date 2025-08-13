@@ -1,0 +1,42 @@
+name: ddev-kanopi-wp
+
+# Minimum DDEV version required
+ddev_version_constraint: ">= 1.24.3"
+
+project_files:
+- docker-compose.kanopi-wp.yaml
+- commands/web/create-block
+- commands/web/development
+- commands/web/production
+- commands/web/refresh
+- commands/web/activate-theme
+- commands/web/restore-admin-user
+- commands/web/open
+- commands/host/phpcs
+- commands/host/phpcbf
+- config/php/php.ini
+- config/nginx/nginx-site.conf
+- config/wp/block-template/block.json
+- config/wp/block-template/edit.js
+- config/wp/block-template/editor.scss
+- config/wp/block-template/index.js
+- config/wp/block-template/save.js
+- config/wp/block-template/style.scss
+- config/wp/block-template/view.js
+- .env-kanopi-wp-example
+
+post_install_actions:
+# Create local environment file if it doesn't exist
+- |
+  if [ ! -f .ddev/.env-kanopi-wp ]; then
+    cp .env-kanopi-wp-example .ddev/.env-kanopi-wp
+    echo "Created .ddev/.env-kanopi-wp - please edit with your configuration"
+  fi
+- echo "ddev-kanopi-wp add-on installed successfully!"
+- echo "Please configure .ddev/.env-kanopi-wp with your Pantheon site details and license keys"
+- echo "Run 'ddev restart' to apply the new configuration"
+
+removal_actions:
+- rm -f .ddev/.env-kanopi-wp-example
+- rm -f .ddev/.env-kanopi-wp
+- echo "ddev-kanopi-wp add-on removed successfully"
