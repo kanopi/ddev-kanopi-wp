@@ -28,15 +28,160 @@ project_files:
 - config.kanopi.yaml
 
 post_install_actions:
-# Create local configuration file if it doesn't exist
+# Interactive configuration setup
 - |
-  if [ ! -f .ddev/config.kanopi.yaml ]; then
-    cp config.kanopi.yaml .ddev/config.kanopi.yaml
-    echo "Created .ddev/config.kanopi.yaml - please edit with your configuration"
+  # Create config file from template
+  cp config.kanopi.yaml .ddev/config.kanopi.yaml
+  
+  echo "🚀 Welcome to Kanopi WordPress DDEV Setup!"
+  echo "==========================================="
+  echo ""
+  echo "Let's configure your development environment. Press Ctrl+C anytime to skip setup."
+  echo ""
+  
+  # Function to prompt for input with default
+  prompt_input() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+    
+    if [ -n "$default" ]; then
+      echo -n "$prompt [$default]: "
+    else
+      echo -n "$prompt: "
+    fi
+    
+    read -r input
+    if [ -z "$input" ] && [ -n "$default" ]; then
+      input="$default"
+    fi
+    
+    eval "$var_name='$input'"
+  }
+  
+  # Function to select from options
+  select_option() {
+    local prompt="$1"
+    shift
+    local options=("$@")
+    
+    echo "$prompt"
+    for i in "${!options[@]}"; do
+      echo "  $((i+1)). ${options[i]}"
+    done
+    echo -n "Select option [1]: "
+    
+    read -r choice
+    choice=${choice:-1}
+    
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#options[@]}" ]; then
+      echo "${options[$((choice-1))]}"
+    else
+      echo "${options[0]}"
+    fi
+  }
+  
+  # 1. Select hosting provider
+  HOST_PROVIDER=$(select_option "What hosting provider are you using?" "Pantheon" "WP Engine" "Kinsta")
+  echo "✓ Selected: $HOST_PROVIDER"
+  echo ""
+  
+  # 2. WordPress admin configuration
+  echo "WordPress Admin Configuration:"
+  echo "------------------------------"
+  prompt_input "WordPress admin username" "admin" WP_ADMIN_USER
+  
+  # Prompt for password with confirmation
+  while true; do
+    echo -n "WordPress admin password: "
+    read -s WP_ADMIN_PASS
+    echo ""
+    echo -n "Confirm password: "
+    read -s WP_ADMIN_PASS_CONFIRM
+    echo ""
+    
+    if [ "$WP_ADMIN_PASS" = "$WP_ADMIN_PASS_CONFIRM" ]; then
+      break
+    else
+      echo "Passwords don't match. Please try again."
+    fi
+  done
+  
+  prompt_input "WordPress admin email" "admin@example.com" WP_ADMIN_EMAIL
+  echo ""
+  
+  # 3. Pantheon-specific configuration
+  if [ "$HOST_PROVIDER" = "Pantheon" ]; then
+    echo "Pantheon Configuration:"
+    echo "----------------------"
+    prompt_input "Pantheon site name" "" PANTHEON_SITE
+    prompt_input "Pantheon environment" "dev" PANTHEON_ENV
+    echo ""
   fi
-- echo "ddev-kanopi-wp add-on installed successfully!"
-- echo "Please configure .ddev/config.kanopi.yaml with your Pantheon site details and license keys"
-- echo "Run 'ddev restart' to apply the new configuration"
+  
+  # 4. Premium plugin licenses (optional)
+  echo "Premium Plugin Licenses (optional - press Enter to skip):"
+  echo "--------------------------------------------------------"
+  prompt_input "ACF Pro license key" "" ACF_LICENSE
+  prompt_input "Gravity Forms license key" "" GF_LICENSE
+  echo ""
+  
+  # Write configuration to YAML file
+  echo "Writing configuration to .ddev/config.kanopi.yaml..."
+  
+  # Use yq to update the YAML file (install if not available)
+  if ! command -v yq >/dev/null 2>&1; then
+    echo "Installing yq for YAML processing..."
+    if command -v brew >/dev/null 2>&1; then
+      brew install yq >/dev/null 2>&1 || {
+        echo "Failed to install yq via brew. Downloading binary..."
+        curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq 2>/dev/null || \
+        curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_darwin_amd64 -o /usr/local/bin/yq 2>/dev/null
+        chmod +x /usr/local/bin/yq 2>/dev/null
+      }
+    else
+      echo "Please install yq manually or edit .ddev/config.kanopi.yaml by hand"
+    fi
+  fi
+  
+  # Update YAML values
+  if command -v yq >/dev/null 2>&1; then
+    yq eval ".wordpress.admin_user = \"$WP_ADMIN_USER\"" -i .ddev/config.kanopi.yaml
+    yq eval ".wordpress.admin_pass = \"$WP_ADMIN_PASS\"" -i .ddev/config.kanopi.yaml  
+    yq eval ".wordpress.admin_email = \"$WP_ADMIN_EMAIL\"" -i .ddev/config.kanopi.yaml
+    
+    if [ "$HOST_PROVIDER" = "Pantheon" ] && [ -n "$PANTHEON_SITE" ]; then
+      yq eval ".pantheon.site = \"$PANTHEON_SITE\"" -i .ddev/config.kanopi.yaml
+      yq eval ".pantheon.env = \"$PANTHEON_ENV\"" -i .ddev/config.kanopi.yaml
+    fi
+    
+    if [ -n "$ACF_LICENSE" ]; then
+      yq eval ".licenses.acf_client_user = \"$ACF_LICENSE\"" -i .ddev/config.kanopi.yaml
+    fi
+    
+    if [ -n "$GF_LICENSE" ]; then
+      yq eval ".licenses.gf_client_user = \"$GF_LICENSE\"" -i .ddev/config.kanopi.yaml
+    fi
+    
+    echo "✅ Configuration written successfully!"
+  else
+    echo "⚠️  Could not install yq. Please edit .ddev/config.kanopi.yaml manually with your settings:"
+    echo "   WordPress Admin: $WP_ADMIN_USER / $WP_ADMIN_EMAIL"
+    if [ "$HOST_PROVIDER" = "Pantheon" ]; then
+      echo "   Pantheon Site: $PANTHEON_SITE ($PANTHEON_ENV)"
+    fi
+  fi
+  
+  echo ""
+  echo "🎉 Setup complete!"
+  echo ""
+  echo "Next steps:"
+  echo "1. Review your configuration: cat .ddev/config.kanopi.yaml"
+  echo "2. Start your project: ddev start"
+  if [ "$HOST_PROVIDER" = "Pantheon" ] && [ -n "$PANTHEON_SITE" ]; then
+    echo "3. Import your database: ddev refresh"
+  fi
+  echo "4. Begin development: ddev development"
 
 removal_actions:
 - rm -f config.kanopi.yaml

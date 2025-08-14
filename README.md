@@ -20,19 +20,34 @@ This add-on converts the existing Docksal-based Kanopi WordPress workflow to DDE
 ddev add-on get kanopi/ddev-kanopi-wp
 ```
 
-## Configuration
+The installation includes an **interactive setup wizard** that will prompt you for:
 
-After installation, you'll need to configure your environment variables in `.ddev/.env-kanopi-wp`:
+1. **Hosting Provider**: Pantheon, WP Engine, or Kinsta
+2. **WordPress Admin**: Username, password, and email
+3. **Hosting Details**: Site-specific configuration (e.g., Pantheon site name)
+4. **Plugin Licenses**: ACF Pro and Gravity Forms keys (optional)
 
-```bash
-# Copy the example environment file
-cp .ddev/.env-kanopi-wp-example .ddev/.env-kanopi-wp
+The wizard automatically writes your configuration to `.ddev/config.kanopi.yaml`.
 
-# Edit with your specific values
-# - ACF_CLIENT_USER: Your ACF Pro license key
-# - GF_CLIENT_USER: Your Gravity Forms license key (if used)
-# - PANTHEON_SITE: Your Pantheon site name
-# - PANTHEON_ENV: Environment to pull from (dev, test, live)
+## Manual Configuration
+
+If you skip the interactive setup or want to edit your configuration later:
+
+```yaml
+# Edit .ddev/config.kanopi.yaml
+wordpress:
+  admin_user: "your-admin-username"
+  admin_pass: "your-admin-password"
+  admin_email: "your-email@domain.com"
+
+pantheon:  # Only if using Pantheon
+  site: "your-pantheon-site-name"
+  env: "dev"  # or test, live
+  token: "your-pantheon-machine-token"
+
+licenses:  # Optional premium plugins
+  acf_client_user: "your-acf-license-key"
+  gf_client_user: "your-gravity-forms-license-key"
 ```
 
 ## Available Commands
@@ -111,7 +126,7 @@ The add-on includes tools for working with Pantheon:
 
 ## License Management
 
-For premium plugins (ACF Pro, Gravity Forms), add your license keys to `.ddev/.env-kanopi-wp`. The add-on will automatically configure Composer authentication for these plugins.
+For premium plugins (ACF Pro, Gravity Forms), provide your license keys during the interactive setup or add them to `.ddev/config.kanopi.yaml` under the `licenses` section. The add-on will automatically configure Composer authentication for these plugins.
 
 ## Development Notes
 
