@@ -174,14 +174,59 @@ post_install_actions:
     fi
   fi
   
+  # Create local config file with common overrides commented out
+  cat > .ddev/config.kanopi.local.yaml << 'EOF'
+# Local Configuration Overrides
+# This file allows you to override settings from config.kanopi.yaml
+# without affecting the main configuration that your team shares.
+
+# Uncomment and modify any settings below, then run 'ddev restart'
+
+# Enable XDebug for local debugging
+# development:
+#   xdebug_enabled: true
+
+# Override image proxy settings if needed
+# proxy:
+#   base_url: "https://test-your-site.pantheonsite.io"
+
+# Override WordPress admin for local development
+# wordpress:
+#   admin_user: "localadmin"
+#   admin_pass: "localpass123"
+#   admin_email: "dev@localhost"
+
+# Override Pantheon environment for testing
+# pantheon:
+#   env: "test"  # or "live"
+
+# Override theme settings if using different local setup
+# theme:
+#   slug: "local-theme"
+#   relative_path: "wp-content/themes/local-theme"
+
+# Override licenses for local development
+# licenses:
+#   acf_client_user: "local-acf-key"
+#   gf_client_user: "local-gf-key"
+EOF
+  
+  # Add to .gitignore to keep local settings private
+  if [ ! -f .gitignore ] || ! grep -q "config.kanopi.local.yaml" .gitignore; then
+    echo ".ddev/config.kanopi.local.yaml" >> .gitignore
+    echo "Added .ddev/config.kanopi.local.yaml to .gitignore"
+  fi
+  
   echo ""
   echo "🎉 Setup complete!"
   echo ""
   echo "Your configuration has been saved to .ddev/config.kanopi.yaml"
+  echo "Local override file created: .ddev/config.kanopi.local.yaml"
   echo ""
-  echo "💡 Pro Tip: Create .ddev/config.kanopi.local.yaml to override settings"
-  echo "   without affecting the main config. Use the provided example:"
-  echo "   cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml"
+  echo "💡 To customize local settings:"
+  echo "   1. Edit .ddev/config.kanopi.local.yaml"
+  echo "   2. Uncomment any settings you want to override"
+  echo "   3. Run 'ddev restart' to apply changes"
   echo ""
   echo "Next steps:"
   echo "1. Review your configuration: cat .ddev/config.kanopi.yaml"
@@ -193,4 +238,9 @@ post_install_actions:
 
 removal_actions:
 - rm -f .ddev/config.kanopi.yaml
+- rm -f .ddev/config.kanopi.local.yaml
+- |
+  if [ -f .gitignore ]; then
+    grep -v "config.kanopi.local.yaml" .gitignore > .gitignore.tmp && mv .gitignore.tmp .gitignore || rm -f .gitignore.tmp
+  fi
 - echo "ddev-kanopi-wp add-on removed successfully"

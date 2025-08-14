@@ -52,33 +52,34 @@ licenses:  # Optional premium plugins
 
 ### Local Configuration Overrides
 
-For personal settings that shouldn't be committed to version control:
+A local configuration file is automatically created during installation with common settings commented out. This file is automatically added to `.gitignore` to keep personal settings private.
 
-```bash
-# Copy the example local config
-cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
+**To customize local settings:**
 
-# Edit your personal overrides
-# These will take precedence over the main config
-```
+1. **Edit** `.ddev/config.kanopi.local.yaml`
+2. **Uncomment** any settings you want to override
+3. **Run** `ddev restart` to apply changes
 
-**Example local overrides:**
+**Common local overrides:**
 ```yaml
 # .ddev/config.kanopi.local.yaml
+
+# Enable XDebug for local debugging
+development:
+  xdebug_enabled: true
+
+# Override image proxy settings
+proxy:
+  base_url: "https://test-your-site.pantheonsite.io"
+
+# Override WordPress admin for local development
 wordpress:
-  admin_user: "localadmin"      # Override for local development
+  admin_user: "localadmin"
   admin_pass: "localpass123"
 
+# Override Pantheon environment for testing
 pantheon:
-  env: "test"                   # Use test environment instead of dev
-
-development:
-  xdebug_enabled: true          # Enable xdebug locally
-```
-
-**Add to .gitignore:**
-```bash
-echo ".ddev/config.kanopi.local.yaml" >> .gitignore
+  env: "test"  # or "live"
 ```
 
 ## Available Commands
