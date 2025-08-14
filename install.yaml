@@ -174,42 +174,8 @@ post_install_actions:
     fi
   fi
   
-  # Create local config file with common overrides commented out
-  cat > .ddev/config.kanopi.local.yaml << 'EOF'
-# Local Configuration Overrides
-# This file allows you to override settings from config.kanopi.yaml
-# without affecting the main configuration that your team shares.
-
-# Uncomment and modify any settings below, then run 'ddev restart'
-
-# Enable XDebug for local debugging
-# development:
-#   xdebug_enabled: true
-
-# Override image proxy settings if needed
-# proxy:
-#   base_url: "https://test-your-site.pantheonsite.io"
-
-# Override WordPress admin for local development
-# wordpress:
-#   admin_user: "localadmin"
-#   admin_pass: "localpass123"
-#   admin_email: "dev@localhost"
-
-# Override Pantheon environment for testing
-# pantheon:
-#   env: "test"  # or "live"
-
-# Override theme settings if using different local setup
-# theme:
-#   slug: "local-theme"
-#   relative_path: "wp-content/themes/local-theme"
-
-# Override licenses for local development
-# licenses:
-#   acf_client_user: "local-acf-key"
-#   gf_client_user: "local-gf-key"
-EOF
+  # Create local config file from example
+  cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
   
   # Add to .gitignore to keep local settings private
   if [ ! -f .gitignore ] || ! grep -q "config.kanopi.local.yaml" .gitignore; then
