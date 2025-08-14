@@ -1,0 +1,34 @@
+# Kanopi WordPress DDEV Configuration
+# This file will be copied to .ddev/config.kanopi.yaml during installation
+
+# WordPress Admin Configuration
+wordpress:
+  admin_user: "xxxxxx"
+  admin_pass: "xxxxxx"
+  admin_email: "xxxxxx"
+
+# Theme Configuration  
+theme:
+  slug: "struts"
+  relative_path: "wp-content/themes/custom/struts"
+
+# Pantheon Configuration
+pantheon:
+  site: "your-pantheon-site-name"
+  env: "dev"
+  token: "your-pantheon-machine-token"
+
+# Premium Plugin Licenses
+licenses:
+  acf_client_user: "your-acf-license-key"
+  gf_client_user: "your-gravity-forms-license-key"
+
+# Development Settings
+development:
+  xdebug_enabled: false
+
+# Image Proxy Settings (for missing uploads)
+# These will be set automatically based on pantheon.site and pantheon.env
+# But can be overridden if needed
+proxy:
+  # base_url: "https://dev-your-site.pantheonsite.io"

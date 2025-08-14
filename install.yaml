@@ -25,20 +25,20 @@ project_files:
 - config/wp/block-template/save.js
 - config/wp/block-template/style.scss
 - config/wp/block-template/view.js
-- .env-kanopi-wp-example
+- config.kanopi.yaml
 
 post_install_actions:
-# Create local environment file if it doesn't exist
+# Create local configuration file if it doesn't exist
 - |
-  if [ ! -f .ddev/.env-kanopi-wp ]; then
-    cp .env-kanopi-wp-example .ddev/.env-kanopi-wp
-    echo "Created .ddev/.env-kanopi-wp - please edit with your configuration"
+  if [ ! -f .ddev/config.kanopi.yaml ]; then
+    cp config.kanopi.yaml .ddev/config.kanopi.yaml
+    echo "Created .ddev/config.kanopi.yaml - please edit with your configuration"
   fi
 - echo "ddev-kanopi-wp add-on installed successfully!"
-- echo "Please configure .ddev/.env-kanopi-wp with your Pantheon site details and license keys"
+- echo "Please configure .ddev/config.kanopi.yaml with your Pantheon site details and license keys"
 - echo "Run 'ddev restart' to apply the new configuration"
 
 removal_actions:
-- rm -f .ddev/.env-kanopi-wp-example
-- rm -f .ddev/.env-kanopi-wp
+- rm -f config.kanopi.yaml
+- rm -f .ddev/config.kanopi.yaml
 - echo "ddev-kanopi-wp add-on removed successfully"

@@ -6,15 +6,17 @@
 
 #ddev-generated
 
-# Load environment variables
-if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
-    source /var/www/html/.ddev/.env-kanopi-wp
+# Load configuration from YAML
+CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
+if [ -f "$CONFIG_FILE" ]; then
+    WP_ADMIN_USER=$(yq eval '.wordpress.admin_user // "admin"' "$CONFIG_FILE" 2>/dev/null || echo "admin")
+    WP_ADMIN_PASS=$(yq eval '.wordpress.admin_pass // "admin"' "$CONFIG_FILE" 2>/dev/null || echo "admin")
+    WP_ADMIN_EMAIL=$(yq eval '.wordpress.admin_email // "admin@example.com"' "$CONFIG_FILE" 2>/dev/null || echo "admin@example.com")
+else
+    WP_ADMIN_USER="admin"
+    WP_ADMIN_PASS="admin"
+    WP_ADMIN_EMAIL="admin@example.com"
 fi
-
-# Set defaults
-WP_ADMIN_USER="${WP_ADMIN_USER:-kadmin}"
-WP_ADMIN_PASS="${WP_ADMIN_PASS:-kadmin}"
-WP_ADMIN_EMAIL="${WP_ADMIN_EMAIL:-wordpress@kanopi.com}"
 
 echo "Restoring admin user: $WP_ADMIN_USER"
 
