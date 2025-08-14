@@ -51,6 +51,10 @@ cp .ddev/.env-kanopi-wp-example .ddev/.env-kanopi-wp
 - `ddev phpcs` - Run PHP Code Sniffer
 - `ddev phpcbf` - Run PHP Code Beautifier and Fixer
 
+### Development Tools
+- `ddev npm <command>` - Run npm commands (automatically runs in theme directory if available)
+- `ddev terminus <command>` - Run Terminus commands for Pantheon integration
+
 ### Utilities
 - `ddev open` - Open the site in your default browser
 - `ddev open cms` - Open WordPress admin in your default browser

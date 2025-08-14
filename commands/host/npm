@@ -1,0 +1,27 @@
+#!/bin/bash
+
+## Run npm commands in the web container
+##
+## Usage: ddev npm <command> [args...]
+##        ddev npm install
+##        ddev npm run start
+##        ddev npm run build
+
+#ddev-generated
+
+# Load environment variables
+if [ -f .ddev/.env-kanopi-wp ]; then
+    source .ddev/.env-kanopi-wp
+fi
+
+# Set default theme path if not defined
+WP_THEME_RELATIVE_PATH="${WP_THEME_RELATIVE_PATH:-wp-content/themes/custom/struts}"
+
+# Check if we should run in theme directory
+if [ -d "${WP_THEME_RELATIVE_PATH}" ] && [ -f "${WP_THEME_RELATIVE_PATH}/package.json" ]; then
+    # Run npm command in theme directory
+    ddev exec "cd ${WP_THEME_RELATIVE_PATH} && npm $*"
+else
+    # Run npm command in project root
+    ddev exec "npm $*"
+fi

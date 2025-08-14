@@ -1,0 +1,29 @@
+#!/bin/bash
+
+## Run Terminus commands in the web container
+##
+## Usage: ddev terminus <command> [args...]
+##        ddev terminus site:list
+##        ddev terminus backup:create site.env --element=database
+##        ddev terminus backup:get site.env --element=database
+
+#ddev-generated
+
+# Load environment variables
+if [ -f .ddev/.env-kanopi-wp ]; then
+    source .ddev/.env-kanopi-wp
+fi
+
+# Check if terminus is installed, install if not
+ddev exec "command -v terminus >/dev/null 2>&1 || { 
+    echo 'Installing Terminus...'; 
+    curl -O https://raw.githubusercontent.com/pantheon-systems/terminus-installer/master/builds/installer.phar && php installer.phar install; 
+}"
+
+# Authenticate with Pantheon if token is provided and not already authenticated
+if [ -n "$PANTHEON_TOKEN" ]; then
+    ddev exec "terminus auth:whoami >/dev/null 2>&1 || terminus auth:login --machine-token='$PANTHEON_TOKEN'"
+fi
+
+# Run terminus command
+ddev exec "terminus $*"

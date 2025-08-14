@@ -14,6 +14,8 @@ This DDEV add-on converts Kanopi's Docksal-based WordPress development workflow 
 - **Asset Compilation**: `ddev development` and `ddev production` for webpack builds
 - **Database Management**: `ddev refresh` for Pantheon integration
 - **WordPress Setup**: `ddev activate-theme` and `ddev restore-admin-user`
+- **Code Quality**: `ddev phpcs` and `ddev phpcbf` for PHP standards
+- **Development Tools**: `ddev npm` and `ddev terminus` wrapper commands
 
 ### Configuration Files
 - **PHP Configuration**: Custom `php.ini` with WordPress-optimized settings
@@ -37,7 +39,9 @@ ddev-kanopi-wp/
 │   │   └── open                           # Browser shortcuts
 │   └── host/                              # Commands run on host
 │       ├── phpcs                          # Code standards check
-│       └── phpcbf                         # Code standards fix
+│       ├── phpcbf                         # Code standards fix
+│       ├── npm                            # npm wrapper command
+│       └── terminus                       # Terminus wrapper command
 ├── config/
 │   ├── php/php.ini                        # PHP configuration
 │   ├── nginx/nginx-site.conf              # NGINX customizations
@@ -62,7 +66,8 @@ ddev-kanopi-wp/
 | `fin create-block` | `ddev create-block` | Direct port with path adjustments |
 | `fin development` | `ddev development` | Runs npm start in theme directory |
 | `fin refresh` | `ddev refresh` | Pantheon integration via Terminus |
-| `fin npm` | `ddev exec npm` or theme commands | DDEV has built-in npm support |
+| `fin npm` | `ddev npm` | Smart wrapper that runs in theme directory |
+| `fin terminus` | `ddev terminus` | Wrapper with auto-authentication |
 
 ### Service Differences
 - **Database**: DDEV uses MariaDB by default vs Docksal's MySQL
