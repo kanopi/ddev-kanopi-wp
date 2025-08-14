@@ -18,6 +18,7 @@ project_files:
 - commands/host/terminus
 - config/php/php.ini
 - config/nginx/nginx-site.conf
+- config/helpers/load-config.sh
 - config/wp/block-template/block.json
 - config/wp/block-template/edit.js
 - config/wp/block-template/editor.scss
@@ -26,6 +27,7 @@ project_files:
 - config/wp/block-template/style.scss
 - config/wp/block-template/view.js
 - config.kanopi.yaml
+- config.kanopi.local.yaml.example
 
 post_install_actions:
 # Interactive configuration setup
@@ -175,6 +177,12 @@ post_install_actions:
   echo ""
   echo "🎉 Setup complete!"
   echo ""
+  echo "Your configuration has been saved to .ddev/config.kanopi.yaml"
+  echo ""
+  echo "💡 Pro Tip: Create .ddev/config.kanopi.local.yaml to override settings"
+  echo "   without affecting the main config. Use the provided example:"
+  echo "   cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml"
+  echo ""
   echo "Next steps:"
   echo "1. Review your configuration: cat .ddev/config.kanopi.yaml"
   echo "2. Start your project: ddev start"
@@ -184,6 +192,5 @@ post_install_actions:
   echo "4. Begin development: ddev development"
 
 removal_actions:
-- rm -f config.kanopi.yaml
 - rm -f .ddev/config.kanopi.yaml
 - echo "ddev-kanopi-wp add-on removed successfully"

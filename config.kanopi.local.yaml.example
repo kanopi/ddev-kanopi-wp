@@ -1,0 +1,27 @@
+# Local Configuration Override Example
+# Copy this file to .ddev/config.kanopi.local.yaml to override main settings
+# This file should be added to .gitignore to keep personal settings private
+
+# Override WordPress admin settings for local development
+wordpress:
+  admin_user: "localadmin"
+  admin_pass: "localpass123"
+  admin_email: "dev@localhost"
+
+# Override Pantheon settings for different environment testing
+pantheon:
+  env: "test"  # Use test environment instead of dev
+  # site: "different-site-name"  # Uncomment to override site
+
+# Override or add local development settings
+development:
+  xdebug_enabled: true
+
+# Override theme settings if using different local setup
+# theme:
+#   slug: "custom-theme"
+#   relative_path: "wp-content/themes/custom-theme"
+
+# Override licenses for local development
+# licenses:
+#   acf_client_user: "local-acf-key"

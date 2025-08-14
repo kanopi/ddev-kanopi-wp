@@ -50,6 +50,37 @@ licenses:  # Optional premium plugins
   gf_client_user: "your-gravity-forms-license-key"
 ```
 
+### Local Configuration Overrides
+
+For personal settings that shouldn't be committed to version control:
+
+```bash
+# Copy the example local config
+cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
+
+# Edit your personal overrides
+# These will take precedence over the main config
+```
+
+**Example local overrides:**
+```yaml
+# .ddev/config.kanopi.local.yaml
+wordpress:
+  admin_user: "localadmin"      # Override for local development
+  admin_pass: "localpass123"
+
+pantheon:
+  env: "test"                   # Use test environment instead of dev
+
+development:
+  xdebug_enabled: true          # Enable xdebug locally
+```
+
+**Add to .gitignore:**
+```bash
+echo ".ddev/config.kanopi.local.yaml" >> .gitignore
+```
+
 ## Available Commands
 
 ### Block Development
