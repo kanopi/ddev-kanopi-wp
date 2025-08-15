@@ -1,0 +1,70 @@
+version: 2.1
+
+jobs:
+  test-ddev-addon:
+    machine:
+      image: ubuntu-2204:2023.04.2
+    working_directory: ~/project
+    
+    steps:
+      - checkout
+      
+      - run:
+          name: Environment setup
+          command: |
+            # Update package lists
+            sudo apt-get update
+            
+            # Install bats-core for testing
+            sudo apt-get install -y bats
+            
+            # Install mkcert for local certificates
+            curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
+            chmod +x mkcert-v*-linux-amd64
+            sudo mv mkcert-v*-linux-amd64 /usr/local/bin/mkcert
+            mkcert -install
+
+      - run:
+          name: Install DDEV
+          command: |
+            # Install DDEV stable version
+            curl -fsSL https://apt.fury.io/drud/gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/ddev.gpg > /dev/null
+            echo "deb [signed-by=/etc/apt/trusted.gpg.d/ddev.gpg] https://apt.fury.io/drud/ * *" | sudo tee /etc/apt/sources.list.d/ddev.list
+            sudo apt-get update
+            sudo apt-get install -y ddev
+            ddev version
+
+      - run:
+          name: Basic DDEV usage test
+          command: |
+            ddev version
+            mkdir -p ~/tmp && cd ~/tmp
+            ddev config --project-type=php --project-name=test-addon-test
+            cd ~/tmp/test-addon-test
+            ddev start
+            ddev stop
+            ddev delete -Oy
+
+      - run:
+          name: Install add-on and run tests
+          command: |
+            export DIR="$(pwd)"
+            bats tests/test.bats
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test-ddev-addon
+  
+  # Daily test run
+  daily:
+    triggers:
+      - schedule:
+          cron: "25 09 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - test-ddev-addon

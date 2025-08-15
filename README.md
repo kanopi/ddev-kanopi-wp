@@ -1,6 +1,6 @@
 # ddev-kanopi-wp
 
-[![tests](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/tests.yml/badge.svg)](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/tests.yml) ![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/kanopi/ddev-kanopi-wp/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/kanopi/ddev-kanopi-wp/tree/main) ![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)
 
 ## What is ddev-kanopi-wp?
 
