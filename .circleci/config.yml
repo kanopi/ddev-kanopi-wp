@@ -15,8 +15,13 @@ jobs:
             # Update package lists
             sudo apt-get update
             
-            # Install bats-core for testing
-            sudo apt-get install -y bats
+            # Install dependencies
+            sudo apt-get install -y git curl
+            
+            # Install bats-core from GitHub (newer version)
+            git clone https://github.com/bats-core/bats-core.git /tmp/bats-core
+            cd /tmp/bats-core
+            sudo ./install.sh /usr/local
             
             # Install mkcert for local certificates
             curl -JLO "https://dl.filippo.io/mkcert/latest?for=linux/amd64"
@@ -49,7 +54,10 @@ jobs:
           name: Install add-on and run tests
           command: |
             export DIR="$(pwd)"
-            bats tests/test.bats
+            echo "BATS version:"
+            bats --version
+            echo "Running tests with DIR=$DIR"
+            bats --verbose-run tests/test.bats
 
 workflows:
   version: 2

@@ -7,7 +7,7 @@ setup() {
     export TESTDIR=~/tmp/$PROJNAME
     mkdir -p $TESTDIR && cd $TESTDIR
     export DDEV_NON_INTERACTIVE=true
-    ddev delete -Oy $PROJNAME || true
+    ddev delete -Oy $PROJNAME >/dev/null 2>&1 || true
     cd $TESTDIR
 }
 
@@ -47,7 +47,7 @@ health_checks() {
 teardown() {
     set -eu -o pipefail
     cd $TESTDIR || ( printf "unable to cd to $TESTDIR\n" && exit 1 )
-    ddev delete -Oy $PROJNAME
+    ddev delete -Oy $PROJNAME >/dev/null 2>&1 || true
     [ "$TESTDIR" != "" ] && rm -rf $TESTDIR
 }
 
