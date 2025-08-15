@@ -1,7 +1,7 @@
 #ddev-generated
 # Docker Compose configuration for Kanopi WordPress development environment
 
-version: '3.6'
+# version: '3.6'  # Obsolete in Docker Compose v2+, removing to avoid warnings
 
 services:
   # PhpMyAdmin for database management
