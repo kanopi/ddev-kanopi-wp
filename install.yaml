@@ -48,13 +48,18 @@ post_install_actions:
       echo "🔧 Auto-configuring wp-config.php for DDEV..."
       cp "$WP_CONFIG" "$WP_CONFIG.bak"
       if grep -q "wp-settings.php" "$WP_CONFIG"; then
-        sed -i.tmp '/wp-settings\.php/i\
-\
-// Include DDEV-managed database settings\
-$ddev_settings = dirname(__FILE__) . '\''/wp-config-ddev.php'\'';\
-if (is_readable($ddev_settings) && !defined('\''DB_USER'\'')) {\
-  require_once($ddev_settings);\
-}' "$WP_CONFIG" && rm "$WP_CONFIG.tmp"
+        # Create temporary PHP snippet
+        cat > /tmp/ddev_snippet.php << 'EOF'
+    
+    // Include DDEV-managed database settings
+    $ddev_settings = dirname(__FILE__) . '/wp-config-ddev.php';
+    if (is_readable($ddev_settings) && !defined('DB_USER')) {
+      require_once($ddev_settings);
+    }
+    EOF
+        # Insert before wp-settings.php
+        sed -i.tmp '/wp-settings\.php/r /tmp/ddev_snippet.php' "$WP_CONFIG"
+        rm /tmp/ddev_snippet.php "$WP_CONFIG.tmp"
         echo "✅ Added DDEV database configuration to wp-config.php"
       fi
     fi
@@ -223,14 +228,18 @@ if (is_readable($ddev_settings) && !defined('\''DB_USER'\'')) {\
       
       # Find the line with wp-settings.php and insert our include before it
       if grep -q "wp-settings.php" "$WP_CONFIG"; then
-        # Insert DDEV include before wp-settings.php
-        sed -i.tmp '/wp-settings\.php/i\
-\
-// Include DDEV-managed database settings\
-$ddev_settings = dirname(__FILE__) . '\''/wp-config-ddev.php'\'';\
-if (is_readable($ddev_settings) && !defined('\''DB_USER'\'')) {\
-  require_once($ddev_settings);\
-}' "$WP_CONFIG" && rm "$WP_CONFIG.tmp"
+        # Create temporary PHP snippet
+        cat > /tmp/ddev_snippet.php << 'EOF'
+    
+    // Include DDEV-managed database settings
+    $ddev_settings = dirname(__FILE__) . '/wp-config-ddev.php';
+    if (is_readable($ddev_settings) && !defined('DB_USER')) {
+      require_once($ddev_settings);
+    }
+    EOF
+        # Insert before wp-settings.php
+        sed -i.tmp '/wp-settings\.php/r /tmp/ddev_snippet.php' "$WP_CONFIG"
+        rm /tmp/ddev_snippet.php "$WP_CONFIG.tmp"
         
         echo "✅ Added DDEV database configuration to wp-config.php"
         echo "📁 Backup created: wp-config.php.bak"
