@@ -32,7 +32,8 @@ project_files:
 post_install_actions:
 # Interactive configuration setup
 - |
-  # Create config file from template
+  # Ensure .ddev directory exists and create config file from template
+  mkdir -p .ddev
   cp config.kanopi.yaml .ddev/config.kanopi.yaml
   
   echo "🚀 Welcome to Kanopi WordPress DDEV Setup!"
