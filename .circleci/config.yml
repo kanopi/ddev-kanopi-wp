@@ -38,9 +38,9 @@ jobs:
           name: Basic DDEV usage test
           command: |
             ddev version
-            mkdir -p ~/tmp && cd ~/tmp
-            ddev config --project-type=php --project-name=test-addon-test
+            mkdir -p ~/tmp/test-addon-test
             cd ~/tmp/test-addon-test
+            ddev config --project-type=php --project-name=test-addon-test
             ddev start
             ddev stop
             ddev delete -Oy
