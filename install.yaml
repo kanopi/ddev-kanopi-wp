@@ -36,6 +36,16 @@ post_install_actions:
   mkdir -p .ddev
   cp config.kanopi.yaml .ddev/config.kanopi.yaml
   
+  # Skip interactive setup in non-interactive mode
+  if [ "${DDEV_NON_INTERACTIVE:-false}" = "true" ]; then
+    echo "🤖 Non-interactive mode detected - using default configuration"
+    cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
+    echo "config.kanopi.local.yaml" >> .gitignore 2>/dev/null || true
+    echo "✅ Configuration files created with default values"
+    echo "📝 Edit .ddev/config.kanopi.yaml to customize your settings"
+    exit 0
+  fi
+  
   echo "🚀 Welcome to Kanopi WordPress DDEV Setup!"
   echo "==========================================="
   echo ""
