@@ -4,7 +4,7 @@ jobs:
   test-ddev-addon:
     machine:
       image: ubuntu-2204:2023.04.2
-      resource_class: small
+      resource_class: medium
     working_directory: ~/project
     
     steps:
