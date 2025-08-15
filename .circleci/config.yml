@@ -4,6 +4,7 @@ jobs:
   test-ddev-addon:
     machine:
       image: ubuntu-2204:2023.04.2
+      resource_class: small
     working_directory: ~/project
     
     steps:
@@ -62,17 +63,5 @@ jobs:
 workflows:
   version: 2
   test:
-    jobs:
-      - test-ddev-addon
-  
-  # Daily test run
-  daily:
-    triggers:
-      - schedule:
-          cron: "25 09 * * *"
-          filters:
-            branches:
-              only:
-                - main
     jobs:
       - test-ddev-addon
