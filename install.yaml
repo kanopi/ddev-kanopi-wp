@@ -41,6 +41,24 @@ post_install_actions:
     echo "🤖 Non-interactive mode detected - using default configuration"
     cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
     echo "config.kanopi.local.yaml" >> .gitignore 2>/dev/null || true
+    
+    # Auto-configure wp-config.php in non-interactive mode too
+    WP_CONFIG="web/wp-config.php"
+    if [ -f "$WP_CONFIG" ] && ! grep -q "wp-config-ddev.php" "$WP_CONFIG"; then
+      echo "🔧 Auto-configuring wp-config.php for DDEV..."
+      cp "$WP_CONFIG" "$WP_CONFIG.bak"
+      if grep -q "wp-settings.php" "$WP_CONFIG"; then
+        sed -i.tmp '/wp-settings\.php/i\
+\
+// Include DDEV-managed database settings\
+$ddev_settings = dirname(__FILE__) . '\''/wp-config-ddev.php'\'';\
+if (is_readable($ddev_settings) && !defined('\''DB_USER'\'')) {\
+  require_once($ddev_settings);\
+}' "$WP_CONFIG" && rm "$WP_CONFIG.tmp"
+        echo "✅ Added DDEV database configuration to wp-config.php"
+      fi
+    fi
+    
     echo "✅ Configuration files created with default values"
     echo "📝 Edit .ddev/config.kanopi.yaml to customize your settings"
     exit 0
@@ -192,6 +210,39 @@ post_install_actions:
   if [ ! -f .gitignore ] || ! grep -q "config.kanopi.local.yaml" .gitignore; then
     echo ".ddev/config.kanopi.local.yaml" >> .gitignore
     echo "Added .ddev/config.kanopi.local.yaml to .gitignore"
+  fi
+  
+  # Auto-configure wp-config.php for DDEV if it exists and doesn't already include ddev settings
+  WP_CONFIG="web/wp-config.php"
+  if [ -f "$WP_CONFIG" ]; then
+    if ! grep -q "wp-config-ddev.php" "$WP_CONFIG"; then
+      echo "🔧 Auto-configuring wp-config.php for DDEV..."
+      
+      # Create a backup
+      cp "$WP_CONFIG" "$WP_CONFIG.bak"
+      
+      # Find the line with wp-settings.php and insert our include before it
+      if grep -q "wp-settings.php" "$WP_CONFIG"; then
+        # Insert DDEV include before wp-settings.php
+        sed -i.tmp '/wp-settings\.php/i\
+\
+// Include DDEV-managed database settings\
+$ddev_settings = dirname(__FILE__) . '\''/wp-config-ddev.php'\'';\
+if (is_readable($ddev_settings) && !defined('\''DB_USER'\'')) {\
+  require_once($ddev_settings);\
+}' "$WP_CONFIG" && rm "$WP_CONFIG.tmp"
+        
+        echo "✅ Added DDEV database configuration to wp-config.php"
+        echo "📁 Backup created: wp-config.php.bak"
+      else
+        echo "⚠️  Could not find wp-settings.php include in wp-config.php"
+        echo "   Please manually add the DDEV include as shown in the documentation"
+      fi
+    else
+      echo "✅ wp-config.php already includes DDEV settings"
+    fi
+  else
+    echo "ℹ️  No wp-config.php found - you can create one later"
   fi
   
   echo ""

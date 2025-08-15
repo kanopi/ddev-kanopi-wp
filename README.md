@@ -27,7 +27,7 @@ The installation includes an **interactive setup wizard** that will prompt you f
 3. **Hosting Details**: Site-specific configuration (e.g., Pantheon site name)
 4. **Plugin Licenses**: ACF Pro and Gravity Forms keys (optional)
 
-The wizard automatically writes your configuration to `.ddev/config.kanopi.yaml`.
+The wizard automatically writes your configuration to `.ddev/config.kanopi.yaml` and configures your `wp-config.php` file for DDEV database connectivity.
 
 ### Pantheon Setup
 
@@ -123,7 +123,7 @@ pantheon:
 
 The add-on automatically configures:
 - WordPress multisite support (if needed)
-- Database connection settings
+- Database connection settings (auto-modifies wp-config.php)
 - Redis object caching
 - Solr search integration
 - Admin user creation
