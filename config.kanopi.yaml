@@ -13,10 +13,11 @@ theme:
   relative_path: "wp-content/themes/custom/struts"
 
 # Pantheon Configuration
+# Note: Pantheon machine token should be set globally with:
+# ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token
 pantheon:
   site: "your-pantheon-site-name"
   env: "dev"
-  token: "your-pantheon-machine-token"
 
 # Premium Plugin Licenses
 licenses:

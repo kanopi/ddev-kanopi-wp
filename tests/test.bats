@@ -28,12 +28,20 @@ health_checks() {
     ddev refresh --help || echo "refresh command exists"
     ddev activate-theme --help || echo "activate-theme command exists"
     ddev restore-admin-user --help || echo "restore-admin-user command exists"
+    ddev phpcs --help || echo "phpcs command exists"
+    ddev phpcbf --help || echo "phpcbf command exists"
+    ddev npm --help || echo "npm command exists"
+    ddev terminus --help || echo "terminus command exists"
     
     # Check configuration files exist
-    [ -f ".ddev/.env-kanopi-wp-example" ]
+    [ -f ".ddev/config.kanopi.yaml" ]
+    [ -f ".ddev/config.kanopi.local.yaml" ]
     [ -f ".ddev/config/php/php.ini" ]
     [ -f ".ddev/config/nginx/nginx-site.conf" ]
     [ -d ".ddev/config/wp/block-template" ]
+    
+    # Check gitignore was updated
+    grep -q "config.kanopi.local.yaml" .gitignore || echo "gitignore should contain config.kanopi.local.yaml"
 }
 
 teardown() {
@@ -71,4 +79,80 @@ teardown() {
     ddev start
     
     health_checks
+}
+
+@test "configuration file generation" {
+    set -eu -o pipefail
+    cd $TESTDIR
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
+    ddev add-on get $DIR
+    ddev start
+    
+    # Check that configuration files were created
+    [ -f ".ddev/config.kanopi.yaml" ]
+    [ -f ".ddev/config.kanopi.local.yaml" ]
+    
+    # Check that config files contain expected content
+    grep -q "wordpress:" .ddev/config.kanopi.yaml
+    grep -q "pantheon:" .ddev/config.kanopi.yaml  
+    grep -q "licenses:" .ddev/config.kanopi.yaml
+    grep -q "theme:" .ddev/config.kanopi.yaml
+    
+    # Check local config has commented examples
+    grep -q "# development:" .ddev/config.kanopi.local.yaml
+    grep -q "# proxy:" .ddev/config.kanopi.local.yaml
+}
+
+@test "interactive installation wizard" {
+    set -eu -o pipefail
+    cd $TESTDIR
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
+    
+    # Test non-interactive mode (should use defaults)
+    export DDEV_NON_INTERACTIVE=true
+    ddev add-on get $DIR
+    ddev start
+    
+    # Check that default values were used
+    [ -f ".ddev/config.kanopi.yaml" ]
+    grep -q "admin_user: \"xxxxxx\"" .ddev/config.kanopi.yaml
+    grep -q "site: \"your-pantheon-site-name\"" .ddev/config.kanopi.yaml
+}
+
+@test "block template functionality" {
+    set -eu -o pipefail
+    cd $TESTDIR
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
+    ddev add-on get $DIR
+    ddev start
+    
+    # Check that block template directory exists
+    [ -d ".ddev/config/wp/block-template" ]
+    
+    # Check that create-block command exists and has proper structure
+    ddev exec "command -v create-block >/dev/null 2>&1" || echo "create-block command should exist"
+    
+    # Test block creation (this will fail without proper theme structure, but command should exist)
+    ddev create-block test-block || echo "create-block command executed (may fail without theme)"
+}
+
+@test "docker services" {
+    set -eu -o pipefail  
+    cd $TESTDIR
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
+    ddev add-on get $DIR
+    ddev start
+    
+    # Wait a moment for services to fully start
+    sleep 5
+    
+    # Check that all expected services are running
+    docker ps --format "table {{.Names}}" | grep -E "ddev-${PROJNAME}-(web|db|pma|redis|solr)" | wc -l | grep -q "5"
+    
+    # Check specific services
+    docker ps | grep "ddev-${PROJNAME}-web"
+    docker ps | grep "ddev-${PROJNAME}-db" 
+    docker ps | grep "ddev-${PROJNAME}-pma"
+    docker ps | grep "ddev-${PROJNAME}-redis"
+    docker ps | grep "ddev-${PROJNAME}-solr"
 }

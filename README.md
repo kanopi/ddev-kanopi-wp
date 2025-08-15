@@ -29,6 +29,20 @@ The installation includes an **interactive setup wizard** that will prompt you f
 
 The wizard automatically writes your configuration to `.ddev/config.kanopi.yaml`.
 
+### Pantheon Setup
+
+For Pantheon users, you'll need to set your machine token **globally** (shared across all DDEV projects):
+
+```bash
+# Set your Pantheon machine token globally
+ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here
+
+# Restart DDEV to apply the token
+ddev restart
+```
+
+**Get your token**: Visit [Pantheon's Machine Token page](https://pantheon.io/docs/machine-tokens/) to create a token.
+
 ## Manual Configuration
 
 If you skip the interactive setup or want to edit your configuration later:
@@ -43,7 +57,7 @@ wordpress:
 pantheon:  # Only if using Pantheon
   site: "your-pantheon-site-name"
   env: "dev"  # or test, live
-  token: "your-pantheon-machine-token"
+  # Note: Machine token is set globally, not in config files
 
 licenses:  # Optional premium plugins
   acf_client_user: "your-acf-license-key"
@@ -84,27 +98,20 @@ pantheon:
 
 ## Available Commands
 
-### Block Development
-- `ddev create-block <block-name>` - Create a new WordPress block with proper scaffolding
-- `ddev development` - Start the development server with file watching
-- `ddev production` - Build production assets
-
-### Database Management
-- `ddev refresh` - Pull database from Pantheon and perform local setup
-- `ddev activate-theme` - Activate the custom theme
-- `ddev restore-admin-user` - Restore the admin user credentials
-
-### Code Quality
-- `ddev phpcs` - Run PHP Code Sniffer
-- `ddev phpcbf` - Run PHP Code Beautifier and Fixer
-
-### Development Tools
-- `ddev npm <command>` - Run npm commands (automatically runs in theme directory if available)
-- `ddev terminus <command>` - Run Terminus commands for Pantheon integration
-
-### Utilities
-- `ddev open` - Open the site in your default browser
-- `ddev open cms` - Open WordPress admin in your default browser
+| Command | Description |
+|---------|-------------|
+| `ddev create-block <block-name>` | Create a new WordPress block with proper scaffolding |
+| `ddev development` | Start the development server with file watching |
+| `ddev production` | Build production assets |
+| `ddev refresh` | Pull database from Pantheon and perform local setup |
+| `ddev activate-theme` | Activate the custom theme |
+| `ddev restore-admin-user` | Restore the admin user credentials |
+| `ddev phpcs` | Run PHP Code Sniffer |
+| `ddev phpcbf` | Run PHP Code Beautifier and Fixer |
+| `ddev npm <command>` | Run npm commands (automatically runs in theme directory if available) |
+| `ddev terminus <command>` | Run Terminus commands for Pantheon integration |
+| `ddev open` | Open the site in your default browser |
+| `ddev open cms` | Open WordPress admin in your default browser |
 
 ## Services Included
 
@@ -148,7 +155,7 @@ The add-on automatically configures:
 
 The add-on includes tools for working with Pantheon:
 
-1. Configure your Pantheon settings in `.ddev/.env-kanopi-wp`
+1. Configure your Pantheon settings in `.ddev/config.kanopi.yaml`
 2. Pull your database: `ddev refresh`
 3. The command will automatically:
    - Download the database from Pantheon
