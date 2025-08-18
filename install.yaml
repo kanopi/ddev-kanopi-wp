@@ -16,6 +16,7 @@ project_files:
 - commands/host/phpcbf
 - commands/host/npm
 - commands/host/terminus
+- commands/host/init
 - config/php/php.ini
 - config/nginx/nginx-site.conf
 - config/helpers/load-config.sh

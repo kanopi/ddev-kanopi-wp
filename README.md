@@ -75,6 +75,26 @@ To add this addon to an existing WordPress project that doesn't have DDEV:
    ddev refresh
    ```
 
+### Quick Start with Init Command
+
+After installation, you can set up your entire development environment with a single command:
+
+```bash
+ddev init
+```
+
+This command will automatically:
+- Start DDEV
+- Install Lefthook (git hooks) if configured
+- Set up NVM for Node.js management
+- Add SSH keys for remote access
+- Install Composer dependencies
+- Download WordPress core (if needed)
+- Pull database from Pantheon (if configured)
+- Install theme dependencies and build assets
+- Activate theme and restore admin user
+- Generate admin login link
+
 The installation includes an **interactive setup wizard** that will prompt you for:
 
 1. **Hosting Provider**: Pantheon, WP Engine, or Kinsta
@@ -155,6 +175,7 @@ pantheon:
 
 | Command | Description |
 |---------|-------------|
+| `ddev init` | **Initialize complete development environment** (runs all setup commands) |
 | `ddev create-block <block-name>` | Create a new WordPress block with proper scaffolding |
 | `ddev development` | Start the development server with file watching |
 | `ddev production` | Build production assets |
