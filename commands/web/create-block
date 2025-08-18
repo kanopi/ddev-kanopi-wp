@@ -15,13 +15,13 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-# Load environment variables
-if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
-    source /var/www/html/.ddev/.env-kanopi-wp
+# Load configuration from YAML
+CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
+if [ -f "$CONFIG_FILE" ]; then
+    WP_THEME_RELATIVE_PATH=$(yq eval '.theme.relative_path // "wp-content/themes/custom/struts"' "$CONFIG_FILE" 2>/dev/null || echo "wp-content/themes/custom/struts")
+else
+    WP_THEME_RELATIVE_PATH="wp-content/themes/custom/struts"
 fi
-
-# Set default theme path if not defined
-WP_THEME_RELATIVE_PATH="${WP_THEME_RELATIVE_PATH:-wp-content/themes/custom/struts}"
 BLOCKS_PATH="/var/www/html/${WP_THEME_RELATIVE_PATH}/assets/src/blocks"
 
 BLOCK_NAME="$1"

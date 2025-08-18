@@ -6,19 +6,19 @@
 
 #ddev-generated
 
-# Load environment variables
-if [ -f /var/www/html/.ddev/.env-kanopi-wp ]; then
-    source /var/www/html/.ddev/.env-kanopi-wp
+# Load configuration from YAML
+CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
+if [ -f "$CONFIG_FILE" ]; then
+    WP_THEME_RELATIVE_PATH=$(yq eval '.theme.relative_path // "wp-content/themes/custom/struts"' "$CONFIG_FILE" 2>/dev/null || echo "wp-content/themes/custom/struts")
+else
+    WP_THEME_RELATIVE_PATH="wp-content/themes/custom/struts"
 fi
-
-# Set default theme path if not defined
-WP_THEME_RELATIVE_PATH="${WP_THEME_RELATIVE_PATH:-wp-content/themes/custom/struts}"
 THEME_PATH="/var/www/html/${WP_THEME_RELATIVE_PATH}"
 
 # Check if theme directory exists
 if [ ! -d "$THEME_PATH" ]; then
     echo "Theme directory not found: $THEME_PATH"
-    echo "Please ensure your theme is located at the correct path or update WP_THEME_RELATIVE_PATH in .ddev/.env-kanopi-wp"
+    echo "Please ensure your theme is located at the correct path or update theme.relative_path in .ddev/config.kanopi.yaml"
     exit 1
 fi
 

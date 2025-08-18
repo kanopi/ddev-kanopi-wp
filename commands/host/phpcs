@@ -6,10 +6,8 @@
 
 #ddev-generated
 
-# Load environment variables
-if [ -f .ddev/.env-kanopi-wp ]; then
-    source .ddev/.env-kanopi-wp
-fi
+# Note: This command doesn't require config.kanopi.yaml
+# Configuration is handled by composer.json and phpcs.xml
 
 echo "Running PHP Code Sniffer..."
 
