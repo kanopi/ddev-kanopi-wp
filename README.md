@@ -16,9 +16,64 @@ This add-on converts the existing Docksal-based Kanopi WordPress workflow to DDE
 
 ## Installation
 
+### New DDEV Project
+
 ```bash
 ddev add-on get kanopi/ddev-kanopi-wp
 ```
+
+### Existing Project Without DDEV
+
+To add this addon to an existing WordPress project that doesn't have DDEV:
+
+1. **Install DDEV** (if not already installed):
+   ```bash
+   # macOS with Homebrew
+   brew install ddev/ddev/ddev
+   
+   # Other platforms: https://ddev.readthedocs.io/en/latest/users/install/ddev-installation/
+   ```
+
+2. **Navigate to your project directory**:
+   ```bash
+   cd /path/to/your/wordpress/project
+   ```
+
+3. **Initialize DDEV for WordPress**:
+   ```bash
+   ddev config --project-name=your-project-name --project-type=wordpress --docroot=web --create-docroot
+   ```
+
+4. **Configure wp-config.php** (if you have an existing one):
+   Add this snippet to your `wp-config.php` before the `wp-settings.php` line:
+   ```php
+   // Include for ddev-managed settings in wp-config-ddev.php.
+   $ddev_settings = dirname(__FILE__) . '/wp-config-ddev.php';
+   if (is_readable($ddev_settings) && !defined('DB_USER')) {
+     require_once($ddev_settings);
+   }
+   ```
+
+5. **Add the Kanopi WordPress addon**:
+   ```bash
+   ddev add-on get kanopi/ddev-kanopi-wp
+   ```
+
+6. **Start DDEV**:
+   ```bash
+   ddev start
+   ```
+
+7. **Set up Pantheon token** (if using Pantheon):
+   ```bash
+   ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here
+   ddev restart
+   ```
+
+8. **Import your database** (if from Pantheon):
+   ```bash
+   ddev refresh
+   ```
 
 The installation includes an **interactive setup wizard** that will prompt you for:
 
