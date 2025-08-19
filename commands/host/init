@@ -102,8 +102,17 @@ if [ ! -f "web/index.php" ] || [ ! -f "web/wp-load.php" ]; then
   if [ ! -f "web/wp-config.php" ] && [ ! -f "web/wp-config-ddev.php" ]; then
     ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=/var/www/html/web --allow-root"
   fi
-  # Install WordPress with basic setup
-  ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=/var/www/html/web --allow-root" 2>/dev/null || echo "WordPress installation completed or already exists"
+fi
+
+# Install WordPress database (if not already installed)
+if [ -f "web/index.php" ]; then
+  # Check if WordPress is installed by trying to get the site URL
+  WP_INSTALLED=$(ddev exec "wp core is-installed --path=/var/www/html/web --allow-root" 2>/dev/null && echo "true" || echo "false")
+  if [ "$WP_INSTALLED" = "false" ]; then
+    echo -e "\n${construction} ${yellow} Setting up WordPress database...${NC} ${construction}\n"
+    echo -e "${green}${divider}${NC}"
+    ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=/var/www/html/web --allow-root" 2>/dev/null || echo "WordPress database setup completed"
+  fi
 fi
 
 # Get the database from Pantheon (if configured)
