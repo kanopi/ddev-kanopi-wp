@@ -2,7 +2,7 @@
 
 ## Refresh the site database from Pantheon
 ##
-## Usage: ddev refresh
+## Usage: refresh
 
 #ddev-generated
 

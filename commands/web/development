@@ -1,8 +1,8 @@
 #!/bin/bash
 
-## Run @wordpress/scripts in development mode for the theme
-##
-## Usage: ddev development
+## Description: Run @wordpress/scripts in development mode for the theme
+## Usage: development
+## Example: "ddev development"
 
 #ddev-generated
 

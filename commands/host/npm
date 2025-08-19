@@ -2,7 +2,7 @@
 
 ## Run npm commands in the web container
 ##
-## Usage: ddev npm <command> [args...]
+## Usage: npm <command> [args...]
 ##        ddev npm install
 ##        ddev npm run start
 ##        ddev npm run build

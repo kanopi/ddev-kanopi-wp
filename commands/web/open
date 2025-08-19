@@ -2,7 +2,7 @@
 
 ## Open the site or admin in your default browser
 ##
-## Usage: ddev open [service]
+## Usage: open [service]
 ##        ddev open      # Opens the site
 ##        ddev open cms  # Opens WordPress admin
 

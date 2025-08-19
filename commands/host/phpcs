@@ -1,8 +1,8 @@
 #!/bin/bash
 
-## Run PHP Code Sniffer
-##
-## Usage: ddev phpcs
+## Description: Run PHP Code Sniffer
+## Usage: phpcs
+## Example: "ddev phpcs"
 
 #ddev-generated
 

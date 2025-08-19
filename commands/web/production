@@ -1,8 +1,8 @@
 #!/bin/bash
 
-## Build production assets for the theme
-##
-## Usage: ddev production
+## Description: Build production assets for the theme
+## Usage: production
+## Example: "ddev production"
 
 #ddev-generated
 

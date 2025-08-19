@@ -1,8 +1,8 @@
 #!/bin/bash
 
-## Interactive configuration wizard for Kanopi WordPress DDEV
-##
-## Usage: ddev configure
+## Description: Interactive configuration wizard for Kanopi WordPress DDEV
+## Usage: configure
+## Example: "ddev configure"
 
 #ddev-generated
 

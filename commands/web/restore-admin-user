@@ -2,7 +2,7 @@
 
 ## Restore the admin user credentials
 ##
-## Usage: ddev restore-admin-user
+## Usage: restore-admin-user
 
 #ddev-generated
 

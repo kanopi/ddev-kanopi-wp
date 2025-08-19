@@ -2,7 +2,7 @@
 
 ## Run Terminus commands in the web container
 ##
-## Usage: ddev terminus <command> [args...]
+## Usage: terminus <command> [args...]
 ##        ddev terminus site:list
 ##        ddev terminus backup:create site.env --element=database
 ##        ddev terminus backup:get site.env --element=database
