@@ -94,11 +94,14 @@ if [ -f "composer.json" ]; then
 fi
 
 # Install WordPress core (if not already installed)
-if [ ! -f "web/wp-config.php" ] && [ ! -f "web/wp-config-ddev.php" ]; then
+if [ ! -f "web/index.php" ] || [ ! -f "web/wp-load.php" ]; then
   echo -e "\n${construction} ${yellow} Installing WordPress...${NC} ${construction}\n"
   echo -e "${green}${divider}${NC}"
   ddev exec "wp core download --path=/var/www/html/web --allow-root"
-  ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=/var/www/html/web --allow-root"
+  # Only create config if it doesn't exist
+  if [ ! -f "web/wp-config.php" ] && [ ! -f "web/wp-config-ddev.php" ]; then
+    ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=/var/www/html/web --allow-root"
+  fi
 fi
 
 # Get the database from Pantheon (if configured)
@@ -128,10 +131,12 @@ fi
 echo -e "\n${lock} ${yellow} Configuring WordPress...${NC} ${lock}"
 echo -e "${green}${divider}${NC}"
 
-# Activate the custom theme (if configured)
-if [ -f "$CONFIG_FILE" ]; then
+# Activate the custom theme (if configured and WordPress is available)
+if [ -f "$CONFIG_FILE" ] && [ -f "web/index.php" ]; then
   THEME_SLUG=$(yq eval '.theme.slug // "struts"' "$CONFIG_FILE" 2>/dev/null || echo "struts")
   ddev exec "wp theme activate ${THEME_SLUG} --allow-root" 2>/dev/null || echo "Theme activation skipped (theme not found)"
+else
+  echo "Theme activation skipped (WordPress not installed)"
 fi
 
 # Restore admin user

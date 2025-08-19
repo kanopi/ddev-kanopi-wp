@@ -12,6 +12,12 @@ load_kanopi_config "/var/www/html/.ddev"
 
 echo "Restoring admin user: $WP_ADMIN_USER"
 
+# Check if WordPress is installed
+if [ ! -f "/var/www/html/web/index.php" ]; then
+    echo "WordPress not found. Skipping admin user restoration."
+    exit 0
+fi
+
 # Create or update admin user
 wp user create "$WP_ADMIN_USER" "$WP_ADMIN_EMAIL" --role=administrator --user_pass="$WP_ADMIN_PASS" --allow-root 2>/dev/null || \
 wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASS" --user_email="$WP_ADMIN_EMAIL" --allow-root
