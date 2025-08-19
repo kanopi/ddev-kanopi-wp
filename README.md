@@ -75,15 +75,26 @@ To add this addon to an existing WordPress project that doesn't have DDEV:
    ddev refresh
    ```
 
-### Quick Start with Init Command
+### Quick Start
 
-After installation, you can set up your entire development environment with a single command:
+After installation, configure and initialize your development environment:
 
 ```bash
+# 1. Configure your project settings (interactive wizard)
+ddev configure
+
+# 2. Initialize your complete development environment
 ddev init
 ```
 
-This command will automatically:
+**`ddev configure`** - Interactive setup wizard that prompts you for:
+
+1. **Hosting Provider**: Pantheon, WP Engine, or Kinsta
+2. **WordPress Admin**: Username, password, and email
+3. **Hosting Details**: Site-specific configuration (e.g., Pantheon site name)
+4. **Plugin Licenses**: ACF Pro and Gravity Forms keys (optional)
+
+**`ddev init`** - Complete development environment setup that automatically:
 - Start DDEV
 - Install Lefthook (git hooks) if configured
 - Set up NVM for Node.js management
@@ -94,15 +105,6 @@ This command will automatically:
 - Install theme dependencies and build assets
 - Activate theme and restore admin user
 - Generate admin login link
-
-The installation includes an **interactive setup wizard** that will prompt you for:
-
-1. **Hosting Provider**: Pantheon, WP Engine, or Kinsta
-2. **WordPress Admin**: Username, password, and email
-3. **Hosting Details**: Site-specific configuration (e.g., Pantheon site name)
-4. **Plugin Licenses**: ACF Pro and Gravity Forms keys (optional)
-
-The wizard automatically writes your configuration to `.ddev/config.kanopi.yaml` and configures your `wp-config.php` file for DDEV database connectivity.
 
 ### Pantheon Setup
 
@@ -175,6 +177,7 @@ pantheon:
 
 | Command | Description |
 |---------|-------------|
+| `ddev configure` | **Interactive setup wizard** (configure project settings) |
 | `ddev init` | **Initialize complete development environment** (runs all setup commands) |
 | `ddev create-block <block-name>` | Create a new WordPress block with proper scaffolding |
 | `ddev development` | Start the development server with file watching |

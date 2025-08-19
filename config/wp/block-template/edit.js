@@ -1,4 +1,6 @@
 /**
+ * #ddev-generated - This file is managed by ddev-kanopi-wp addon
+ * 
  * Retrieves the translation of text.
  *
  * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/

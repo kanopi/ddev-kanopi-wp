@@ -17,6 +17,7 @@ project_files:
 - commands/host/npm
 - commands/host/terminus
 - commands/host/init
+- commands/host/configure
 - config/php/php.ini
 - config/nginx/nginx-site.conf
 - config/helpers/load-config.sh
@@ -31,217 +32,27 @@ project_files:
 - config.kanopi.local.yaml.example
 
 post_install_actions:
-# Interactive configuration setup
 - |
-  echo "🚀 Starting Kanopi WordPress DDEV setup..."
-  
-  # Ensure .ddev directory exists and create config file from template
+  echo "✅ Kanopi WordPress DDEV add-on installed successfully!"
+  echo ""
   mkdir -p .ddev
   cp config.kanopi.yaml .ddev/config.kanopi.yaml
-  
-  # Skip interactive setup in non-interactive mode
-  if [ "${DDEV_NON_INTERACTIVE:-false}" = "true" ]; then
-    echo "🤖 Non-interactive mode detected - using default configuration"
-    cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
-    echo "config.kanopi.local.yaml" >> .gitignore 2>/dev/null || true
-    
-    # Note about wp-config.php in non-interactive mode
-    WP_CONFIG="web/wp-config.php"
-    if [ -f "$WP_CONFIG" ] && ! grep -q "wp-config-ddev.php" "$WP_CONFIG"; then
-      echo "ℹ️  wp-config.php detected - you may need to add DDEV database settings"
-    fi
-    
-    echo "✅ Configuration files created with default values"
-    echo "📝 Edit .ddev/config.kanopi.yaml to customize your settings"
-    exit 0
-  fi
-  
-  echo "🚀 Welcome to Kanopi WordPress DDEV Setup!"
-  echo "==========================================="
-  echo ""
-  echo "Let's configure your development environment. Press Ctrl+C anytime to skip setup."
-  echo ""
-  
-  # Function to prompt for input with default
-  prompt_input() {
-    local prompt="$1"
-    local default="$2"
-    local var_name="$3"
-    
-    if [ -n "$default" ]; then
-      echo -n "$prompt [$default]: "
-    else
-      echo -n "$prompt: "
-    fi
-    
-    read -r input
-    if [ -z "$input" ] && [ -n "$default" ]; then
-      input="$default"
-    fi
-    
-    eval "$var_name='$input'"
-  }
-  
-  # Function to select from options
-  select_option() {
-    local prompt="$1"
-    shift
-    local options=("$@")
-    
-    echo "$prompt"
-    for i in "${!options[@]}"; do
-      echo "  $((i+1)). ${options[i]}"
-    done
-    echo -n "Select option [1]: "
-    
-    read -r choice
-    choice=${choice:-1}
-    
-    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#options[@]}" ]; then
-      echo "${options[$((choice-1))]}"
-    else
-      echo "${options[0]}"
-    fi
-  }
-  
-  # 1. Select hosting provider
-  HOST_PROVIDER=$(select_option "What hosting provider are you using?" "Pantheon" "WP Engine" "Kinsta")
-  echo "✓ Selected: $HOST_PROVIDER"
-  echo ""
-  
-  # 2. WordPress admin configuration
-  echo "WordPress Admin Configuration:"
-  echo "------------------------------"
-  prompt_input "WordPress admin username" "admin" WP_ADMIN_USER
-  
-  # Prompt for password with confirmation
-  while true; do
-    echo -n "WordPress admin password: "
-    read -s WP_ADMIN_PASS
-    echo ""
-    echo -n "Confirm password: "
-    read -s WP_ADMIN_PASS_CONFIRM
-    echo ""
-    
-    if [ "$WP_ADMIN_PASS" = "$WP_ADMIN_PASS_CONFIRM" ]; then
-      break
-    else
-      echo "Passwords don't match. Please try again."
-    fi
-  done
-  
-  prompt_input "WordPress admin email" "admin@example.com" WP_ADMIN_EMAIL
-  echo ""
-  
-  # 3. Pantheon-specific configuration
-  if [ "$HOST_PROVIDER" = "Pantheon" ]; then
-    echo "Pantheon Configuration:"
-    echo "----------------------"
-    prompt_input "Pantheon site name" "" PANTHEON_SITE
-    prompt_input "Pantheon environment" "dev" PANTHEON_ENV
-    echo ""
-  fi
-  
-  # 4. Premium plugin licenses (optional)
-  echo "Premium Plugin Licenses (optional - press Enter to skip):"
-  echo "--------------------------------------------------------"
-  prompt_input "ACF Pro license key" "" ACF_LICENSE
-  prompt_input "Gravity Forms license key" "" GF_LICENSE
-  echo ""
-  
-  # Write configuration to YAML file
-  echo "Writing configuration to .ddev/config.kanopi.yaml..."
-  
-  # Use yq to update the YAML file (install if not available)
-  if ! command -v yq >/dev/null 2>&1; then
-    echo "Installing yq for YAML processing..."
-    if command -v brew >/dev/null 2>&1; then
-      brew install yq >/dev/null 2>&1 || {
-        echo "Failed to install yq via brew. Downloading binary..."
-        curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -o /usr/local/bin/yq 2>/dev/null || \
-        curl -L https://github.com/mikefarah/yq/releases/latest/download/yq_darwin_amd64 -o /usr/local/bin/yq 2>/dev/null
-        chmod +x /usr/local/bin/yq 2>/dev/null
-      }
-    else
-      echo "Please install yq manually or edit .ddev/config.kanopi.yaml by hand"
-    fi
-  fi
-  
-  # Update YAML values
-  if command -v yq >/dev/null 2>&1; then
-    yq eval ".wordpress.admin_user = \"$WP_ADMIN_USER\"" -i .ddev/config.kanopi.yaml
-    yq eval ".wordpress.admin_pass = \"$WP_ADMIN_PASS\"" -i .ddev/config.kanopi.yaml  
-    yq eval ".wordpress.admin_email = \"$WP_ADMIN_EMAIL\"" -i .ddev/config.kanopi.yaml
-    
-    if [ "$HOST_PROVIDER" = "Pantheon" ] && [ -n "$PANTHEON_SITE" ]; then
-      yq eval ".pantheon.site = \"$PANTHEON_SITE\"" -i .ddev/config.kanopi.yaml
-      yq eval ".pantheon.env = \"$PANTHEON_ENV\"" -i .ddev/config.kanopi.yaml
-    fi
-    
-    if [ -n "$ACF_LICENSE" ]; then
-      yq eval ".licenses.acf_client_user = \"$ACF_LICENSE\"" -i .ddev/config.kanopi.yaml
-    fi
-    
-    if [ -n "$GF_LICENSE" ]; then
-      yq eval ".licenses.gf_client_user = \"$GF_LICENSE\"" -i .ddev/config.kanopi.yaml
-    fi
-    
-    echo "✅ Configuration written successfully!"
-  else
-    echo "⚠️  Could not install yq. Please edit .ddev/config.kanopi.yaml manually with your settings:"
-    echo "   WordPress Admin: $WP_ADMIN_USER / $WP_ADMIN_EMAIL"
-    if [ "$HOST_PROVIDER" = "Pantheon" ]; then
-      echo "   Pantheon Site: $PANTHEON_SITE ($PANTHEON_ENV)"
-    fi
-  fi
-  
-  # Create local config file from example
   cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
-  
-  # Add to .gitignore to keep local settings private
-  if [ ! -f .gitignore ] || ! grep -q "config.kanopi.local.yaml" .gitignore; then
-    echo ".ddev/config.kanopi.local.yaml" >> .gitignore
-    echo "Added .ddev/config.kanopi.local.yaml to .gitignore"
-  fi
-  
-  # Check if wp-config.php needs DDEV configuration
-  WP_CONFIG="web/wp-config.php"
-  if [ -f "$WP_CONFIG" ] && ! grep -q "wp-config-ddev.php" "$WP_CONFIG"; then
-    echo "ℹ️  wp-config.php detected but not yet configured for DDEV"
-    echo "   After installation, you may need to add DDEV database settings"
-    echo "   See: https://ddev.readthedocs.io/en/latest/users/quickstart/#wordpress"
-  fi
-  
+  echo ".ddev/config.kanopi.local.yaml" >> .gitignore 2>/dev/null || true
+  echo "📋 Next steps:"
   echo ""
-  echo "🎉 Setup complete!"
+  echo "1. 🔧 Configure your settings:"
+  echo "   ddev configure  # Interactive setup wizard"
+  echo "   # OR edit .ddev/config.kanopi.yaml manually"
   echo ""
-  echo "Your configuration has been saved to .ddev/config.kanopi.yaml"
-  echo "Local override file created: .ddev/config.kanopi.local.yaml"
+  echo "2. 🏛️ Set Pantheon token (if using Pantheon):"
+  echo "   ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token"
   echo ""
-  echo "💡 To customize local settings:"
-  echo "   1. Edit .ddev/config.kanopi.local.yaml"
-  echo "   2. Uncomment any settings you want to override"
-  echo "   3. Run 'ddev restart' to apply changes"
+  echo "3. 🚀 Initialize your environment:"
+  echo "   ddev init  # Complete development setup"
   echo ""
-  echo "🔧 Next steps:"
-  if [ "$HOST_PROVIDER" = "Pantheon" ]; then
-    echo "   1. Set your Pantheon machine token globally (if you haven't already):"
-    echo "      ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here"
-    echo "   2. Restart DDEV: ddev restart"
-    echo "   3. Start your project: ddev start"
-    if [ -n "$PANTHEON_SITE" ]; then
-      echo "   4. Import your database: ddev refresh"
-    fi
-    echo "   5. Begin development: ddev development"
-    echo ""
-    echo "💡 The Pantheon machine token is stored globally and shared across all DDEV projects"
-    echo "   for security and convenience."
-  else
-    echo "   1. Start your project: ddev start"
-    echo "   2. Begin development: ddev development"
-  fi
-  echo ""
-  echo "📝 Review your configuration: cat .ddev/config.kanopi.yaml"
+  echo "📖 Documentation: https://github.com/kanopi/ddev-kanopi-wp"
+  echo "🆘 Issues: https://github.com/kanopi/ddev-kanopi-wp/issues"
 
 removal_actions:
 - rm -f .ddev/config.kanopi.yaml

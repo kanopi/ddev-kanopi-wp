@@ -1,3 +1,4 @@
+#ddev-generated
 # Kanopi WordPress DDEV Configuration
 # This file will be copied to .ddev/config.kanopi.yaml during installation
 
@@ -13,7 +14,7 @@ theme:
   relative_path: "wp-content/themes/custom/struts"
 
 # Pantheon Configuration
-# Note: Pantheon machine token should be set globally with:
+# IMPORTANT: Set the Pantheon machine token BEFORE running ddev init:
 # ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token
 pantheon:
   site: "your-pantheon-site-name"

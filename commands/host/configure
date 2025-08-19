@@ -1,0 +1,160 @@
+#!/bin/bash
+
+## Interactive configuration wizard for Kanopi WordPress DDEV
+##
+## Usage: ddev configure
+
+#ddev-generated
+
+# Colors and formatting
+green='\033[0;32m'
+yellow='\033[1;33m'
+NC='\033[0m'
+divider='===================================================\n'
+
+echo -e "\n🚀 ${yellow}Kanopi WordPress DDEV Configuration Wizard${NC} 🚀"
+echo -e "${green}${divider}${NC}"
+echo "Let's configure your development environment. Press Ctrl+C anytime to exit."
+echo ""
+
+# Check if config file exists
+CONFIG_FILE=".ddev/config.kanopi.yaml"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "❌ Configuration file not found: $CONFIG_FILE"
+    echo "Please run 'ddev add-on get kanopi/ddev-kanopi-wp' first"
+    exit 1
+fi
+
+# Function to prompt for input with default
+prompt_input() {
+    local prompt="$1"
+    local default="$2"
+    local var_name="$3"
+    
+    if [ -n "$default" ]; then
+        echo -n "$prompt [$default]: "
+    else
+        echo -n "$prompt: "
+    fi
+    
+    read -r input
+    if [ -z "$input" ] && [ -n "$default" ]; then
+        input="$default"
+    fi
+    
+    eval "$var_name='$input'"
+}
+
+# Function to select from options
+select_option() {
+    local prompt="$1"
+    shift
+    local options=("$@")
+    
+    echo "$prompt"
+    for i in "${!options[@]}"; do
+        echo "  $((i+1)). ${options[i]}"
+    done
+    echo -n "Select option [1]: "
+    
+    read -r choice
+    choice=${choice:-1}
+    
+    if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#options[@]}" ]; then
+        echo "${options[$((choice-1))]}"
+    else
+        echo "${options[0]}"
+    fi
+}
+
+# Get hosting provider
+echo "🏛️ Hosting Provider:"
+HOST_PROVIDER=$(select_option "What hosting provider are you using?" "Pantheon" "WP Engine" "Kinsta")
+echo "✓ Selected: $HOST_PROVIDER"
+
+# Get WordPress admin configuration
+echo ""
+echo "👤 WordPress Admin Configuration:"
+echo "--------------------------------"
+prompt_input "WordPress admin username" "admin" WP_ADMIN_USER
+
+# Get password securely
+echo -n "WordPress admin password: "
+read -s WP_ADMIN_PASS
+echo ""
+echo -n "Confirm password: "
+read -s WP_ADMIN_PASS_CONFIRM
+echo ""
+
+if [ "$WP_ADMIN_PASS" != "$WP_ADMIN_PASS_CONFIRM" ]; then
+    echo "⚠️  Passwords don't match. Using default."
+    WP_ADMIN_PASS="admin"
+fi
+
+prompt_input "WordPress admin email" "admin@example.com" WP_ADMIN_EMAIL
+
+# Get hosting-specific configuration
+if [ "$HOST_PROVIDER" = "Pantheon" ]; then
+    echo ""
+    echo "🏛️ Pantheon Configuration:"
+    echo "--------------------------"
+    prompt_input "Pantheon site name" "" PANTHEON_SITE
+    prompt_input "Pantheon environment" "dev" PANTHEON_ENV
+fi
+
+# Get plugin licenses
+echo ""
+echo "🔑 Premium Plugin Licenses (optional):"
+echo "--------------------------------------"
+prompt_input "ACF Pro license key" "" ACF_LICENSE
+prompt_input "Gravity Forms license key" "" GF_LICENSE
+
+# Update configuration file with user input
+echo ""
+echo "💾 Updating configuration..."
+
+# Create backup
+cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
+
+# Update WordPress admin settings
+sed -i.tmp "s/admin_user: \"xxxxxx\"/admin_user: \"$WP_ADMIN_USER\"/" "$CONFIG_FILE"
+sed -i.tmp "s/admin_pass: \"xxxxxx\"/admin_pass: \"$WP_ADMIN_PASS\"/" "$CONFIG_FILE"
+sed -i.tmp "s/admin_email: \"xxxxxx\"/admin_email: \"$WP_ADMIN_EMAIL\"/" "$CONFIG_FILE"
+
+# Update Pantheon settings if provided
+if [ -n "$PANTHEON_SITE" ]; then
+    sed -i.tmp "s/site: \"your-pantheon-site-name\"/site: \"$PANTHEON_SITE\"/" "$CONFIG_FILE"
+    sed -i.tmp "s/env: \"dev\"/env: \"$PANTHEON_ENV\"/" "$CONFIG_FILE"
+fi
+
+# Update license settings if provided
+if [ -n "$ACF_LICENSE" ]; then
+    sed -i.tmp "s/acf_client_user: \"your-acf-license-key\"/acf_client_user: \"$ACF_LICENSE\"/" "$CONFIG_FILE"
+fi
+
+if [ -n "$GF_LICENSE" ]; then
+    sed -i.tmp "s/gf_client_user: \"your-gravity-forms-license-key\"/gf_client_user: \"$GF_LICENSE\"/" "$CONFIG_FILE"
+fi
+
+# Clean up temporary files
+rm -f "$CONFIG_FILE.tmp"
+
+echo ""
+echo -e "🎉 ${green}Configuration complete!${NC}"
+echo ""
+echo "📁 Your settings have been saved to: $CONFIG_FILE"
+echo "📁 Backup created: $CONFIG_FILE.bak"
+echo ""
+echo -e "${yellow}Next steps:${NC}"
+if [ "$HOST_PROVIDER" = "Pantheon" ]; then
+    echo "1. 🔑 Set your Pantheon machine token globally:"
+    echo "   ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token"
+    echo ""
+fi
+echo "2. 🚀 Initialize your development environment:"
+echo "   ddev init"
+echo ""
+echo "3. 🌐 Start developing:"
+echo "   ddev development"
+echo ""
+echo -e "${green}${divider}${NC}"

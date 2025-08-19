@@ -58,6 +58,26 @@ find "$NEW_BLOCK_DIR" -name '*example-block*' | while read -r FILE; do
     mv "$FILE" "$NEW_FILE"
 done
 
+# Remove #ddev-generated signatures from copied files
+find "$NEW_BLOCK_DIR" -type f | while read -r FILE; do
+    case "$FILE" in
+        *.json)
+            # Remove JSON signature line: "tagName": "This file is managed by ddev-kanopi-wp addon",
+            sed -i '/^[[:space:]]*"#ddev-generated":.*,$/d' "$FILE"
+            ;;
+        *.js)
+            # Remove JS signature line: * #ddev-generated - This file is managed by ddev-kanopi-wp addon
+            sed -i '/^[[:space:]]*\*[[:space:]]*#ddev-generated/d' "$FILE"
+            # Remove any empty comment line that follows
+            sed -i '/^[[:space:]]*\*[[:space:]]*$/d' "$FILE"
+            ;;
+        *.scss)
+            # Remove SCSS signature line: /* #ddev-generated - This file is managed by ddev-kanopi-wp addon */
+            sed -i '/^\/\*[[:space:]]*#ddev-generated.*\*\/$/d' "$FILE"
+            ;;
+    esac
+done
+
 # Replace contents of files with the new block name and formatted block title
 find "$NEW_BLOCK_DIR" -type f | while read -r FILE; do
     sed -i "s/example-block/${BLOCK_NAME}/g" "$FILE"

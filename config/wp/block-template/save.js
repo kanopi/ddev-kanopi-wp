@@ -1,4 +1,6 @@
 /**
+ * #ddev-generated - This file is managed by ddev-kanopi-wp addon
+ * 
  * React hook that is used to mark the block wrapper element.
  * It provides all the necessary props like the class name.
  *
