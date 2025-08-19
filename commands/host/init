@@ -102,6 +102,8 @@ if [ ! -f "web/index.php" ] || [ ! -f "web/wp-load.php" ]; then
   if [ ! -f "web/wp-config.php" ] && [ ! -f "web/wp-config-ddev.php" ]; then
     ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=/var/www/html/web --allow-root"
   fi
+  # Install WordPress with basic setup
+  ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=/var/www/html/web --allow-root" 2>/dev/null || echo "WordPress installation completed or already exists"
 fi
 
 # Get the database from Pantheon (if configured)
@@ -120,11 +122,14 @@ THEME_PATH=$(yq eval '.theme.relative_path // "wp-content/themes/custom/struts"'
 if [ -f "web/${THEME_PATH}/package.json" ]; then
   echo -e "\n${construction} ${yellow} Installing theme dependencies...${NC} ${construction}\n"
   echo -e "${green}${divider}${NC}"
-  ddev npm install
+  ddev exec "cd /var/www/html/web/${THEME_PATH} && npm install"
   
   echo -e "\n${gear} ${yellow} Building theme assets...${NC} ${gear}"
   echo -e "${green}${divider}${NC}"
-  ddev production
+  ddev exec "cd /var/www/html/web/${THEME_PATH} && npm run build"
+else
+  echo -e "\n${construction} ${yellow} Theme directory not found: ${THEME_PATH}${NC}"
+  echo -e "Please ensure your theme is located at the correct path or update theme.relative_path in .ddev/config.kanopi.yaml"
 fi
 
 # Activate theme and restore admin user
