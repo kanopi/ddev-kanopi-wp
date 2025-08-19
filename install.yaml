@@ -35,10 +35,9 @@ post_install_actions:
 - |
   echo "✅ Kanopi WordPress DDEV add-on installed successfully!"
   echo ""
-  mkdir -p .ddev
-  cp config.kanopi.yaml .ddev/config.kanopi.yaml
-  cp config.kanopi.local.yaml.example .ddev/config.kanopi.local.yaml
-  echo ".ddev/config.kanopi.local.yaml" >> .gitignore 2>/dev/null || true
+  cp config.kanopi.yaml ../config.kanopi.yaml
+  cp config.kanopi.local.yaml.example ../config.kanopi.local.yaml
+  echo ".ddev/config.kanopi.local.yaml" >> ../../.gitignore 2>/dev/null || true
   echo "📋 Next steps:"
   echo ""
   echo "1. 🔧 Configure your settings:"
@@ -55,10 +54,10 @@ post_install_actions:
   echo "🆘 Issues: https://github.com/kanopi/ddev-kanopi-wp/issues"
 
 removal_actions:
-- rm -f .ddev/config.kanopi.yaml
-- rm -f .ddev/config.kanopi.local.yaml
+- rm -f ../config.kanopi.yaml
+- rm -f ../config.kanopi.local.yaml
 - |
-  if [ -f .gitignore ]; then
-    grep -v "config.kanopi.local.yaml" .gitignore > .gitignore.tmp && mv .gitignore.tmp .gitignore || rm -f .gitignore.tmp
+  if [ -f ../../.gitignore ]; then
+    grep -v "config.kanopi.local.yaml" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
   fi
 - echo "ddev-kanopi-wp add-on removed successfully"
