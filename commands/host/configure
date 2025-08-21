@@ -51,11 +51,11 @@ select_option() {
     shift
     local options=("$@")
     
-    echo "$prompt" >&2
+    printf "%s\n" "$prompt" >&2
     for i in "${!options[@]}"; do
-        echo "  $((i+1)). ${options[i]}" >&2
+        printf "  %d. %s\n" "$((i+1))" "${options[i]}" >&2
     done
-    echo -n "Select option [1]: " >&2
+    printf "Select option [1]: " >&2
     
     read -r choice
     choice=${choice:-1}
@@ -98,8 +98,8 @@ if [ "$HOST_PROVIDER" = "Pantheon" ]; then
     echo ""
     echo "🏛️ Pantheon Configuration:"
     echo "--------------------------"
-    prompt_input "Pantheon site name" "" PANTHEON_SITE
-    prompt_input "Pantheon environment" "dev" PANTHEON_ENV
+    prompt_input "What is your site's machine name" "" PANTHEON_SITE
+    prompt_input "What is your default environment" "dev" PANTHEON_ENV
 fi
 
 # Get plugin licenses
@@ -117,14 +117,14 @@ echo "💾 Updating configuration..."
 cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
 
 # Update WordPress admin settings
-sed -i.tmp "s/admin_user: \"xxxxxx\"/admin_user: \"$WP_ADMIN_USER\"/" "$CONFIG_FILE"
-sed -i.tmp "s/admin_pass: \"xxxxxx\"/admin_pass: \"$WP_ADMIN_PASS\"/" "$CONFIG_FILE"
-sed -i.tmp "s/admin_email: \"xxxxxx\"/admin_email: \"$WP_ADMIN_EMAIL\"/" "$CONFIG_FILE"
+sed -i.tmp "s/admin_user: \"[^\"]*\"/admin_user: \"$WP_ADMIN_USER\"/" "$CONFIG_FILE"
+sed -i.tmp "s/admin_pass: \"[^\"]*\"/admin_pass: \"$WP_ADMIN_PASS\"/" "$CONFIG_FILE"
+sed -i.tmp "s/admin_email: \"[^\"]*\"/admin_email: \"$WP_ADMIN_EMAIL\"/" "$CONFIG_FILE"
 
 # Update Pantheon settings if provided
 if [ -n "$PANTHEON_SITE" ]; then
-    sed -i.tmp "s/site: \"your-pantheon-site-name\"/site: \"$PANTHEON_SITE\"/" "$CONFIG_FILE"
-    sed -i.tmp "s/env: \"dev\"/env: \"$PANTHEON_ENV\"/" "$CONFIG_FILE"
+    sed -i.tmp "/^pantheon:/,/^[a-zA-Z]/ s/site: \"[^\"]*\"/site: \"$PANTHEON_SITE\"/" "$CONFIG_FILE"
+    sed -i.tmp "/^pantheon:/,/^[a-zA-Z]/ s/env: \"[^\"]*\"/env: \"$PANTHEON_ENV\"/" "$CONFIG_FILE"
 fi
 
 # Update license settings if provided
