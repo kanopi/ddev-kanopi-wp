@@ -51,11 +51,11 @@ select_option() {
     shift
     local options=("$@")
     
-    echo "$prompt"
+    echo "$prompt" >&2
     for i in "${!options[@]}"; do
-        echo "  $((i+1)). ${options[i]}"
+        echo "  $((i+1)). ${options[i]}" >&2
     done
-    echo -n "Select option [1]: "
+    echo -n "Select option [1]: " >&2
     
     read -r choice
     choice=${choice:-1}
