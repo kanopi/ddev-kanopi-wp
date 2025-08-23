@@ -38,6 +38,31 @@ post_install_actions:
   cp config.kanopi.yaml ../config.kanopi.yaml
   cp config.kanopi.local.yaml.example ../config.kanopi.local.yaml
   echo ".ddev/config.kanopi.local.yaml" >> ../../.gitignore 2>/dev/null || true
+  
+  # Add ddev-managed settings to wp-config.php
+  if [ -f "../../web/wp-config.php" ]; then
+    # Check if the ddev settings snippet is already present
+    if ! grep -q "wp-config-ddev.php" "../../web/wp-config.php"; then
+      # Create a temporary file with the new content
+      {
+        head -n 1 "../../web/wp-config.php"  # <?php line
+        echo ""
+        echo "// Added for ddev-managed settings in wp-config-ddev.php."
+        echo "\$ddev_settings = dirname(__FILE__) . '/wp-config-ddev.php';"
+        echo "if (is_readable(\$ddev_settings) && !defined('DB_USER')) {"
+        echo "  require_once(\$ddev_settings);"
+        echo "}"
+        echo ""
+        tail -n +2 "../../web/wp-config.php"  # Rest of the file
+      } > "../../web/wp-config.php.tmp"
+      mv "../../web/wp-config.php.tmp" "../../web/wp-config.php"
+      echo "📝 Added ddev-managed settings to wp-config.php"
+    else
+      echo "📝 ddev-managed settings already present in wp-config.php"
+    fi
+  else
+    echo "⚠️  wp-config.php not found at web/wp-config.php"
+  fi
   echo "📋 Next steps:"
   echo ""
   echo "1. 🔧 Configure your settings:"
