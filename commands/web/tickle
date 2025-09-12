@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+## Description: Continuously wake up a hosting environment to prevent it from sleeping.
+## Usage: tickle [site.env]
+## Example: ddev tickle my-site.dev
+
+# Abort if anything fails
+set -e
+
+# Load configuration from YAML
+CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
+if [ -f "$CONFIG_FILE" ]; then
+    HOSTING_PROVIDER=$(yq eval '.hosting.provider // "pantheon"' "$CONFIG_FILE" 2>/dev/null || echo "pantheon")
+    DEFAULT_SITE=$(yq eval '.pantheon.site // ""' "$CONFIG_FILE" 2>/dev/null || echo "")
+    DEFAULT_ENV=$(yq eval '.pantheon.env // "dev"' "$CONFIG_FILE" 2>/dev/null || echo "dev")
+else
+    HOSTING_PROVIDER="pantheon"
+    DEFAULT_SITE=""
+    DEFAULT_ENV="dev"
+fi
+
+# Use provided argument or default site.env
+if [ -n "$1" ]; then
+    SITE_ENV="$1"
+else
+    if [ -n "$DEFAULT_SITE" ]; then
+        SITE_ENV="${DEFAULT_SITE}.${DEFAULT_ENV}"
+    else
+        echo -e " ❌  Error: No site specified and no default configured."
+        echo -e "     Usage: ddev tickle <site.env>"
+        echo -e "     Or configure default site in .ddev/config.kanopi.yaml"
+        exit 1
+    fi
+fi
+
+if [ "$HOSTING_PROVIDER" = "pantheon" ]; then
+    echo -e "\n ✅  Logging into Terminus. \n"
+    terminus auth:login
+
+    echo -e "\n ⏰  Starting Pantheon wake-up loop for ${SITE_ENV}.\n"
+
+    # Infinite loop to wake the Pantheon environment every 5 minutes (300 seconds).
+    while true
+    do
+        TIMESTAMP=$(date)
+        echo -e "\n 📅  ${TIMESTAMP} - Waking up ${SITE_ENV}."
+        terminus env:wake "${SITE_ENV}"
+        echo -e "\n ⏳  Sleeping for 5 minutes..."
+        sleep 300
+    done
+else
+    echo -e " ❌  Tickle command currently only supports Pantheon environments."
+    echo -e "     WPEngine and Kinsta environments don't require wake-up calls."
+    exit 1
+fi

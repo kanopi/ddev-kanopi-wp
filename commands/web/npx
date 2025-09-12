@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+## Description: Runs NPX commands on the theme.
+## Usage: npx
+## Example: ddev npx
+
+# Abort if anything fails
+set -e
+
+#-------------------------- Settings --------------------------------
+
+# Load configuration from YAML
+CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
+if [ -f "$CONFIG_FILE" ]; then
+    THEME_PATH=$(yq eval '.theme.relative_path // "wp-content/themes/custom/struts"' "$CONFIG_FILE" 2>/dev/null || echo "wp-content/themes/custom/struts")
+else
+    THEME_PATH="wp-content/themes/custom/struts"
+fi
+
+# Define full theme path
+FULL_THEME_PATH="/var/www/html/web/${THEME_PATH}"
+
+#-------------------------- Execution -------------------------------------
+
+# Check if theme directory exists
+if [ ! -d "${FULL_THEME_PATH}" ]; then
+    echo "Theme directory not found: ${FULL_THEME_PATH}"
+    echo "Please ensure your theme is located at the correct path or update theme.relative_path in .ddev/config.kanopi.yaml"
+    exit 1
+fi
+
+cd ${FULL_THEME_PATH}
+
+npx "$@"

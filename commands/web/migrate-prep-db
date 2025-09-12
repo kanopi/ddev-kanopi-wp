@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+## Description: Create and configure the migration database inside the DDEV web container
+## Usage: migrate-prep-db
+## Example: ddev migrate-prep-db
+
+# Abort if anything fails
+set -e
+
+#-------------------------- Helper functions --------------------------------
+
+green='\033[0;32m'
+yellow='\033[1;33m'
+NC='\033[0m'
+
+divider='===================================================\n'
+database_icon='\xF0\x9F\x93\x80'
+down_arrow='\xE2\xAC\x86'
+
+#-------------------------- Settings --------------------------------
+
+# Migration database name
+MIGRATE_DB_NAME="migration"
+
+# Load configuration from YAML
+CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
+if [ -f "$CONFIG_FILE" ]; then
+    MIGRATE_DB_SOURCE=$(yq eval '.migration.source_site // ""' "$CONFIG_FILE" 2>/dev/null || echo "")
+    MIGRATE_DB_ENV=$(yq eval '.migration.source_env // "live"' "$CONFIG_FILE" 2>/dev/null || echo "live")
+    HOSTING_PROVIDER=$(yq eval '.hosting.provider // "pantheon"' "$CONFIG_FILE" 2>/dev/null || echo "pantheon")
+else
+    MIGRATE_DB_SOURCE=""
+    MIGRATE_DB_ENV="live"
+    HOSTING_PROVIDER="pantheon"
+fi
+
+#-------------------------- Execution -------------------------------------
+
+# Ensure the script is running inside the DDEV web container
+if [ -z "$DDEV_HOSTNAME" ]; then
+    echo -e "\n ❌ ${yellow} This command must be run inside the DDEV web container. ${NC}"
+    echo -e "Use: ${green}ddev migrate-prep-db${NC} instead of running it manually."
+    exit 1
+fi
+
+# Step 1: Create the migration database
+echo -e "\n ${database_icon} ${yellow} Creating migration database: ${MIGRATE_DB_NAME} ${NC} ${database_icon}"
+echo -e "${green}${divider}${NC}"
+
+mysql -e "CREATE DATABASE IF NOT EXISTS ${MIGRATE_DB_NAME};"
+echo -e "\n ✅  Migration database '${MIGRATE_DB_NAME}' is ready.\n"
+
+# Step 2: Import the database dump from a remote source
+if [ -z "${MIGRATE_DB_SOURCE}" ]; then
+    echo -e "\n ❌ ${yellow} MIGRATE_DB_SOURCE not configured in .ddev/config.kanopi.yaml ${NC}"
+    echo -e "Please set migration.source_site in your configuration file"
+    exit 1
+fi
+
+echo -e "\n ${down_arrow} ${yellow} Pulling database from ${MIGRATE_DB_SOURCE} (${MIGRATE_DB_ENV}). ${NC} ${down_arrow}"
+echo -e "${green}${divider}${NC}"
+
+if [ "$HOSTING_PROVIDER" = "pantheon" ]; then
+    # Use Terminus for Pantheon
+    SITE_ENV="${MIGRATE_DB_SOURCE}.${MIGRATE_DB_ENV}"
+    
+    # Get database backup
+    BACKUP_URL=$(terminus backup:get ${SITE_ENV} --element=database --field=url)
+    
+    # Download and import into migration database
+    curl -s -o /tmp/migration.sql.gz "$BACKUP_URL"
+    gunzip /tmp/migration.sql.gz
+    mysql "${MIGRATE_DB_NAME}" < /tmp/migration.sql
+    rm -f /tmp/migration.sql
+    
+elif [ "$HOSTING_PROVIDER" = "wpengine" ]; then
+    echo -e "WPEngine migration support not yet implemented"
+    exit 1
+elif [ "$HOSTING_PROVIDER" = "kinsta" ]; then
+    echo -e "Kinsta migration support not yet implemented"
+    exit 1
+else
+    echo -e "\n ❌ ${yellow} Unsupported hosting provider: ${HOSTING_PROVIDER} ${NC}"
+    exit 1
+fi
+
+echo -e "\n ✅ Migration database '${MIGRATE_DB_NAME}' is now populated.\n"
+echo -e "${green}${divider}${NC}"
