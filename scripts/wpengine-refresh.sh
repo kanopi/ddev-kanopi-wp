@@ -16,14 +16,12 @@ FORCE_REFRESH=${2:-false}
 echo -e "${green}${divider}${NC}"
 echo -e "${green}Refreshing database from WPEngine ${ENVIRONMENT} environment${NC}"
 if [[ "$FORCE_REFRESH" == "true" ]]; then
-  echo -e "${yellow}Force refresh enabled - will create new backup${NC}"
+  echo -e "${yellow}Force refresh enabled - will download fresh backup${NC}"
 fi
 echo -e "${green}${divider}${NC}"
 
 # Get WPEngine configuration from environment variables
 WPENGINE_SITE=$(printenv HOSTING_SITE 2>/dev/null)
-WPENGINE_USER=$(printenv WPENGINE_USER 2>/dev/null)
-WPENGINE_SSH_KEY=$(printenv WPENGINE_SSH_KEY 2>/dev/null)
 
 # Check for required environment variables
 if [ -z "${WPENGINE_SITE:-}" ]; then
@@ -31,40 +29,115 @@ if [ -z "${WPENGINE_SITE:-}" ]; then
   exit 1
 fi
 
-if [ -z "${WPENGINE_USER:-}" ]; then
-  echo -e "${red}Error: WPENGINE_USER environment variable not set${NC}"
-  echo -e "${red}Please set this in ~/.ddev/global_config.yaml or your environment${NC}"
-  echo -e "${red}Example in ~/.ddev/global_config.yaml:${NC}"
-  echo -e "${red}web_environment:${NC}"
-  echo -e "${red}  - WPENGINE_USER=your_wpengine_user${NC}"
-  exit 1
-fi
+# Use environment parameter or fall back to HOSTING_SITE
+WPENGINE_ENV=${ENVIRONMENT:-$WPENGINE_SITE}
+WPENGINE_SSH="$WPENGINE_ENV@$WPENGINE_ENV.ssh.wpengine.net"
+WPENGINE_PATH="/home/wpe-user/sites/$WPENGINE_ENV"
+WPENGINE_BACKUP_PATH="$WPENGINE_PATH/wp-content/mysql.sql"
+DB_DUMP='/tmp/wpengine_db.sql'
 
 echo -e "${green}Using WPEngine site: ${WPENGINE_SITE}${NC}"
-echo -e "${green}Environment: ${ENVIRONMENT}${NC}"
+echo -e "${green}Environment: ${WPENGINE_ENV}${NC}"
+echo -e "${green}SSH connection: ${WPENGINE_SSH}${NC}"
 
-# WPEngine uses SSH access for database operations
-# Note: This is a basic implementation that would need to be enhanced based on
-# WPEngine's specific backup and database access methods
+# Change to docroot
+DOCROOT="${DOCROOT:-web}"
+cd "/var/www/html/${DOCROOT}"
 
-echo -e "${yellow}Note: WPEngine database refresh implementation requires manual database export/import${NC}"
-echo -e "${yellow}Please follow these steps:${NC}"
-echo -e "${yellow}1. Log into your WPEngine dashboard${NC}"
-echo -e "${yellow}2. Navigate to your ${WPENGINE_SITE} site${NC}"
-echo -e "${yellow}3. Go to Backup Points and create/download a database backup${NC}"
-echo -e "${yellow}4. Import the database manually using: wp db import backup.sql --allow-root${NC}"
+# Check if database dump exists and is recent (12 hours = 720 minutes)
+DOWNLOAD_BACKUP=false
 
-# Placeholder for future WPEngine API integration
-echo -e "${red}WPEngine API integration not yet implemented.${NC}"
-echo -e "${red}Please use manual database import process described above.${NC}"
+if [[ "$FORCE_REFRESH" == "true" ]]; then
+    echo -e "${yellow}Force flag detected. Downloading fresh backup regardless of age.${NC}"
+    DOWNLOAD_BACKUP=true
+elif [ ! -f "$DB_DUMP" ]; then
+    echo -e "${yellow}Database backup does not exist locally.${NC}"
+    DOWNLOAD_BACKUP=true
+elif [ ! -z $(find $DB_DUMP -mmin +720) ]; then
+    echo -e "${yellow}Database backup is older than 12 hours.${NC}"
+    DOWNLOAD_BACKUP=true
+else
+    BACKUP_AGE_MINUTES=$(( ($(date +%s) - $(stat -c %Y "$DB_DUMP")) / 60 ))
+    BACKUP_AGE_HOURS=$(( BACKUP_AGE_MINUTES / 60 ))
+    echo -e "${green}Recent backup found (${BACKUP_AGE_HOURS} hours old). Using existing backup.${NC}"
+fi
 
-# Basic WordPress post-import tasks that would still apply
-echo -e "${yellow}After importing database manually, run these commands:${NC}"
-echo -e "${yellow}ddev wp search-replace 'old-domain.wpengine.com' '${DDEV_SITENAME}.ddev.site' --all-tables --allow-root${NC}"
-echo -e "${yellow}ddev wp rewrite flush --allow-root${NC}"
-echo -e "${yellow}ddev activate-theme${NC}"
-echo -e "${yellow}ddev restore-admin-user${NC}"
+if [ "$DOWNLOAD_BACKUP" = true ]; then
+    echo -e "${yellow}Downloading nightly backup from WPEngine...${NC}"
+    echo -e "${yellow}This may take some time. Perhaps make a refreshing beverage.${NC}"
+    
+    # Test SSH connectivity first
+    echo -e "${yellow}Testing SSH connectivity to WPEngine...${NC}"
+    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$WPENGINE_SSH" "echo 'SSH connection successful'" 2>/dev/null; then
+        echo -e "${red}Error: Cannot connect to WPEngine via SSH${NC}"
+        echo -e "${red}Please ensure:${NC}"
+        echo -e "${red}1. Your SSH key is properly configured with WPEngine${NC}"
+        echo -e "${red}2. SSH agent is running: ddev auth ssh${NC}"
+        echo -e "${red}3. Your key is added to your WPEngine account${NC}"
+        exit 1
+    fi
+    
+    echo -e "${green}SSH connection successful. Downloading backup...${NC}"
+    if rsync -avzh --progress "$WPENGINE_SSH:$WPENGINE_BACKUP_PATH" "$DB_DUMP"; then
+        # Update timestamp to mark as fresh
+        touch -d "1 second ago" "$DB_DUMP"
+        echo -e "${green}Backup downloaded successfully!${NC}"
+    else
+        echo -e "${red}Failed to download backup from WPEngine${NC}"
+        exit 1
+    fi
+fi
+
+echo -e "${yellow}Importing database...${NC}"
+
+# Reset the database
+wp db reset --yes --allow-root
+
+# Import the database
+if mysql -h db -u db -pdb db < "$DB_DUMP"; then
+    echo -e "${green}Database imported successfully!${NC}"
+else
+    echo -e "${red}Failed to import database${NC}"
+    exit 1
+fi
+
+# Update domains for DDEV
+echo -e "${yellow}Updating domains for DDEV environment...${NC}"
+LOCAL_DOMAIN="${DDEV_SITENAME}.ddev.site"
+BASIC_DDEV_URL="https://$LOCAL_DOMAIN"
+
+# Update WordPress multisite domains if they exist
+mysql -h db -u db -pdb db -e "UPDATE wp_blogs SET domain = '$LOCAL_DOMAIN' WHERE blog_id = 1;" 2>/dev/null || true
+mysql -h db -u db -pdb db -e "UPDATE wp_site SET domain = '$LOCAL_DOMAIN' WHERE id = 1;" 2>/dev/null || true
+
+# Get the current home URL and perform search-replace
+CURRENT_HOME=$(wp option get home --allow-root 2>/dev/null || echo "")
+
+if [[ -n "$CURRENT_HOME" ]]; then
+    echo -e "${yellow}Running search-replace: ${CURRENT_HOME} -> ${BASIC_DDEV_URL}${NC}"
+    wp search-replace "$CURRENT_HOME" "$BASIC_DDEV_URL" --all-tables --allow-root
+else
+    echo -e "${yellow}Could not detect current home URL. Skipping search-replace.${NC}"
+fi
+
+# Standard WordPress cleanup
+echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
+wp cache flush --allow-root
+wp rewrite flush --allow-root
+
+# Deactivate problematic plugins
+echo -e "${yellow}Deactivating problematic plugins...${NC}"
+wp plugin deactivate wp-health --allow-root 2>/dev/null || true
+
+# Activate theme
+echo -e "${yellow}Activating theme...${NC}"
+ddev activate-theme 2>/dev/null || echo "Theme activation command not available"
+
+# Restore admin user
+echo -e "${yellow}Restoring admin user...${NC}"
+ddev restore-admin-user 2>/dev/null || echo "Admin user restoration command not available"
 
 echo -e "${green}${divider}${NC}"
-echo -e "${yellow}WPEngine refresh process initiated - manual steps required${NC}"
+echo -e "${green}WPEngine database refresh complete!${NC}"
+echo -e "${green}Site URL: ${BASIC_DDEV_URL}${NC}"
 echo -e "${green}${divider}${NC}"
