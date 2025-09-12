@@ -6,13 +6,8 @@
 
 #ddev-generated
 
-# Load configuration from YAML
-CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
-if [ -f "$CONFIG_FILE" ]; then
-    WP_THEME_SLUG=$(yq eval '.theme.slug // "struts"' "$CONFIG_FILE" 2>/dev/null || echo "struts")
-else
-    WP_THEME_SLUG="struts"
-fi
+# Get theme configuration from environment variables
+WP_THEME_SLUG=$(printenv THEMENAME 2>/dev/null || echo "struts")
 
 echo "Activating theme: $WP_THEME_SLUG"
 

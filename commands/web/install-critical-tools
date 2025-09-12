@@ -27,13 +27,8 @@ critical_command='ddev critical'
 
 #-------------------------- Settings -------------------------------------------
 
-# Load configuration from YAML
-CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
-if [ -f "$CONFIG_FILE" ]; then
-    THEME_PATH=$(yq eval '.theme.relative_path // "wp-content/themes/custom/struts"' "$CONFIG_FILE" 2>/dev/null || echo "wp-content/themes/custom/struts")
-else
-    THEME_PATH="wp-content/themes/custom/struts"
-fi
+# Get theme configuration from environment variables
+THEME_PATH=$(printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
 
 # Define full theme path
 FULL_THEME_PATH="/var/www/html/web/${THEME_PATH}"
@@ -54,7 +49,7 @@ sudo apt-get install -yq --no-install-recommends chromium
 # Check if theme directory exists
 if [ ! -d "${FULL_THEME_PATH}" ]; then
     echo -e "\n${yellow}Theme directory not found: ${FULL_THEME_PATH}${NC}"
-    echo -e "Please ensure your theme is located at the correct path or update theme.relative_path in .ddev/config.kanopi.yaml"
+    echo -e "Please ensure your theme is located at the correct path or update THEME environment variable in .ddev/config.yaml"
     exit 1
 fi
 

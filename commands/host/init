@@ -115,19 +115,16 @@ if [ -f "web/index.php" ]; then
   fi
 fi
 
-# Get the database from Pantheon (if configured)
-CONFIG_FILE=".ddev/config.kanopi.yaml"
-if [ -f "$CONFIG_FILE" ]; then
-  PANTHEON_SITE=$(yq eval '.pantheon.site // ""' "$CONFIG_FILE" 2>/dev/null || echo "")
-  if [ -n "$PANTHEON_SITE" ] && [ "$PANTHEON_SITE" != "your-pantheon-site-name" ]; then
-    echo -e "\n${lightning} ${yellow} Refreshing database from Pantheon...${NC} ${lightning}"
-    echo -e "${green}${divider}${NC}"
-    ddev refresh
-  fi
+# Get the database from hosting provider (if configured)
+HOSTING_SITE_VALUE=$(ddev exec printenv HOSTING_SITE 2>/dev/null || echo "")
+if [ -n "$HOSTING_SITE_VALUE" ]; then
+  echo -e "\n${lightning} ${yellow} Refreshing database from hosting provider...${NC} ${lightning}"
+  echo -e "${green}${divider}${NC}"
+  ddev refresh
 fi
 
 # Install theme dependencies and build assets
-THEME_PATH=$(yq eval '.theme.relative_path // "wp-content/themes/custom/struts"' "$CONFIG_FILE" 2>/dev/null || echo "wp-content/themes/custom/struts")
+THEME_PATH=$(ddev exec printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
 if [ -f "web/${THEME_PATH}/package.json" ]; then
   echo -e "\n${construction} ${yellow} Installing theme dependencies...${NC} ${construction}\n"
   echo -e "${green}${divider}${NC}"
@@ -138,7 +135,7 @@ if [ -f "web/${THEME_PATH}/package.json" ]; then
   ddev exec "cd /var/www/html/web/${THEME_PATH} && npm run build"
 else
   echo -e "\n${construction} ${yellow} Theme directory not found: ${THEME_PATH}${NC}"
-  echo -e "Please ensure your theme is located at the correct path or update theme.relative_path in .ddev/config.kanopi.yaml"
+  echo -e "Please ensure your theme is located at the correct path or update THEME environment variable in .ddev/config.yaml"
 fi
 
 # Activate theme and restore admin user
@@ -146,8 +143,8 @@ echo -e "\n${lock} ${yellow} Configuring WordPress...${NC} ${lock}"
 echo -e "${green}${divider}${NC}"
 
 # Activate the custom theme (if configured and WordPress is available)
-if [ -f "$CONFIG_FILE" ] && [ -f "web/index.php" ]; then
-  THEME_SLUG=$(yq eval '.theme.slug // "struts"' "$CONFIG_FILE" 2>/dev/null || echo "struts")
+if [ -f "web/index.php" ]; then
+  THEME_SLUG=$(ddev exec printenv THEMENAME 2>/dev/null || echo "struts")
   ddev exec "wp theme activate ${THEME_SLUG} --allow-root" 2>/dev/null || echo "Theme activation skipped (theme not found)"
 else
   echo "Theme activation skipped (WordPress not installed)"
