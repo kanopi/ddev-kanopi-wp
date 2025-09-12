@@ -2,6 +2,10 @@
 # Kanopi WordPress DDEV Configuration
 # This file will be copied to .ddev/config.kanopi.yaml during installation
 
+# NOTE: Hosting provider settings (HOSTING_PROVIDER, HOSTING_SITE, etc.) 
+# are now configured via environment variables in .ddev/config.yaml
+# See install.yaml for hosting provider configuration
+
 # WordPress Admin Configuration
 wordpress:
   admin_user: "xxxxxx"
@@ -13,13 +17,6 @@ theme:
   slug: "struts"
   relative_path: "wp-content/themes/custom/struts"
 
-# Pantheon Configuration
-# IMPORTANT: Set the Pantheon machine token BEFORE running ddev init:
-# ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token
-pantheon:
-  site: "your-pantheon-site-name"
-  env: "dev"
-
 # Premium Plugin Licenses
 licenses:
   acf_client_user: "your-acf-license-key"
@@ -29,8 +26,7 @@ licenses:
 development:
   xdebug_enabled: false
 
-# Image Proxy Settings (for missing uploads)
-# These will be set automatically based on pantheon.site and pantheon.env
-# But can be overridden if needed
-proxy:
-  # base_url: "https://dev-your-site.pantheonsite.io"
+# Migration Settings (optional)
+migration:
+  # source_site: "your-source-site-name"
+  # source_env: "live"
