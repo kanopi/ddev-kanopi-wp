@@ -20,20 +20,13 @@ if [[ "$FORCE_REFRESH" == "true" ]]; then
 fi
 echo -e "${green}${divider}${NC}"
 
-# Load configuration from YAML
-CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
-if [ -f "$CONFIG_FILE" ]; then
-    PANTHEON_SITE=$(yq eval '.pantheon.site // ""' "$CONFIG_FILE" 2>/dev/null)
-else
-    PANTHEON_SITE=""
-fi
-
-# Get Pantheon token from global DDEV environment
+# Get configuration from environment variables
+PANTHEON_SITE=$(printenv HOSTING_SITE 2>/dev/null)
 PANTHEON_TOKEN="${TERMINUS_MACHINE_TOKEN:-}"
 
 # Check required configuration
-if [ -z "$PANTHEON_SITE" ] || [ "$PANTHEON_SITE" = "your-pantheon-site-name" ]; then
-    echo -e "${red}PANTHEON_SITE is not configured. Please edit .ddev/config.kanopi.yaml${NC}"
+if [ -z "$PANTHEON_SITE" ]; then
+    echo -e "${red}HOSTING_SITE environment variable not set. Check .ddev/config.yaml web_environment section.${NC}"
     exit 1
 fi
 

@@ -7,17 +7,10 @@
 # Abort if anything fails
 set -e
 
-# Load configuration from YAML
-CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
-if [ -f "$CONFIG_FILE" ]; then
-    HOSTING_PROVIDER=$(yq eval '.hosting.provider // "pantheon"' "$CONFIG_FILE" 2>/dev/null || echo "pantheon")
-    DEFAULT_SITE=$(yq eval '.pantheon.site // ""' "$CONFIG_FILE" 2>/dev/null || echo "")
-    DEFAULT_ENV=$(yq eval '.pantheon.env // "dev"' "$CONFIG_FILE" 2>/dev/null || echo "dev")
-else
-    HOSTING_PROVIDER="pantheon"
-    DEFAULT_SITE=""
-    DEFAULT_ENV="dev"
-fi
+# Get configuration from environment variables
+HOSTING_PROVIDER="${HOSTING_PROVIDER:-pantheon}"
+DEFAULT_SITE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
+DEFAULT_ENV=$(printenv HOSTING_ENV 2>/dev/null || echo "dev")
 
 # Use provided argument or default site.env
 if [ -n "$1" ]; then
@@ -28,7 +21,7 @@ else
     else
         echo -e " ❌  Error: No site specified and no default configured."
         echo -e "     Usage: ddev tickle <site.env>"
-        echo -e "     Or configure default site in .ddev/config.kanopi.yaml"
+        echo -e "     Or configure HOSTING_SITE environment variable in .ddev/config.yaml"
         exit 1
     fi
 fi

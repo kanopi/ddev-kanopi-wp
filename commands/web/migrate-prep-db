@@ -22,17 +22,10 @@ down_arrow='\xE2\xAC\x86'
 # Migration database name
 MIGRATE_DB_NAME="migration"
 
-# Load configuration from YAML
-CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
-if [ -f "$CONFIG_FILE" ]; then
-    MIGRATE_DB_SOURCE=$(yq eval '.migration.source_site // ""' "$CONFIG_FILE" 2>/dev/null || echo "")
-    MIGRATE_DB_ENV=$(yq eval '.migration.source_env // "live"' "$CONFIG_FILE" 2>/dev/null || echo "live")
-    HOSTING_PROVIDER=$(yq eval '.hosting.provider // "pantheon"' "$CONFIG_FILE" 2>/dev/null || echo "pantheon")
-else
-    MIGRATE_DB_SOURCE=""
-    MIGRATE_DB_ENV="live"
-    HOSTING_PROVIDER="pantheon"
-fi
+# Get configuration from environment variables
+MIGRATE_DB_SOURCE=$(printenv MIGRATE_DB_SOURCE 2>/dev/null || echo "")
+MIGRATE_DB_ENV=$(printenv MIGRATE_DB_ENV 2>/dev/null || echo "live")
+HOSTING_PROVIDER="${HOSTING_PROVIDER:-pantheon}"
 
 #-------------------------- Execution -------------------------------------
 
@@ -52,8 +45,8 @@ echo -e "\n ✅  Migration database '${MIGRATE_DB_NAME}' is ready.\n"
 
 # Step 2: Import the database dump from a remote source
 if [ -z "${MIGRATE_DB_SOURCE}" ]; then
-    echo -e "\n ❌ ${yellow} MIGRATE_DB_SOURCE not configured in .ddev/config.kanopi.yaml ${NC}"
-    echo -e "Please set migration.source_site in your configuration file"
+    echo -e "\n ❌ ${yellow} MIGRATE_DB_SOURCE environment variable not set ${NC}"
+    echo -e "Please set MIGRATE_DB_SOURCE in .ddev/config.yaml web_environment section"
     exit 1
 fi
 
