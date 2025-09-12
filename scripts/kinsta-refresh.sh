@@ -16,13 +16,15 @@ FORCE_REFRESH=${2:-false}
 echo -e "${green}${divider}${NC}"
 echo -e "${green}Refreshing database from Kinsta ${ENVIRONMENT} environment${NC}"
 if [[ "$FORCE_REFRESH" == "true" ]]; then
-  echo -e "${yellow}Force refresh enabled - will create new backup${NC}"
+  echo -e "${yellow}Force refresh enabled - will export fresh database${NC}"
 fi
 echo -e "${green}${divider}${NC}"
 
 # Get Kinsta configuration from environment variables
 KINSTA_SITE=$(printenv HOSTING_SITE 2>/dev/null)
-KINSTA_API_KEY=$(printenv KINSTA_API_KEY 2>/dev/null)
+KINSTA_SSH_HOST=$(printenv KINSTA_SSH_HOST 2>/dev/null)
+KINSTA_SSH_PORT=$(printenv KINSTA_SSH_PORT 2>/dev/null)
+KINSTA_SSH_USER=$(printenv KINSTA_SSH_USER 2>/dev/null)
 
 # Check for required environment variables
 if [ -z "${KINSTA_SITE:-}" ]; then
@@ -30,65 +32,163 @@ if [ -z "${KINSTA_SITE:-}" ]; then
   exit 1
 fi
 
-if [ -z "${KINSTA_API_KEY:-}" ]; then
-  echo -e "${red}Error: KINSTA_API_KEY environment variable not set${NC}"
+if [ -z "${KINSTA_SSH_HOST:-}" ]; then
+  echo -e "${red}Error: KINSTA_SSH_HOST environment variable not set${NC}"
   echo -e "${red}Please set this in ~/.ddev/global_config.yaml or your environment${NC}"
   echo -e "${red}Example in ~/.ddev/global_config.yaml:${NC}"
   echo -e "${red}web_environment:${NC}"
-  echo -e "${red}  - KINSTA_API_KEY=your_kinsta_api_key${NC}"
-  echo -e "${red}You can get your API key from https://my.kinsta.com/api-keys${NC}"
+  echo -e "${red}  - KINSTA_SSH_HOST=your.kinsta.server.ip${NC}"
   exit 1
 fi
+
+if [ -z "${KINSTA_SSH_PORT:-}" ]; then
+  echo -e "${red}Error: KINSTA_SSH_PORT environment variable not set${NC}"
+  echo -e "${red}Please set this in ~/.ddev/global_config.yaml or your environment${NC}"
+  echo -e "${red}Example in ~/.ddev/global_config.yaml:${NC}"
+  echo -e "${red}web_environment:${NC}"
+  echo -e "${red}  - KINSTA_SSH_PORT=60490${NC}"
+  exit 1
+fi
+
+if [ -z "${KINSTA_SSH_USER:-}" ]; then
+  echo -e "${red}Error: KINSTA_SSH_USER environment variable not set${NC}"
+  echo -e "${red}Please set this in ~/.ddev/global_config.yaml or your environment${NC}"
+  echo -e "${red}Example in ~/.ddev/global_config.yaml:${NC}"
+  echo -e "${red}web_environment:${NC}"
+  echo -e "${red}  - KINSTA_SSH_USER=your_kinsta_user${NC}"
+  exit 1
+fi
+
+# Set up SSH connection details
+REMOTE_HOST="${KINSTA_SSH_USER}@${KINSTA_SSH_HOST}"
+REMOTE_PORT="${KINSTA_SSH_PORT}"
+REMOTE_PATH="public"
+DBFILE="/tmp/kinsta_${KINSTA_SITE}.sql"
 
 echo -e "${green}Using Kinsta site: ${KINSTA_SITE}${NC}"
 echo -e "${green}Environment: ${ENVIRONMENT}${NC}"
+echo -e "${green}SSH connection: ${REMOTE_HOST}:${REMOTE_PORT}${NC}"
 
-# Kinsta API integration placeholder
-# Note: Kinsta has an API, but database backup/restore functionality
-# may require specific implementation based on their API documentation
+# Change to docroot
+DOCROOT="${DOCROOT:-web}"
+cd "/var/www/html/${DOCROOT}"
 
-echo -e "${yellow}Kinsta API integration...${NC}"
+# Check if database dump exists and is recent (12 hours = 720 minutes)
+EXPORT_DATABASE=false
 
-# Basic API connectivity check
-echo -e "${yellow}Testing Kinsta API connectivity...${NC}"
-API_RESPONSE=$(curl -s -H "Authorization: Bearer ${KINSTA_API_KEY}" \
-                   -H "Content-Type: application/json" \
-                   "https://api.kinsta.com/v2/sites" || echo "")
-
-if [[ -z "$API_RESPONSE" ]] || [[ "$API_RESPONSE" == *"error"* ]]; then
-  echo -e "${red}Error: Unable to connect to Kinsta API${NC}"
-  echo -e "${red}Please verify your KINSTA_API_KEY is correct${NC}"
-  echo -e "${yellow}Falling back to manual process...${NC}"
-  
-  echo -e "${yellow}Manual database refresh steps for Kinsta:${NC}"
-  echo -e "${yellow}1. Log into your Kinsta dashboard (my.kinsta.com)${NC}"
-  echo -e "${yellow}2. Navigate to your ${KINSTA_SITE} site${NC}"
-  echo -e "${yellow}3. Go to Site Tools -> Database and create a backup${NC}"
-  echo -e "${yellow}4. Download the backup and import using: wp db import backup.sql --allow-root${NC}"
-  
-  # Basic WordPress post-import tasks
-  echo -e "${yellow}After importing database manually, run these commands:${NC}"
-  echo -e "${yellow}ddev wp search-replace 'your-site.kinsta.cloud' '${DDEV_SITENAME}.ddev.site' --all-tables --allow-root${NC}"
-  echo -e "${yellow}ddev wp rewrite flush --allow-root${NC}"
-  echo -e "${yellow}ddev activate-theme${NC}"
-  echo -e "${yellow}ddev restore-admin-user${NC}"
-  
-  exit 1
+if [[ "$FORCE_REFRESH" == "true" ]]; then
+    echo -e "${yellow}Force flag detected. Exporting fresh database regardless of age.${NC}"
+    EXPORT_DATABASE=true
+elif [ ! -f "$DBFILE" ]; then
+    echo -e "${yellow}Database file does not exist locally.${NC}"
+    EXPORT_DATABASE=true
+elif [ ! -z $(find $DBFILE -mmin +720) ]; then
+    echo -e "${yellow}Database file is older than 12 hours.${NC}"
+    EXPORT_DATABASE=true
+else
+    BACKUP_AGE_MINUTES=$(( ($(date +%s) - $(stat -c %Y "$DBFILE")) / 60 ))
+    BACKUP_AGE_HOURS=$(( BACKUP_AGE_MINUTES / 60 ))
+    echo -e "${green}Recent database export found (${BACKUP_AGE_HOURS} hours old). Using existing export.${NC}"
 fi
 
-echo -e "${green}Successfully connected to Kinsta API${NC}"
+if [ "$EXPORT_DATABASE" = true ]; then
+    echo -e "${yellow}You might want to get a snack or a drink. The database for this project takes a bit to export and download.${NC}"
+    
+    echo -e "${yellow}Exporting ${KINSTA_SITE} Database...${NC}"
+    
+    # Clean up any existing files
+    rm -rf ${DBFILE} || true
+    rm -rf ${DBFILE}.gz || true
+    
+    # Test SSH connectivity first
+    echo -e "${yellow}Testing SSH connectivity to Kinsta...${NC}"
+    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -p "${REMOTE_PORT}" "${REMOTE_HOST}" "echo 'SSH connection successful'" 2>/dev/null; then
+        echo -e "${red}Error: Cannot connect to Kinsta via SSH${NC}"
+        echo -e "${red}Please ensure:${NC}"
+        echo -e "${red}1. Your SSH key is properly configured with Kinsta${NC}"
+        echo -e "${red}2. SSH agent is running: ddev auth ssh${NC}"
+        echo -e "${red}3. Your key is added to your Kinsta account${NC}"
+        echo -e "${red}4. SSH connection details are correct${NC}"
+        exit 1
+    fi
+    
+    echo -e "${green}SSH connection successful.${NC}"
+    echo -e "${yellow}Using ssh on the server to access WP-CLI commands...${NC}"
+    echo -e "${yellow}Exporting the remote database...${NC}"
+    
+    # Export database on remote server
+    REMOTE_DBFILE="${KINSTA_SITE}.sql"
+    if ssh -p "${REMOTE_PORT}" "${REMOTE_HOST}" "cd ${REMOTE_PATH}; wp db export ${REMOTE_DBFILE} --allow-root"; then
+        echo -e "${green}Database exported successfully on remote server.${NC}"
+    else
+        echo -e "${red}Failed to export database on remote server${NC}"
+        exit 1
+    fi
+    
+    echo -e "${yellow}Downloading Database...${NC}"
+    if rsync -arv -e "ssh -p ${REMOTE_PORT}" --progress "${REMOTE_HOST}:${REMOTE_PATH}/${REMOTE_DBFILE}" "${DBFILE}"; then
+        echo -e "${green}Database downloaded successfully!${NC}"
+    else
+        echo -e "${red}Failed to download database${NC}"
+        exit 1
+    fi
+    
+    echo -e "${yellow}Database downloaded. Removing remote db file...${NC}"
+    ssh -p "${REMOTE_PORT}" "${REMOTE_HOST}" "rm ${REMOTE_PATH}/${REMOTE_DBFILE}" || echo "Warning: Could not remove remote database file"
+fi
 
-# Note: The following would need to be implemented based on Kinsta's specific API endpoints
-# for backup creation and database operations. This is a placeholder structure.
+echo -e "${yellow}Importing Database...${NC}"
 
-echo -e "${yellow}Note: Full Kinsta database automation requires API endpoint implementation${NC}"
-echo -e "${yellow}Please refer to Kinsta API documentation for backup/restore endpoints${NC}"
-echo -e "${yellow}Current implementation provides basic connectivity and manual fallback${NC}"
+# Reset and import database
+wp db reset --yes --allow-root
 
-# Placeholder for future full Kinsta API integration
-echo -e "${red}Full Kinsta database refresh automation not yet implemented.${NC}"
-echo -e "${red}Please use manual process described above.${NC}"
+if mysql -h db -u db -pdb db < "${DBFILE}"; then
+    echo -e "${green}Database imported successfully!${NC}"
+else
+    echo -e "${red}Failed to import database${NC}"
+    exit 1
+fi
+
+echo -e "${yellow}Running search and replace for domains...${NC}"
+LOCAL_DOMAIN="${DDEV_SITENAME}.ddev.site"
+BASIC_DDEV_URL="https://$LOCAL_DOMAIN"
+
+# Replace HTTPS to HTTP first to handle SSL differences
+wp search-replace "https://" "http://" --include-columns=option_value --allow-root --quiet || true
+
+# Determine source domains based on environment
+if [[ "$ENVIRONMENT" == "live" ]]; then
+    SOURCE_DOMAIN=$(printenv KINSTA_LIVE_DOMAIN 2>/dev/null || echo "${KINSTA_SITE}.kinsta.cloud")
+elif [[ "$ENVIRONMENT" == "staging" ]]; then
+    SOURCE_DOMAIN=$(printenv KINSTA_STAGING_DOMAIN 2>/dev/null || echo "staging-${KINSTA_SITE}.kinsta.cloud")
+else
+    SOURCE_DOMAIN=$(printenv KINSTA_LIVE_DOMAIN 2>/dev/null || echo "${KINSTA_SITE}.kinsta.cloud")
+fi
+
+echo -e "${yellow}Replacing domains: ${SOURCE_DOMAIN} -> ${LOCAL_DOMAIN}${NC}"
+wp search-replace "$SOURCE_DOMAIN" "$LOCAL_DOMAIN" --all-tables --allow-root
+
+# Standard WordPress cleanup
+echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
+wp cache flush --allow-root 2>/dev/null || true
+wp rewrite flush --allow-root
+
+echo -e "${yellow}Fixing files directory permissions...${NC}"
+chmod -R 755 wp-content/uploads 2>/dev/null || true
+
+echo -e "${yellow}Disabling plugins for local development...${NC}"
+wp plugin deactivate ithemes-security-pro autoptimize wp-health --allow-root --quiet 2>/dev/null || true
+
+# Restore admin user
+echo -e "${yellow}Verifying admin user...${NC}"
+ddev restore-admin-user 2>/dev/null || echo "Admin user restoration command not available"
+
+# Activate theme
+echo -e "${yellow}Activating theme...${NC}"
+ddev activate-theme 2>/dev/null || echo "Theme activation command not available"
 
 echo -e "${green}${divider}${NC}"
-echo -e "${yellow}Kinsta refresh process initiated - manual steps required${NC}"
+echo -e "${green}Kinsta database refresh complete!${NC}"
+echo -e "${green}Site URL: ${BASIC_DDEV_URL}${NC}"
+echo -e "${yellow}You should now rebuild the .htaccess file if needed.${NC}"
 echo -e "${green}${divider}${NC}"
