@@ -1,40 +1,421 @@
 name: ddev-kanopi-wp
 
-# Minimum DDEV version required
-ddev_version_constraint: ">= 1.24.3"
-
+# Based on https://github.com/ddev/ddev/blob/HEAD/pkg/ddevapp/addons.go#L61
 project_files:
+- commands/
+- config/
 - docker-compose.kanopi-wp.yaml
-- commands/web/create-block
-- commands/web/development
-- commands/web/production
-- commands/web/refresh
-- commands/web/activate-theme
-- commands/web/restore-admin-user
-- commands/web/open
-- commands/host/phpcs
-- commands/host/phpcbf
-- commands/host/npm
-- commands/host/terminus
-- commands/host/init
-- commands/host/configure
-- config/php/php.ini
-- config/nginx/nginx-site.conf
-- config/helpers/load-config.sh
-- config/wp/block-template/block.json
-- config/wp/block-template/edit.js
-- config/wp/block-template/editor.scss
-- config/wp/block-template/index.js
-- config/wp/block-template/save.js
-- config/wp/block-template/style.scss
-- config/wp/block-template/view.js
 - config.kanopi.yaml
 - config.kanopi.local.yaml.example
 
-post_install_actions:
+# DDEV version constraint
+ddev_version_constraint: ">= v1.22.0"
+
+# Pre-install actions
+pre_install_actions:
+# Introduction
 - |
-  echo "✅ Kanopi WordPress DDEV add-on installed successfully!"
+  #ddev-description:Configuring Kanopi WordPress Add-on
   echo ""
+  echo "🔧 Configuring Kanopi WordPress Add-on..."
+  echo ""
+
+# Platform selection - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "HOSTING_PROVIDER=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing HOSTING_PROVIDER from project config.yaml."
+  else
+    printf "🌐 Select your hosting platform (pantheon/wpengine/kinsta): "
+  fi
+
+# Platform selection - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set HOSTING_PROVIDER
+  if !( {{ contains "HOSTING_PROVIDER=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      HOSTING_PROVIDER="pantheon"
+      echo "CI environment detected, using test platform: $HOSTING_PROVIDER"
+    else
+      read HOSTING_PROVIDER
+      if [ -z "$HOSTING_PROVIDER" ]; then
+        HOSTING_PROVIDER="pantheon"
+        echo "⚠️  Using default platform: $HOSTING_PROVIDER"
+      fi
+      # Validate platform choice
+      if [[ "$HOSTING_PROVIDER" != "pantheon" && "$HOSTING_PROVIDER" != "wpengine" && "$HOSTING_PROVIDER" != "kinsta" ]]; then
+        echo "❌ Invalid platform. Please choose 'pantheon', 'wpengine', or 'kinsta'"
+        exit 1
+      fi
+    fi
+    echo "HOSTING_PROVIDER = '${HOSTING_PROVIDER}'"
+    ddev config --web-environment-add HOSTING_PROVIDER=${HOSTING_PROVIDER}
+    echo "HOSTING_PROVIDER set to ${HOSTING_PROVIDER}"
+    
+    # Platform-specific configuration
+    if [[ "$HOSTING_PROVIDER" == "pantheon" ]]; then
+      # Pantheon uses 'web' as docroot
+      ddev config --docroot=web
+      echo "✅ Configured docroot for Pantheon (web)"
+    elif [[ "$HOSTING_PROVIDER" == "wpengine" ]]; then
+      # WPEngine uses 'wp' as docroot
+      ddev config --docroot=wp
+      echo "✅ Configured docroot for WPEngine (wp)"
+    elif [[ "$HOSTING_PROVIDER" == "kinsta" ]]; then
+      # Kinsta uses 'public' as docroot
+      ddev config --docroot=public
+      echo "✅ Configured docroot for Kinsta (public)"
+    fi
+  fi
+
+# Platform-specific credentials configuration
+- |
+  #ddev-nodisplay
+  #ddev-description:Configure platform credentials
+  # Get current hosting provider
+  CURRENT_PROVIDER=""
+  if ( {{ contains "HOSTING_PROVIDER=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    CURRENT_PROVIDER=$(ddev exec printenv HOSTING_PROVIDER 2>/dev/null || echo "pantheon")
+  fi
+  
+  if [[ "$CURRENT_PROVIDER" == "pantheon" ]]; then
+    # Pantheon - check for TERMINUS_MACHINE_TOKEN
+    if ( {{ contains "TERMINUS_MACHINE_TOKEN" (list .DdevGlobalConfig.web_environment | toString) }} || {{ contains "TERMINUS_MACHINE_TOKEN" (list .DdevProjectConfig.web_environment | toString) }} ); then
+      echo "Using existing TERMINUS_MACHINE_TOKEN."
+    else
+      printf "\n\n🏛️  Please enter your Pantheon Terminus machine token: "
+      read token
+      # Put the token into the global web environment
+      ddev config global --web-environment-add TERMINUS_MACHINE_TOKEN=${token}
+      echo "TERMINUS_MACHINE_TOKEN set globally"
+    fi
+  elif [[ "$CURRENT_PROVIDER" == "wpengine" ]]; then
+    # WPEngine - check for WPE credentials
+    if ( {{ contains "WPE_API_USERNAME" (list .DdevGlobalConfig.web_environment | toString) }} || {{ contains "WPE_API_USERNAME" (list .DdevProjectConfig.web_environment | toString) }} ); then
+      echo "Using existing WPE_API_USERNAME."
+    else
+      printf "\n\n⚡ Please enter your WPEngine API Username: "
+      read wpe_username
+      ddev config global --web-environment-add WPE_API_USERNAME=${wpe_username}
+      echo "WPE_API_USERNAME set globally"
+    fi
+    
+    if ( {{ contains "WPE_API_PASSWORD" (list .DdevGlobalConfig.web_environment | toString) }} || {{ contains "WPE_API_PASSWORD" (list .DdevProjectConfig.web_environment | toString) }} ); then
+      echo "Using existing WPE_API_PASSWORD."
+    else
+      printf "🔐 Please enter your WPEngine API Password: "
+      read wpe_password
+      ddev config global --web-environment-add WPE_API_PASSWORD=${wpe_password}
+      echo "WPE_API_PASSWORD set globally"
+    fi
+  elif [[ "$CURRENT_PROVIDER" == "kinsta" ]]; then
+    # Kinsta - check for API key
+    if ( {{ contains "KINSTA_API_KEY" (list .DdevGlobalConfig.web_environment | toString) }} || {{ contains "KINSTA_API_KEY" (list .DdevProjectConfig.web_environment | toString) }} ); then
+      echo "Using existing KINSTA_API_KEY."
+    else
+      printf "\n\n🔷 Please enter your Kinsta API Key: "
+      read kinsta_key
+      ddev config global --web-environment-add KINSTA_API_KEY=${kinsta_key}
+      echo "KINSTA_API_KEY set globally"
+    fi
+  fi
+
+# THEME configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "THEME=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing THEME from project config.yaml."
+  else
+    printf "📁 Enter the path to your active WordPress theme (like 'wp-content/themes/custom/mytheme'): "
+  fi
+
+# THEME configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set THEME
+  if !( {{ contains "THEME=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      THEME_PATH="wp-content/themes/custom/testtheme"
+      echo "CI environment detected, using test theme path: $THEME_PATH"
+    else
+      read THEME_PATH
+      if [ -z "$THEME_PATH" ]; then
+        THEME_PATH="wp-content/themes/custom/struts"
+        echo "⚠️  Using default theme path: $THEME_PATH"
+      fi
+    fi
+    echo "THEME = '${THEME_PATH}'"
+    ddev config --web-environment-add THEME=${THEME_PATH}
+    echo "THEME set to ${THEME_PATH}"
+  fi
+
+# THEMENAME configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "THEMENAME=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing THEMENAME from project config.yaml."
+  else
+    printf "🎨 Enter your theme name (like 'mytheme'): "
+  fi
+
+# THEMENAME configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set THEMENAME
+  if !( {{ contains "THEMENAME=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      THEME_NAME="testtheme"
+      echo "CI environment detected, using test theme name: $THEME_NAME"
+    else
+      read THEME_NAME
+      if [ -z "$THEME_NAME" ]; then
+        THEME_NAME="struts"
+        echo "⚠️  Using default theme name: $THEME_NAME"
+      fi
+    fi
+    echo "THEMENAME = '${THEME_NAME}'"
+    ddev config --web-environment-add THEMENAME=${THEME_NAME}
+    echo "THEMENAME set to ${THEME_NAME}"
+  fi
+
+# HOSTING_SITE configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "HOSTING_SITE=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing HOSTING_SITE from project config.yaml."
+  else
+    # Get current hosting provider
+    CURRENT_PROVIDER=$(ddev exec printenv HOSTING_PROVIDER 2>/dev/null || echo "pantheon")
+    if [[ "$CURRENT_PROVIDER" == "pantheon" ]]; then
+      printf "🏛️  Enter your Pantheon project machine name (like 'my-site'): "
+    elif [[ "$CURRENT_PROVIDER" == "wpengine" ]]; then
+      printf "⚡ Enter your WPEngine install name (like 'my-site'): "
+    elif [[ "$CURRENT_PROVIDER" == "kinsta" ]]; then
+      printf "🔷 Enter your Kinsta site name (like 'my-site'): "
+    fi
+  fi
+
+# HOSTING_SITE configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set HOSTING_SITE
+  if !( {{ contains "HOSTING_SITE=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      HOSTING_SITE="test-site-123"
+      echo "CI environment detected, using test site: $HOSTING_SITE"
+    else
+      read HOSTING_SITE
+      if [ -z "$HOSTING_SITE" ]; then
+        echo "❌ HOSTING_SITE is required for proper functionality"
+        exit 1
+      fi
+    fi
+    echo "HOSTING_SITE = '${HOSTING_SITE}'"
+    ddev config --web-environment-add HOSTING_SITE=${HOSTING_SITE}
+    echo "HOSTING_SITE set to ${HOSTING_SITE}"
+  fi
+
+# HOSTING_ENV configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "HOSTING_ENV=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing HOSTING_ENV from project config.yaml."
+  else
+    # Get current hosting provider
+    CURRENT_PROVIDER=$(ddev exec printenv HOSTING_PROVIDER 2>/dev/null || echo "pantheon")
+    if [[ "$CURRENT_PROVIDER" == "pantheon" ]]; then
+      printf "🌍 Enter default Pantheon environment for database pulls (dev/test/live) [dev]: "
+    elif [[ "$CURRENT_PROVIDER" == "wpengine" ]]; then
+      printf "🌍 Enter default WPEngine environment for database pulls (development/staging/production) [development]: "
+    elif [[ "$CURRENT_PROVIDER" == "kinsta" ]]; then
+      printf "🌍 Enter default Kinsta environment for database pulls (staging/live) [staging]: "
+    fi
+  fi
+
+# HOSTING_ENV configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set HOSTING_ENV
+  if !( {{ contains "HOSTING_ENV=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      HOSTING_ENV="dev"
+      echo "CI environment detected, using default environment: $HOSTING_ENV"
+    else
+      read HOSTING_ENV
+      if [ -z "$HOSTING_ENV" ]; then
+        # Provider-specific defaults
+        CURRENT_PROVIDER=$(ddev exec printenv HOSTING_PROVIDER 2>/dev/null || echo "pantheon")
+        if [[ "$CURRENT_PROVIDER" == "wpengine" ]]; then
+          HOSTING_ENV="development"
+        elif [[ "$CURRENT_PROVIDER" == "kinsta" ]]; then
+          HOSTING_ENV="staging"
+        else
+          HOSTING_ENV="dev"
+        fi
+        echo "⚠️  Using default environment: $HOSTING_ENV"
+      fi
+    fi
+    echo "HOSTING_ENV = '${HOSTING_ENV}'"
+    ddev config --web-environment-add HOSTING_ENV=${HOSTING_ENV}
+    echo "HOSTING_ENV set to ${HOSTING_ENV}"
+  fi
+
+# Optional Migration Configuration intro
+- |
+  #ddev-nodisplay
+  echo ""
+  echo "Optional Migration Configuration:"
+  echo "Press Enter to skip if you don't need migration support"
+  echo ""
+
+# MIGRATE_DB_SOURCE configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "MIGRATE_DB_SOURCE=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing MIGRATE_DB_SOURCE from project config.yaml."
+  else
+    CURRENT_PROVIDER=$(ddev exec printenv HOSTING_PROVIDER 2>/dev/null || echo "pantheon")
+    if [[ "$CURRENT_PROVIDER" == "pantheon" ]]; then
+      printf "📦 Enter migration source Pantheon project name (optional): "
+    elif [[ "$CURRENT_PROVIDER" == "wpengine" ]]; then
+      printf "📦 Enter migration source WPEngine install name (optional): "
+    elif [[ "$CURRENT_PROVIDER" == "kinsta" ]]; then
+      printf "📦 Enter migration source Kinsta site name (optional): "
+    fi
+  fi
+
+# MIGRATE_DB_SOURCE configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set MIGRATE_DB_SOURCE
+  if !( {{ contains "MIGRATE_DB_SOURCE=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      MIGRATE_SOURCE="test-migration-source"
+      echo "CI environment detected, using test migration source: $MIGRATE_SOURCE"
+      echo "MIGRATE_DB_SOURCE = '${MIGRATE_SOURCE}'"
+      ddev config --web-environment-add MIGRATE_DB_SOURCE=${MIGRATE_SOURCE}
+      echo "MIGRATE_DB_SOURCE set to ${MIGRATE_SOURCE}"
+    else
+      read MIGRATE_SOURCE
+      if [ -n "$MIGRATE_SOURCE" ]; then
+        echo "MIGRATE_DB_SOURCE = '${MIGRATE_SOURCE}'"
+        ddev config --web-environment-add MIGRATE_DB_SOURCE=${MIGRATE_SOURCE}
+        echo "MIGRATE_DB_SOURCE set to ${MIGRATE_SOURCE}"
+      fi
+    fi
+  fi
+
+# MIGRATE_DB_ENV configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "MIGRATE_DB_ENV=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing MIGRATE_DB_ENV from project config.yaml."
+  else
+    CURRENT_PROVIDER=$(ddev exec printenv HOSTING_PROVIDER 2>/dev/null || echo "pantheon")
+    if [[ "$CURRENT_PROVIDER" == "pantheon" ]]; then
+      printf "🌍 Enter migration source environment (dev/test/live) (optional): "
+    elif [[ "$CURRENT_PROVIDER" == "wpengine" ]]; then
+      printf "🌍 Enter migration source environment (development/staging/production) (optional): "
+    elif [[ "$CURRENT_PROVIDER" == "kinsta" ]]; then
+      printf "🌍 Enter migration source environment (staging/live) (optional): "
+    fi
+  fi
+
+# MIGRATE_DB_ENV configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set MIGRATE_DB_ENV
+  if !( {{ contains "MIGRATE_DB_ENV=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      MIGRATE_ENV="live"
+      echo "CI environment detected, using test migration environment: $MIGRATE_ENV"
+      echo "MIGRATE_DB_ENV = '${MIGRATE_ENV}'"
+      ddev config --web-environment-add MIGRATE_DB_ENV=${MIGRATE_ENV}
+      echo "MIGRATE_DB_ENV set to ${MIGRATE_ENV}"
+    else
+      read MIGRATE_ENV
+      if [ -n "$MIGRATE_ENV" ]; then
+        echo "MIGRATE_DB_ENV = '${MIGRATE_ENV}'"
+        ddev config --web-environment-add MIGRATE_DB_ENV=${MIGRATE_ENV}
+        echo "MIGRATE_DB_ENV set to ${MIGRATE_ENV}"
+      fi
+    fi
+  fi
+
+# Configuration complete
+- |
+  #ddev-nodisplay
+  #ddev-description:Configuration complete
+  echo ""
+  echo "✅ Configuration collected successfully"
+  echo ""
+
+# Post-install actions
+post_install_actions:
+# Apply additional configuration and detect hosting platform settings
+- |
+  #ddev-nodisplay
+  #ddev-description: Installing Redis add-on. This may take a moment as Docker images are downloaded.
+  echo ""  
+
+- |
+  #ddev-nodisplay
+  #ddev-description: Update Nginx proxy configuration with hosting platform values
+  echo "🔧 Updating Nginx proxy configuration..."
+  
+  # Get the environment variables from the config file
+  HOSTING_PROVIDER_VALUE=$(grep "HOSTING_PROVIDER=" ./config.yaml | sed 's/.*HOSTING_PROVIDER=\([^,]*\).*/\1/' | tr -d '"' || echo "pantheon")
+  HOSTING_SITE_VALUE=$(grep "HOSTING_SITE=" ./config.yaml | sed 's/.*HOSTING_SITE=\([^,]*\).*/\1/' | tr -d '"' || echo "")
+  HOSTING_ENV_VALUE=$(grep "HOSTING_ENV=" ./config.yaml | sed 's/.*HOSTING_ENV=\([^,]*\).*/\1/' | tr -d '"' || echo "")
+  
+  if [ -n "$HOSTING_SITE_VALUE" ] && [ -n "$HOSTING_ENV_VALUE" ]; then
+    # Platform-specific proxy configuration
+    if [[ "$HOSTING_PROVIDER_VALUE" == "pantheon" ]]; then
+      # Replace the placeholder in nginx config with Pantheon values
+      sed -i.bak "s/HOSTING_ENV-HOSTING_SITE/$HOSTING_ENV_VALUE-$HOSTING_SITE_VALUE/g" ./config/nginx/nginx-site.conf
+      sed -i.bak "s/HOSTING_DOMAIN/pantheonsite.io/g" ./config/nginx/nginx-site.conf
+      echo "✅ Updated nginx proxy to redirect to: $HOSTING_ENV_VALUE-$HOSTING_SITE_VALUE.pantheonsite.io"
+    elif [[ "$HOSTING_PROVIDER_VALUE" == "wpengine" ]]; then
+      # WPEngine uses install-name.wpengine.com format
+      sed -i.bak "s/HOSTING_ENV-HOSTING_SITE/$HOSTING_SITE_VALUE/g" ./config/nginx/nginx-site.conf
+      sed -i.bak "s/HOSTING_DOMAIN/wpengine.com/g" ./config/nginx/nginx-site.conf
+      echo "✅ Updated nginx proxy to redirect to: $HOSTING_SITE_VALUE.wpengine.com"
+    elif [[ "$HOSTING_PROVIDER_VALUE" == "kinsta" ]]; then
+      # Kinsta uses custom domains, typically site-name.kinsta.cloud
+      sed -i.bak "s/HOSTING_ENV-HOSTING_SITE/$HOSTING_SITE_VALUE/g" ./config/nginx/nginx-site.conf
+      sed -i.bak "s/HOSTING_DOMAIN/kinsta.cloud/g" ./config/nginx/nginx-site.conf
+      echo "✅ Updated nginx proxy to redirect to: $HOSTING_SITE_VALUE.kinsta.cloud"
+    fi
+  else
+    echo "⚠️  Could not retrieve HOSTING_SITE and HOSTING_ENV values from config for nginx configuration"
+    echo "    HOSTING_PROVIDER_VALUE: '$HOSTING_PROVIDER_VALUE'"
+    echo "    HOSTING_SITE_VALUE: '$HOSTING_SITE_VALUE'"
+    echo "    HOSTING_ENV_VALUE: '$HOSTING_ENV_VALUE'"
+  fi  
+
+- |
+  #ddev-description: Install Redis add-on for all configurations
+  # Install Redis add-on for all configurations
+  echo ""
+  echo "📦 Installing Redis add-on..."
+  ddev add-on get ddev/ddev-redis  
+  echo ""
+  echo "Ignore DDEV Redis settings file"
+  echo "settings.ddev.redis.php" >> ../.gitignore
+
+- |
+  #ddev-description: Copy configuration files
+  # Copy config files
+  echo ""
+  echo "📦 Setting up configuration files..."
   cp config.kanopi.yaml ../config.kanopi.yaml
   cp config.kanopi.local.yaml.example ../config.kanopi.local.yaml
   echo ".ddev/config.kanopi.local.yaml" >> ../../.gitignore 2>/dev/null || true
@@ -63,26 +444,100 @@ post_install_actions:
   else
     echo "⚠️  wp-config.php not found at web/wp-config.php"
   fi
-  echo "📋 Next steps:"
+
+# Explain the installed components
+- |
   echo ""
-  echo "1. 🔧 Configure your settings:"
-  echo "   ddev configure  # Interactive setup wizard"
-  echo "   # OR edit .ddev/config.kanopi.yaml manually"
+  echo "✅ Kanopi WordPress Add-on installed successfully!"
   echo ""
-  echo "2. 🏛️ Set Pantheon token (if using Pantheon):"
-  echo "   ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token"
+  echo "📦 Installed components:"
+  echo "   • Enhanced multi-provider hosting support (Pantheon, WPEngine, Kinsta)"
+  echo "   • 20+ custom commands for WordPress development workflow"
+  echo "   • Nginx proxy configuration so you dont have to download assets locally"
+  echo "   • Theme development tools with Node.js/NPM support"
+  echo "   • Cypress testing integration"
+  echo "   • WordPress block creation tools"
+  echo "   • Migration and backup utilities"
+  echo "   • Redis add-on installed"
   echo ""
-  echo "3. 🚀 Initialize your environment:"
-  echo "   ddev init  # Complete development setup"
+  echo "🔧 Next steps:"
+  echo "   1. Configure your site settings in .ddev/config.kanopi.yaml if needed"
+  echo "   2. Run 'ddev restart' to apply configuration changes"
+  echo "   3. Run 'ddev init' to complete project initialization"
   echo ""
-  echo "📖 Documentation: https://github.com/kanopi/ddev-kanopi-wp"
-  echo "🆘 Issues: https://github.com/kanopi/ddev-kanopi-wp/issues"
+  echo "📚 Run 'ddev help' to see available commands"
+  echo ""
 
 removal_actions:
-- rm -f ../config.kanopi.yaml
-- rm -f ../config.kanopi.local.yaml
+# Remove all installed components and add-ons
 - |
-  if [ -f ../../.gitignore ]; then
-    grep -v "config.kanopi.local.yaml" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
+  echo ""
+  echo "🗑️ Removing Kanopi WordPress Add-on..."
+  echo ""
+  
+  # Remove Redis add-on
+  echo "📦 Removing Redis add-on..."
+  if ddev add-on remove ddev-redis 2>/dev/null; then
+    echo "✅ Redis add-on removed successfully"
+  else
+    echo "⚠️ Redis add-on removal failed or not found"
   fi
-- echo "ddev-kanopi-wp add-on removed successfully"
+  
+  # Remove all custom commands
+  echo "🔧 Removing custom commands..."
+  
+  # Remove host commands
+  rm -f commands/host/cypress 2>/dev/null || true
+  rm -f commands/host/cypress-users 2>/dev/null || true
+  rm -f commands/host/init 2>/dev/null || true
+  rm -f commands/host/install-cypress 2>/dev/null || true
+  rm -f commands/host/phpmyadmin 2>/dev/null || true
+  rm -f commands/host/rebuild 2>/dev/null || true
+  rm -f commands/host/testenv 2>/dev/null || true
+  rm -f commands/host/configure 2>/dev/null || true
+  rm -f commands/host/npm 2>/dev/null || true
+  rm -f commands/host/phpcbf 2>/dev/null || true
+  rm -f commands/host/phpcs 2>/dev/null || true
+  rm -f commands/host/terminus 2>/dev/null || true
+  
+  # Remove web commands
+  rm -f commands/web/install-critical-tools 2>/dev/null || true
+  rm -f commands/web/install-theme-tools 2>/dev/null || true
+  rm -f commands/web/migrate-prep-db 2>/dev/null || true
+  rm -f commands/web/npx 2>/dev/null || true
+  rm -f commands/web/tickle 2>/dev/null || true
+  rm -f commands/web/activate-theme 2>/dev/null || true
+  rm -f commands/web/create-block 2>/dev/null || true
+  rm -f commands/web/development 2>/dev/null || true
+  rm -f commands/web/open 2>/dev/null || true
+  rm -f commands/web/production 2>/dev/null || true
+  rm -f commands/web/refresh 2>/dev/null || true
+  rm -f commands/web/restore-admin-user 2>/dev/null || true
+  
+  echo "✅ Custom commands removed"
+  
+  # Remove config files and nginx config
+  rm -f ../config.kanopi.yaml 2>/dev/null || true
+  rm -f ../config.kanopi.local.yaml 2>/dev/null || true
+  rm -rf config 2>/dev/null || true
+  rm -f docker-compose.kanopi-wp.yaml 2>/dev/null || true
+  
+  # Clean up gitignore
+  if [ -f ../../.gitignore ]; then
+    grep -v "config.kanopi.local.yaml\|settings.ddev.redis.php" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
+  fi
+  
+  # Clean up empty directories
+  rmdir commands/host 2>/dev/null || true
+  rmdir commands/web 2>/dev/null || true
+  rmdir commands 2>/dev/null || true
+  
+  echo ""
+  echo "✅ Kanopi WordPress Add-on removed successfully!"
+  echo "   • Redis add-on uninstalled"
+  echo "   • All 20+ custom commands removed"
+  echo "   • Nginx proxy configuration removed"
+  echo "   • Environment variables preserved (remove manually if needed)"
+  echo ""
+  echo "💡 Tip: Run 'ddev restart' to apply changes"
+  echo ""
