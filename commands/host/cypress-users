@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+## Description: Create Cypress users
+## Usage: cypress-users
+## Example: "ddev cypress-users"
+## OSTypes: darwin,linux
+
+# Abort if anything fails
+set -e
+
+echo "Create default admin user for Cypress tests."
+ddev exec "wp user create cypress support+cypress@kanopi.com --role=administrator --user_pass=cypress --allow-root" 2>/dev/null || echo "Cypress user already exists"
