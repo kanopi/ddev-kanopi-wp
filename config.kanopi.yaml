@@ -2,20 +2,17 @@
 # Kanopi WordPress DDEV Configuration
 # This file will be copied to .ddev/config.kanopi.yaml during installation
 
-# NOTE: Hosting provider settings (HOSTING_PROVIDER, HOSTING_SITE, etc.) 
-# are now configured via environment variables in .ddev/config.yaml
-# See install.yaml for hosting provider configuration
+# NOTE: All configuration is now handled via environment variables in .ddev/config.yaml
+# - HOSTING_PROVIDER, HOSTING_SITE, HOSTING_ENV for platform settings
+# - THEME, THEMENAME for theme configuration  
+# - MIGRATE_DB_SOURCE, MIGRATE_DB_ENV for migration settings
+# See install.yaml for interactive configuration setup
 
 # WordPress Admin Configuration
 wordpress:
   admin_user: "xxxxxx"
   admin_pass: "xxxxxx"
   admin_email: "xxxxxx"
-
-# Theme Configuration  
-theme:
-  slug: "struts"
-  relative_path: "wp-content/themes/custom/struts"
 
 # Premium Plugin Licenses
 licenses:
@@ -25,8 +22,3 @@ licenses:
 # Development Settings
 development:
   xdebug_enabled: false
-
-# Migration Settings (optional)
-migration:
-  # source_site: "your-source-site-name"
-  # source_env: "live"

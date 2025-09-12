@@ -104,7 +104,7 @@ if [ "$CREATE_NEW_BACKUP" = true ]; then
 fi
 
 # Get the backup URL
-DB_BACKUP_URL=$(terminus backup:get ${SITE_ENV} --element=database --field=url)
+DB_BACKUP_URL=$(terminus backup:get ${SITE_ENV} --element=database)
 
 # Download and import database
 curl -o /tmp/database.sql.gz "$DB_BACKUP_URL"
