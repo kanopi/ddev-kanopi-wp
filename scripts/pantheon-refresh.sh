@@ -109,7 +109,7 @@ DB_BACKUP_URL=$(terminus backup:get ${SITE_ENV} --element=database)
 # Download and import database
 curl -o /tmp/database.sql.gz "$DB_BACKUP_URL"
 gunzip /tmp/database.sql.gz
-wp db import /tmp/database.sql.gz --allow-root
+wp db import /tmp/database.sql --allow-root
 
 echo -e "${yellow}Running search and replace for local domains...${NC}"
 BASE_DOMAIN="${ENVIRONMENT}-${PANTHEON_SITE}.pantheonsite.io"
