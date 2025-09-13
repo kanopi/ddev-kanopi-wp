@@ -150,3 +150,34 @@ teardown() {
     docker ps | grep "ddev-${PROJNAME}-redis"
     docker ps | grep "ddev-${PROJNAME}-solr"
 }
+
+@test "pantheon mu-plugin handling" {
+    set -eu -o pipefail
+    cd $TESTDIR
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
+    
+    # Create a mock Pantheon mu-plugin loader that would cause conflicts
+    mkdir -p web/wp-content/mu-plugins
+    cat > web/wp-content/mu-plugins/pantheon-mu-loader.php << 'EOF'
+<?php
+// Mock Pantheon mu-plugin loader for testing
+$pantheon_mu_plugins = [
+    'pantheon-mu-plugin/pantheon.php',
+];
+
+foreach ( $pantheon_mu_plugins as $file ) {
+    require_once WPMU_PLUGIN_DIR . '/' . $file;
+}
+EOF
+
+    # Install the add-on
+    ddev add-on get $DIR
+    ddev start
+    
+    # Check that the problematic mu-plugin loader was disabled
+    [ -f "web/wp-content/mu-plugins/pantheon-mu-loader.php.disabled" ]
+    [ ! -f "web/wp-content/mu-plugins/pantheon-mu-loader.php" ]
+    
+    # Verify WP-CLI works without fatal errors
+    ddev exec wp core version
+}

@@ -543,6 +543,33 @@ post_install_actions:
     echo "⚠️  wp-config.php not found at web/wp-config.php"
   fi
 
+- |
+  #ddev-description: Handle Pantheon mu-plugins compatibility
+  # Disable Pantheon mu-plugins that conflict with DDEV environment
+  echo ""
+  echo "🔧 Checking for Pantheon mu-plugins that need to be disabled in DDEV..."
+  
+  PANTHEON_LOADER="../../web/wp-content/mu-plugins/pantheon-mu-loader.php"
+  if [ -f "$PANTHEON_LOADER" ]; then
+    # Check if the loader tries to load pantheon-mu-plugin
+    if grep -q "pantheon-mu-plugin/pantheon.php" "$PANTHEON_LOADER"; then
+      # Check if the actual plugin directory exists
+      if [ ! -d "../../web/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
+        echo "📝 Found Pantheon mu-plugin loader but plugin directory missing"
+        echo "   Disabling to prevent PHP fatal errors in DDEV environment..."
+        mv "$PANTHEON_LOADER" "${PANTHEON_LOADER}.disabled"
+        echo "✅ Pantheon mu-plugin loader disabled (renamed to .disabled)"
+        echo "   This prevents 'Failed to open stream' errors when running WP-CLI commands"
+      else
+        echo "📝 Pantheon mu-plugin found and appears complete - leaving enabled"
+      fi
+    else
+      echo "📝 Custom pantheon-mu-loader.php found - leaving as-is"
+    fi
+  else
+    echo "📝 No Pantheon mu-plugin loader found - no action needed"
+  fi
+
 # Explain the installed components
 - |
   echo ""
@@ -557,6 +584,7 @@ post_install_actions:
   echo "   • WordPress block creation tools"
   echo "   • Migration and backup utilities"
   echo "   • Redis, Solr, and PhpMyAdmin add-ons installed"
+  echo "   • Automatic Pantheon mu-plugin conflict resolution for DDEV compatibility"
   echo ""
   echo "🔧 Next steps:"
   echo "   1. Run 'ddev restart' to apply configuration changes"
@@ -631,6 +659,14 @@ removal_actions:
   
   # Remove config files and nginx config
   rm -rf config 2>/dev/null || true
+  
+  # Restore Pantheon mu-plugin loader if it was disabled during installation
+  PANTHEON_LOADER_DISABLED="../../web/wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
+  if [ -f "$PANTHEON_LOADER_DISABLED" ]; then
+    PANTHEON_LOADER="../../web/wp-content/mu-plugins/pantheon-mu-loader.php"
+    mv "$PANTHEON_LOADER_DISABLED" "$PANTHEON_LOADER"
+    echo "✅ Restored Pantheon mu-plugin loader (was disabled during add-on installation)"
+  fi
   
   # Clean up gitignore
   if [ -f ../../.gitignore ]; then
