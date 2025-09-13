@@ -53,29 +53,58 @@ fi
 echo -e "\n ${down_arrow} ${yellow} Pulling database from ${MIGRATE_DB_SOURCE} (${MIGRATE_DB_ENV}). ${NC} ${down_arrow}"
 echo -e "${green}${divider}${NC}"
 
-if [ "$HOSTING_PROVIDER" = "pantheon" ]; then
-    # Use Terminus for Pantheon
-    SITE_ENV="${MIGRATE_DB_SOURCE}.${MIGRATE_DB_ENV}"
-    
-    # Get database backup
-    BACKUP_URL=$(terminus backup:get ${SITE_ENV} --element=database --field=url)
-    
-    # Download and import into migration database
-    curl -s -o /tmp/migration.sql.gz "$BACKUP_URL"
-    gunzip /tmp/migration.sql.gz
-    mysql "${MIGRATE_DB_NAME}" < /tmp/migration.sql
-    rm -f /tmp/migration.sql
-    
-elif [ "$HOSTING_PROVIDER" = "wpengine" ]; then
-    echo -e "WPEngine migration support not yet implemented"
-    exit 1
-elif [ "$HOSTING_PROVIDER" = "kinsta" ]; then
-    echo -e "Kinsta migration support not yet implemented"
-    exit 1
-else
-    echo -e "\n ❌ ${yellow} Unsupported hosting provider: ${HOSTING_PROVIDER} ${NC}"
-    exit 1
-fi
+# Temporarily set hosting environment variables to migration source for refresh
+ORIGINAL_HOSTING_SITE="${HOSTING_SITE:-}"
+ORIGINAL_HOSTING_ENV="${HOSTING_ENV:-}"
+
+# Override environment variables for migration source
+export HOSTING_SITE="$MIGRATE_DB_SOURCE"
+export HOSTING_ENV="$MIGRATE_DB_ENV"
+
+echo -e "${yellow}Using migration source: ${HOSTING_PROVIDER} ${MIGRATE_DB_SOURCE} (${MIGRATE_DB_ENV})${NC}"
+
+# Use the platform-specific refresh script to get the database
+case "$HOSTING_PROVIDER" in
+    "pantheon")
+        echo -e "${yellow}Pulling from Pantheon using refresh script...${NC}"
+        # Run Pantheon refresh script with force flag to get fresh backup
+        bash /var/www/html/scripts/pantheon-refresh.sh "$MIGRATE_DB_ENV" "true"
+        
+        # Move the imported database to migration database
+        echo -e "${yellow}Moving database to migration database...${NC}"
+        mysqldump -h db -u db -pdb db | mysql -h db -u db -pdb "${MIGRATE_DB_NAME}"
+        ;;
+        
+    "wpengine")
+        echo -e "${yellow}Pulling from WPEngine using refresh script...${NC}"
+        # Run WPEngine refresh script with force flag
+        bash /var/www/html/scripts/wpengine-refresh.sh "$MIGRATE_DB_ENV" "true"
+        
+        # Move the imported database to migration database
+        echo -e "${yellow}Moving database to migration database...${NC}"
+        mysqldump -h db -u db -pdb db | mysql -h db -u db -pdb "${MIGRATE_DB_NAME}"
+        ;;
+        
+    "kinsta")
+        echo -e "${yellow}Pulling from Kinsta using refresh script...${NC}"
+        # Run Kinsta refresh script with force flag
+        bash /var/www/html/scripts/kinsta-refresh.sh "$MIGRATE_DB_ENV" "true"
+        
+        # Move the imported database to migration database
+        echo -e "${yellow}Moving database to migration database...${NC}"
+        mysqldump -h db -u db -pdb db | mysql -h db -u db -pdb "${MIGRATE_DB_NAME}"
+        ;;
+        
+    *)
+        echo -e "\n ❌ ${yellow} Unsupported hosting provider: ${HOSTING_PROVIDER} ${NC}"
+        echo -e "Supported providers: pantheon, wpengine, kinsta"
+        exit 1
+        ;;
+esac
+
+# Restore original environment variables
+export HOSTING_SITE="$ORIGINAL_HOSTING_SITE"
+export HOSTING_ENV="$ORIGINAL_HOSTING_ENV"
 
 echo -e "\n ✅ Migration database '${MIGRATE_DB_NAME}' is now populated.\n"
 echo -e "${green}${divider}${NC}"
