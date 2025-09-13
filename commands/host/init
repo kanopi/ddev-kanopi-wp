@@ -30,6 +30,29 @@ arm='\xF0\x9F\x92\xAA'
 theme_dev_command='ddev development'
 theme_build_command='ddev production'
 
+# Handle Pantheon mu-plugin conflicts early (before any wp-cli commands)
+echo -e "\n${construction} ${yellow} Checking for Pantheon mu-plugin conflicts...${NC} ${construction}\n"
+PANTHEON_LOADER="web/wp-content/mu-plugins/pantheon-mu-loader.php"
+if [ -f "$PANTHEON_LOADER" ]; then
+  # Check if the loader tries to load pantheon-mu-plugin
+  if grep -q "pantheon-mu-plugin/pantheon.php" "$PANTHEON_LOADER"; then
+    # Check if the actual plugin directory exists
+    if [ ! -d "web/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
+      echo "📝 Found Pantheon mu-plugin loader but plugin directory missing"
+      echo "   Disabling to prevent PHP fatal errors in DDEV environment..."
+      mv "$PANTHEON_LOADER" "${PANTHEON_LOADER}.disabled"
+      echo "✅ Pantheon mu-plugin loader disabled (renamed to .disabled)"
+      echo "   This prevents 'Failed to open stream' errors when running WP-CLI commands"
+    else
+      echo "📝 Pantheon mu-plugin found and appears complete - leaving enabled"
+    fi
+  else
+    echo "📝 Custom pantheon-mu-loader.php found - leaving as-is"
+  fi
+else
+  echo "📝 No Pantheon mu-plugin loader found - no action needed"
+fi
+
 # Check for Lefthook (if using git hooks)
 LEFTHOOK=$(which lefthook || true)
 if [[ "${LEFTHOOK}" == "" ]] && [[ -f ".lefthook.yml" ]]; then
