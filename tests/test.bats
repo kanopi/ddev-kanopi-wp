@@ -39,6 +39,12 @@ health_checks() {
     [ -f ".ddev/config/nginx/nginx-site.conf" ]
     [ -d ".ddev/config/wp/block-template" ]
     
+    # Check that scripts folder was copied
+    [ -d ".ddev/scripts" ]
+    [ -f ".ddev/scripts/pantheon-refresh.sh" ]
+    [ -f ".ddev/scripts/wpengine-refresh.sh" ]
+    [ -f ".ddev/scripts/kinsta-refresh.sh" ]
+    
     # Check gitignore was updated for add-on settings
     grep -q "settings.ddev.redis.php" .gitignore || echo "gitignore should contain add-on settings files"
 }

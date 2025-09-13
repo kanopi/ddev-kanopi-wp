@@ -4,6 +4,7 @@ name: ddev-kanopi-wp
 project_files:
 - commands/
 - config/
+- scripts/
 
 # DDEV version constraint
 ddev_version_constraint: ">= v1.22.0"
@@ -657,8 +658,9 @@ removal_actions:
   
   echo "✅ Custom commands removed"
   
-  # Remove config files and nginx config
+  # Remove config files, scripts, and nginx config
   rm -rf config 2>/dev/null || true
+  rm -rf scripts 2>/dev/null || true
   
   # Restore Pantheon mu-plugin loader if it was disabled during installation
   PANTHEON_LOADER_DISABLED="../../web/wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
