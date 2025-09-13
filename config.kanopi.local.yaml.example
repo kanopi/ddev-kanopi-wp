@@ -5,31 +5,17 @@
 
 # Uncomment and modify any settings below, then run 'ddev restart'
 
-# Enable XDebug for local debugging
-# development:
-#   xdebug_enabled: true
-
-# Override image proxy settings if needed
-# proxy:
-#   base_url: "https://test-your-site.pantheonsite.io"
-
 # Override WordPress admin for local development
 # wordpress:
 #   admin_user: "localadmin"
 #   admin_pass: "localpass123"
 #   admin_email: "dev@localhost"
 
-# Override Pantheon environment for testing
-# Note: Pantheon machine token is set globally, not in config files
-# pantheon:
-#   env: "test"  # or "live"
-
-# Override theme settings if using different local setup
-# theme:
-#   slug: "local-theme"
-#   relative_path: "wp-content/themes/local-theme"
-
 # Override licenses for local development
 # licenses:
 #   acf_client_user: "local-acf-key"
 #   gf_client_user: "local-gf-key"
+
+# Enable XDebug for local debugging
+# development:
+#   xdebug_enabled: true
