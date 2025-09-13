@@ -8,7 +8,8 @@
 
 # Get theme configuration from environment variables
 WP_THEME_RELATIVE_PATH=$(printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
-THEME_PATH="/var/www/html/${WP_THEME_RELATIVE_PATH}"
+DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+THEME_PATH="/var/www/html/${DOCROOT}/${WP_THEME_RELATIVE_PATH}"
 
 # Check if theme directory exists
 if [ ! -d "$THEME_PATH" ]; then

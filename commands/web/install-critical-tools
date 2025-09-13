@@ -29,9 +29,10 @@ critical_command='ddev critical'
 
 # Get theme configuration from environment variables
 THEME_PATH=$(printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
+DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
 
 # Define full theme path
-FULL_THEME_PATH="/var/www/html/web/${THEME_PATH}"
+FULL_THEME_PATH="/var/www/html/${DOCROOT}/${THEME_PATH}"
 
 #-------------------------- Execution ------------------------------------------
 

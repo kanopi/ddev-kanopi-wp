@@ -13,7 +13,8 @@ load_kanopi_config "/var/www/html/.ddev"
 echo "Restoring admin user: $WP_ADMIN_USER"
 
 # Check if WordPress is installed
-if [ ! -f "/var/www/html/web/index.php" ]; then
+DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+if [ ! -f "/var/www/html/${DOCROOT}/index.php" ]; then
     echo "WordPress not found. Skipping admin user restoration."
     exit 0
 fi

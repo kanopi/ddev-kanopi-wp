@@ -148,14 +148,15 @@ fi
 
 # Install theme dependencies and build assets
 THEME_PATH=$(ddev exec printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
-if [ -f "web/${THEME_PATH}/package.json" ]; then
+DOCROOT=$(ddev exec printenv DOCROOT 2>/dev/null || echo "web")
+if [ -f "${DOCROOT}/${THEME_PATH}/package.json" ]; then
   echo -e "\n${construction} ${yellow} Installing theme dependencies...${NC} ${construction}\n"
   echo -e "${green}${divider}${NC}"
-  ddev exec "cd /var/www/html/web/${THEME_PATH} && npm install"
+  ddev exec "cd /var/www/html/${DOCROOT}/${THEME_PATH} && npm install"
   
   echo -e "\n${gear} ${yellow} Building theme assets...${NC} ${gear}"
   echo -e "${green}${divider}${NC}"
-  ddev exec "cd /var/www/html/web/${THEME_PATH} && npm run build"
+  ddev exec "cd /var/www/html/${DOCROOT}/${THEME_PATH} && npm run build"
 else
   echo -e "\n${construction} ${yellow} Theme directory not found: ${THEME_PATH}${NC}"
   echo -e "Please ensure your theme is located at the correct path or update THEME environment variable in .ddev/config.yaml"
@@ -166,7 +167,7 @@ echo -e "\n${lock} ${yellow} Configuring WordPress...${NC} ${lock}"
 echo -e "${green}${divider}${NC}"
 
 # Activate the custom theme (if configured and WordPress is available)
-if [ -f "web/index.php" ]; then
+if [ -f "${DOCROOT}/index.php" ]; then
   THEME_SLUG=$(ddev exec printenv THEMENAME 2>/dev/null || echo "struts")
   ddev exec "wp theme activate ${THEME_SLUG} --allow-root" 2>/dev/null || echo "Theme activation skipped (theme not found)"
 else
