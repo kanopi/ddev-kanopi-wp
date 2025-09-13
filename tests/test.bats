@@ -16,10 +16,10 @@ health_checks() {
     ddev exec "php --version" | grep "PHP"
     ddev exec "wp --version" | grep "WP-CLI"
     
-    # Check services are running
-    docker ps | grep "ddev-${PROJNAME}-pma"
+    # Check services are running (from DDEV add-ons)
     docker ps | grep "ddev-${PROJNAME}-redis" 
     docker ps | grep "ddev-${PROJNAME}-solr"
+    docker ps | grep "ddev-${PROJNAME}-pma"
     
     # Check custom commands exist (may be skipped if conflicts with existing DDEV commands)
     ddev create-block --help || echo "create-block command exists or skipped due to conflicts"
@@ -34,15 +34,13 @@ health_checks() {
     ddev terminus --help || echo "terminus command exists or skipped due to conflicts"
     
     # Check configuration files exist
-    [ -f ".ddev/config.kanopi.yaml" ]
-    # Local config may not exist depending on installation mode
-    [ -f ".ddev/config.kanopi.local.yaml" ] || echo "Local config not created (depends on installation mode)"
+    # Configuration is now handled via environment variables
     [ -f ".ddev/config/php/php.ini" ]
     [ -f ".ddev/config/nginx/nginx-site.conf" ]
     [ -d ".ddev/config/wp/block-template" ]
     
-    # Check gitignore was updated
-    grep -q "config.kanopi.local.yaml" .gitignore || echo "gitignore should contain config.kanopi.local.yaml"
+    # Check gitignore was updated for add-on settings
+    grep -q "settings.ddev.redis.php" .gitignore || echo "gitignore should contain add-on settings files"
 }
 
 teardown() {
@@ -82,29 +80,21 @@ teardown() {
     health_checks
 }
 
-@test "configuration file generation" {
+@test "environment variable configuration" {
     set -eu -o pipefail
     cd $TESTDIR
     ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
     ddev add-on get $DIR
     ddev start
     
-    # Check that main configuration file was created
-    [ -f ".ddev/config.kanopi.yaml" ]
-    
-    # Check that config files contain expected content
-    grep -q "wordpress:" .ddev/config.kanopi.yaml
-    grep -q "pantheon:" .ddev/config.kanopi.yaml  
-    grep -q "licenses:" .ddev/config.kanopi.yaml
-    grep -q "theme:" .ddev/config.kanopi.yaml
-    
-    # Check local config has commented examples (if it exists)
-    if [ -f ".ddev/config.kanopi.local.yaml" ]; then
-        grep -q "# development:" .ddev/config.kanopi.local.yaml
-        grep -q "# proxy:" .ddev/config.kanopi.local.yaml
-    else
-        echo "Local config file not created (may depend on installation mode)"
-    fi
+    # Check that environment variables were set correctly
+    ddev exec printenv HOSTING_PROVIDER | grep -q "pantheon"
+    ddev exec printenv HOSTING_SITE | grep -q "test-site-123"
+    ddev exec printenv HOSTING_ENV | grep -q "dev"
+    ddev exec printenv THEME | grep -q "wp-content/themes/custom"
+    ddev exec printenv THEMENAME | grep -q "testtheme"
+    ddev exec printenv WP_ADMIN_USER | grep -q "admin"
+    ddev exec printenv WP_ADMIN_EMAIL | grep -q "admin"
 }
 
 @test "interactive installation wizard" {
@@ -113,14 +103,14 @@ teardown() {
     ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
     
     # Test non-interactive mode (should use defaults)
-    export DDEV_NON_INTERACTIVE=true
+    export DDEV_NONINTERACTIVE=true
     ddev add-on get $DIR
     ddev start
     
-    # Check that default values were used
-    [ -f ".ddev/config.kanopi.yaml" ]
-    grep -q "admin_user: \"xxxxxx\"" .ddev/config.kanopi.yaml
-    grep -q "site: \"your-pantheon-site-name\"" .ddev/config.kanopi.yaml
+    # Check that default values were used in environment variables
+    ddev exec printenv HOSTING_PROVIDER | grep -q "pantheon"
+    ddev exec printenv HOSTING_SITE | grep -q "test-site-123"
+    ddev exec printenv WP_ADMIN_USER | grep -q "admin"
 }
 
 @test "block template functionality" {

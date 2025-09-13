@@ -4,9 +4,6 @@ name: ddev-kanopi-wp
 project_files:
 - commands/
 - config/
-- docker-compose.kanopi-wp.yaml
-- config.kanopi.yaml
-- config.kanopi.local.yaml.example
 
 # DDEV version constraint
 ddev_version_constraint: ">= v1.22.0"
@@ -350,6 +347,104 @@ pre_install_actions:
     fi
   fi
 
+# WordPress Admin User configuration intro
+- |
+  #ddev-nodisplay
+  echo ""
+  echo "WordPress Admin Configuration:"
+  echo "Configure the admin user credentials for your WordPress site"
+  echo ""
+
+# WP_ADMIN_USER configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "WP_ADMIN_USER=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing WP_ADMIN_USER from project config.yaml."
+  else
+    printf "👤 Enter WordPress admin username [admin]: "
+  fi
+
+# WP_ADMIN_USER configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set WP_ADMIN_USER
+  if !( {{ contains "WP_ADMIN_USER=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      WP_ADMIN_USER="admin"
+      echo "CI environment detected, using default admin user: $WP_ADMIN_USER"
+    else
+      read WP_ADMIN_USER
+      if [ -z "$WP_ADMIN_USER" ]; then
+        WP_ADMIN_USER="admin"
+        echo "⚠️  Using default admin user: $WP_ADMIN_USER"
+      fi
+    fi
+    echo "WP_ADMIN_USER = '${WP_ADMIN_USER}'"
+    ddev config --web-environment-add WP_ADMIN_USER=${WP_ADMIN_USER}
+    echo "WP_ADMIN_USER set to ${WP_ADMIN_USER}"
+  fi
+
+# WP_ADMIN_PASS configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "WP_ADMIN_PASS=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing WP_ADMIN_PASS from project config.yaml."
+  else
+    printf "🔐 Enter WordPress admin password [admin]: "
+  fi
+
+# WP_ADMIN_PASS configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set WP_ADMIN_PASS
+  if !( {{ contains "WP_ADMIN_PASS=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      WP_ADMIN_PASS="admin"
+      echo "CI environment detected, using default admin password: $WP_ADMIN_PASS"
+    else
+      read WP_ADMIN_PASS
+      if [ -z "$WP_ADMIN_PASS" ]; then
+        WP_ADMIN_PASS="admin"
+        echo "⚠️  Using default admin password: $WP_ADMIN_PASS"
+      fi
+    fi
+    echo "WP_ADMIN_PASS = '${WP_ADMIN_PASS}'"
+    ddev config --web-environment-add WP_ADMIN_PASS=${WP_ADMIN_PASS}
+    echo "WP_ADMIN_PASS set to ${WP_ADMIN_PASS}"
+  fi
+
+# WP_ADMIN_EMAIL configuration - check if exists
+- |
+  #ddev-nodisplay
+  if ({{ contains "WP_ADMIN_EMAIL=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    echo "Using existing WP_ADMIN_EMAIL from project config.yaml."
+  else
+    printf "📧 Enter WordPress admin email [admin@example.com]: "
+  fi
+
+# WP_ADMIN_EMAIL configuration - set value
+- |
+  #ddev-nodisplay
+  #ddev-description:Set WP_ADMIN_EMAIL
+  if !( {{ contains "WP_ADMIN_EMAIL=" (list .DdevProjectConfig.web_environment | toString) }} ); then
+    # Check if running in CI environment
+    if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ] || [ "${DDEV_NONINTERACTIVE:-}" = "true" ]; then
+      WP_ADMIN_EMAIL="admin@example.com"
+      echo "CI environment detected, using default admin email: $WP_ADMIN_EMAIL"
+    else
+      read WP_ADMIN_EMAIL
+      if [ -z "$WP_ADMIN_EMAIL" ]; then
+        WP_ADMIN_EMAIL="admin@example.com"
+        echo "⚠️  Using default admin email: $WP_ADMIN_EMAIL"
+      fi
+    fi
+    echo "WP_ADMIN_EMAIL = '${WP_ADMIN_EMAIL}'"
+    ddev config --web-environment-add WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
+    echo "WP_ADMIN_EMAIL set to ${WP_ADMIN_EMAIL}"
+  fi
+
 # Configuration complete
 - |
   #ddev-nodisplay
@@ -402,23 +497,26 @@ post_install_actions:
   fi  
 
 - |
-  #ddev-description: Install Redis add-on for all configurations
+  #ddev-description: Install required DDEV add-ons
   # Install Redis add-on for all configurations
   echo ""
   echo "📦 Installing Redis add-on..."
   ddev add-on get ddev/ddev-redis  
   echo ""
-  echo "Ignore DDEV Redis settings file"
+  echo "📦 Installing Solr add-on..."
+  ddev add-on get ddev/ddev-solr
+  echo ""
+  echo "📦 Installing PhpMyAdmin add-on..."
+  ddev add-on get ddev/ddev-phpmyadmin
+  echo ""
+  echo "Ignore DDEV add-on settings files"
   echo "settings.ddev.redis.php" >> ../.gitignore
+  echo "settings.ddev.solr.php" >> ../.gitignore
 
 - |
-  #ddev-description: Copy configuration files
-  # Copy config files
+  #ddev-description: WordPress configuration setup
   echo ""
-  echo "📦 Setting up configuration files..."
-  cp config.kanopi.yaml ../config.kanopi.yaml
-  cp config.kanopi.local.yaml.example ../config.kanopi.local.yaml
-  echo ".ddev/config.kanopi.local.yaml" >> ../../.gitignore 2>/dev/null || true
+  echo "📦 WordPress configuration complete - all settings now use environment variables"
   
   # Add ddev-managed settings to wp-config.php
   if [ -f "../../web/wp-config.php" ]; then
@@ -458,12 +556,11 @@ post_install_actions:
   echo "   • Cypress testing integration"
   echo "   • WordPress block creation tools"
   echo "   • Migration and backup utilities"
-  echo "   • Redis add-on installed"
+  echo "   • Redis, Solr, and PhpMyAdmin add-ons installed"
   echo ""
   echo "🔧 Next steps:"
-  echo "   1. Configure your site settings in .ddev/config.kanopi.yaml if needed"
-  echo "   2. Run 'ddev restart' to apply configuration changes"
-  echo "   3. Run 'ddev init' to complete project initialization"
+  echo "   1. Run 'ddev restart' to apply configuration changes"
+  echo "   2. Run 'ddev init' to complete project initialization"
   echo ""
   echo "📚 Run 'ddev help' to see available commands"
   echo ""
@@ -475,12 +572,28 @@ removal_actions:
   echo "🗑️ Removing Kanopi WordPress Add-on..."
   echo ""
   
+  # Remove DDEV add-ons
+  echo "📦 Removing DDEV add-ons..."
+  
   # Remove Redis add-on
-  echo "📦 Removing Redis add-on..."
   if ddev add-on remove ddev-redis 2>/dev/null; then
     echo "✅ Redis add-on removed successfully"
   else
     echo "⚠️ Redis add-on removal failed or not found"
+  fi
+  
+  # Remove Solr add-on
+  if ddev add-on remove ddev-solr 2>/dev/null; then
+    echo "✅ Solr add-on removed successfully"
+  else
+    echo "⚠️ Solr add-on removal failed or not found"
+  fi
+  
+  # Remove PhpMyAdmin add-on
+  if ddev add-on remove ddev-phpmyadmin 2>/dev/null; then
+    echo "✅ PhpMyAdmin add-on removed successfully"
+  else
+    echo "⚠️ PhpMyAdmin add-on removal failed or not found"
   fi
   
   # Remove all custom commands
@@ -517,14 +630,11 @@ removal_actions:
   echo "✅ Custom commands removed"
   
   # Remove config files and nginx config
-  rm -f ../config.kanopi.yaml 2>/dev/null || true
-  rm -f ../config.kanopi.local.yaml 2>/dev/null || true
   rm -rf config 2>/dev/null || true
-  rm -f docker-compose.kanopi-wp.yaml 2>/dev/null || true
   
   # Clean up gitignore
   if [ -f ../../.gitignore ]; then
-    grep -v "config.kanopi.local.yaml\|settings.ddev.redis.php" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
+    grep -v "settings.ddev.redis.php\|settings.ddev.solr.php" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
   fi
   
   # Clean up empty directories
@@ -534,7 +644,7 @@ removal_actions:
   
   echo ""
   echo "✅ Kanopi WordPress Add-on removed successfully!"
-  echo "   • Redis add-on uninstalled"
+  echo "   • Redis, Solr, and PhpMyAdmin add-ons uninstalled"
   echo "   • All 20+ custom commands removed"
   echo "   • Nginx proxy configuration removed"
   echo "   • Environment variables preserved (remove manually if needed)"
