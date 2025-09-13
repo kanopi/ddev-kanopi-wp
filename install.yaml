@@ -528,7 +528,7 @@ post_install_actions:
         echo ""
         echo "// Added for ddev-managed settings in wp-config-ddev.php."
         echo "\$ddev_settings = dirname(__FILE__) . '/wp-config-ddev.php';"
-        echo "if (is_readable(\$ddev_settings) && !defined('DB_USER')) {"
+        echo "if (is_readable(\$ddev_settings)) {"
         echo "  require_once(\$ddev_settings);"
         echo "}"
         echo ""
