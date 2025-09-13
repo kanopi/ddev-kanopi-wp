@@ -7,10 +7,10 @@
 This repository provides a DDEV add-on that configures a WordPress development environment with Kanopi's standard tooling and workflows. It includes:
 
 - **Block Creation Tooling**: Command to generate custom WordPress blocks with proper scaffolding
-- **Pantheon Integration**: Tools for pulling databases and assets from Pantheon hosting
-- **Development Workflow**: Asset compilation, code quality tools, and development server setup
-- **WordPress Configuration**: Pre-configured services including PHPMyAdmin, Redis, and Solr
-- **Premium Plugin Support**: ACF Pro and Gravity Forms integration with license management
+- **Multi-Provider Hosting**: Support for Pantheon, WPEngine, and Kinsta hosting platforms
+- **Development Workflow**: Asset compilation, code quality tools, and development server setup  
+- **WordPress Configuration**: Pre-configured services using official DDEV add-ons (PHPMyAdmin, Redis, Solr)
+- **Environment Variable Configuration**: Clean configuration system without YAML files
 
 This add-on converts the existing Docksal-based Kanopi WordPress workflow to DDEV, providing the same functionality and commands in a DDEV environment.
 
@@ -89,10 +89,11 @@ ddev init
 
 **`ddev configure`** - Interactive setup wizard that prompts you for:
 
-1. **Hosting Provider**: Pantheon, WP Engine, or Kinsta
+1. **Hosting Provider**: Pantheon, WPEngine, or Kinsta
 2. **WordPress Admin**: Username, password, and email
 3. **Hosting Details**: Site-specific configuration (e.g., Pantheon site name)
-4. **Plugin Licenses**: ACF Pro and Gravity Forms keys (optional)
+4. **Theme Configuration**: Theme path and name
+5. **Migration Settings**: Source project for database migrations (optional)
 
 **`ddev init`** - Complete development environment setup that automatically:
 - Start DDEV
@@ -101,7 +102,7 @@ ddev init
 - Add SSH keys for remote access
 - Install Composer dependencies
 - Download WordPress core (if needed)
-- Pull database from Pantheon (if configured)
+- Pull database from hosting provider (if configured)
 - Install theme dependencies and build assets
 - Activate theme and restore admin user
 - Generate admin login link
@@ -120,57 +121,30 @@ ddev restart
 
 **Get your token**: Visit [Pantheon's Machine Token page](https://pantheon.io/docs/machine-tokens/) to create a token.
 
-## Manual Configuration
+## Configuration Management
 
-If you skip the interactive setup or want to edit your configuration later:
+All configuration is handled through environment variables stored in `.ddev/config.yaml`. These are set during the interactive installation or can be updated using the `ddev configure` command.
 
-```yaml
-# Edit .ddev/config.kanopi.yaml
-wordpress:
-  admin_user: "your-admin-username"
-  admin_pass: "your-admin-password"
-  admin_email: "your-email@domain.com"
+**Configuration is stored as environment variables:**
+- `HOSTING_PROVIDER` - Your hosting platform (pantheon/wpengine/kinsta)
+- `HOSTING_SITE` - Your site identifier (e.g., pantheon site name)
+- `HOSTING_ENV` - Default environment for database pulls (dev/staging/live)
+- `THEME` - Path to your custom theme
+- `THEMENAME` - Theme name for development tools
+- `WP_ADMIN_USER` - WordPress admin username
+- `WP_ADMIN_PASS` - WordPress admin password
+- `WP_ADMIN_EMAIL` - WordPress admin email
+- `MIGRATE_DB_SOURCE` - Source project for migrations (optional)
+- `MIGRATE_DB_ENV` - Source environment for migrations (optional)
 
-pantheon:  # Only if using Pantheon
-  site: "your-pantheon-site-name"
-  env: "dev"  # or test, live
-  # Note: Machine token is set globally, not in config files
+**To update configuration:**
+```bash
+# Use the interactive reconfiguration wizard
+ddev configure
 
-licenses:  # Optional premium plugins
-  acf_client_user: "your-acf-license-key"
-  gf_client_user: "your-gravity-forms-license-key"
-```
-
-### Local Configuration Overrides
-
-A local configuration file is automatically created during installation with common settings commented out. This file is automatically added to `.gitignore` to keep personal settings private.
-
-**To customize local settings:**
-
-1. **Edit** `.ddev/config.kanopi.local.yaml`
-2. **Uncomment** any settings you want to override
-3. **Run** `ddev restart` to apply changes
-
-**Common local overrides:**
-```yaml
-# .ddev/config.kanopi.local.yaml
-
-# Enable XDebug for local debugging
-development:
-  xdebug_enabled: true
-
-# Override image proxy settings
-proxy:
-  base_url: "https://test-your-site.pantheonsite.io"
-
-# Override WordPress admin for local development
-wordpress:
-  admin_user: "localadmin"
-  admin_pass: "localpass123"
-
-# Override Pantheon environment for testing
-pantheon:
-  env: "test"  # or "live"
+# Or manually update environment variables
+ddev config --web-environment-add HOSTING_SITE=new-site-name
+ddev restart
 ```
 
 ## Available Commands
@@ -182,7 +156,7 @@ pantheon:
 | `ddev create-block <block-name>` | Create a new WordPress block with proper scaffolding |
 | `ddev development` | Start the development server with file watching |
 | `ddev production` | Build production assets |
-| `ddev refresh` | Pull database from Pantheon and perform local setup |
+| `ddev refresh [env]` | Pull database from hosting provider and perform local setup |
 | `ddev activate-theme` | Activate the custom theme |
 | `ddev restore-admin-user` | Restore the admin user credentials |
 | `ddev phpcs` | Run PHP Code Sniffer |
@@ -194,9 +168,11 @@ pantheon:
 
 ## Services Included
 
-- **PHPMyAdmin**: Database management interface (accessible via `ddev describe`)
-- **Redis**: Object caching for WordPress
-- **Solr**: Search indexing (compatible with Pantheon's Solr configuration)
+All services are provided by official DDEV add-ons:
+
+- **PHPMyAdmin**: Database management interface (via ddev/ddev-phpmyadmin)
+- **Redis**: Object caching for WordPress (via ddev/ddev-redis)  
+- **Solr**: Search indexing compatible with hosting providers (via ddev/ddev-solr)
 
 ## WordPress Configuration
 
@@ -230,21 +206,42 @@ The add-on automatically configures:
    - `editor.scss` - Editor styles
    - `view.js` - Frontend JavaScript
 
-## Pantheon Integration
+## Multi-Provider Hosting Integration
 
-The add-on includes tools for working with Pantheon:
+The add-on supports multiple hosting platforms with provider-specific refresh capabilities:
 
-1. Configure your Pantheon settings in `.ddev/config.kanopi.yaml`
-2. Pull your database: `ddev refresh`
-3. The command will automatically:
-   - Download the database from Pantheon
-   - Perform search/replace for local URLs
-   - Activate your theme
-   - Restore admin user credentials
+### Pantheon
+```bash
+# Set your machine token globally
+ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token
 
-## License Management
+# Pull database from Pantheon
+ddev refresh [environment]
+```
 
-For premium plugins (ACF Pro, Gravity Forms), provide your license keys during the interactive setup or add them to `.ddev/config.kanopi.yaml` under the `licenses` section. The add-on will automatically configure Composer authentication for these plugins.
+### WPEngine  
+```bash
+# Configure SSH access (add your SSH key to WPEngine account)
+ddev auth ssh
+
+# Pull database from WPEngine
+ddev refresh [environment]
+```
+
+### Kinsta
+```bash  
+# Set your API credentials globally
+ddev config global --web-environment-add=KINSTA_API_KEY=your_api_key
+
+# Pull database from Kinsta
+ddev refresh [environment]
+```
+
+All refresh commands automatically:
+- Download the database from your hosting provider
+- Perform search/replace for local URLs  
+- Activate your theme
+- Restore admin user credentials
 
 ## Development Notes
 
