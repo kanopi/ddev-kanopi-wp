@@ -1,8 +1,9 @@
 #!/bin/bash
 
 ## Description: Create a new WordPress block
-## Usage: create-block <block-name>
-## Example: "ddev create-block my-awesome-block"
+## Usage: theme:create-block <block-name>
+## Example: "ddev theme:create-block my-awesome-block"
+## Aliases: create-block,thcb,theme-create-block
 
 #ddev-generated
 
@@ -11,7 +12,7 @@ set -e
 
 # Check if block name is provided
 if [ -z "$1" ]; then
-    echo "Usage: ddev create-block <block-name>"
+    echo "Usage: ddev theme:create-block <block-name>"
     exit 1
 fi
 

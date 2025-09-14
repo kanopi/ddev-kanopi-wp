@@ -153,7 +153,7 @@ ddev restart
 |---------|-------------|
 | `ddev configure` | **Interactive setup wizard** (configure project settings) |
 | `ddev init` | **Initialize complete development environment** (runs all setup commands) |
-| `ddev create-block <block-name>` | Create a new WordPress block with proper scaffolding |
+| `ddev theme:create-block <block-name>` | Create a new WordPress block with proper scaffolding |
 | `ddev theme:watch` | Start the development server with file watching |
 | `ddev theme:build` | Build production assets |
 | `ddev refresh [env]` | Pull database from hosting provider and perform local setup |
@@ -189,7 +189,7 @@ The add-on automatically configures:
 
 1. Create a new block:
    ```bash
-   ddev create-block my-custom-block
+   ddev theme:create-block my-custom-block
    ```
 
 2. Start development:
