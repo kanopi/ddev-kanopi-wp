@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Runs NPX commands on the theme.
-## Usage: npx <command> [args...]
-## Example: ddev npx webpack --watch
+## Usage: theme:npx <command> [args...]
+## Example: ddev theme:npx webpack --watch
+## Aliases: npx,theme-npx
 
 # Abort if anything fails
 set -e

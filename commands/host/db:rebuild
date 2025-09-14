@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Runs composer install and database refresh.
-## Usage: rebuild
-## Example: "ddev rebuild"
+## Usage: db:rebuild
+## Example: "ddev db:rebuild"
+## Aliases: rebuild,db-rebuild,dbreb
 ## OSTypes: darwin,linux
 
 green='\033[0;32m'
@@ -16,7 +17,7 @@ echo -e "${green}${divider}${NC}"
 ddev composer install
 
 # Database.
-ddev refresh
+ddev db:refresh
 
 echo "Flush WordPress cache"
 ddev exec "wp cache flush --allow-root" 2>/dev/null || echo "Cache flush completed"

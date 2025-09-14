@@ -157,20 +157,22 @@ ddev restart
 | `ddev cypress:run <command>` | Host | Run Cypress commands with environment support | `ddev cypress:run open` | cy, cypress, cypress-run, cyr |
 | `ddev cypress:users` | Host | Create default admin user for Cypress testing | `ddev cypress:users` | cyu, cypress-users |
 | `ddev init` | Host | **Initialize complete development environment** (runs all setup commands) | `ddev init` | - |
-| `ddev npm <command>` | Web | Run npm commands (automatically runs in theme directory if available) | `ddev npm run build` | - |
 | `ddev open [service]` | Web | Open the site or admin in your default browser | `ddev open` or `ddev open cms` | - |
 | `ddev pantheon:testenv <name> [type]` | Host | Create isolated testing environment (fresh or existing) | `ddev pantheon:testenv my-test fresh` | testenv, pantheon-testenv |
 | `ddev pantheon:terminus <command>` | Host | Run Terminus commands for Pantheon integration | `ddev pantheon:terminus site:list` | terminus, pantheon-terminus |
 | `ddev pantheon:tickle` | Web | Keep Pantheon environment awake during long operations | `ddev pantheon:tickle` | tickle, pantheon-tickle |
-| `ddev phpcbf` | Host | Run PHP Code Beautifier and Fixer | `ddev phpcbf` | - |
-| `ddev phpcs` | Host | Run PHP Code Sniffer | `ddev phpcs` | - |
+| `ddev phpmyadmin` | Host | Launch PhpMyAdmin database interface | `ddev phpmyadmin` | - |
+| `ddev db:prep-migrate` | Web | Create secondary database for migrations | `ddev db:prep-migrate` | migrate-prep-db, db-prep-migrate, db-mpdb |
+| `ddev db:rebuild` | Host | Run composer install followed by database refresh | `ddev db:rebuild` | rebuild, db-rebuild, dbreb |
+| `ddev db:refresh [env]` | Web | Pull database from hosting provider and perform local setup | `ddev db:refresh live` | refresh, db-refresh, dbref |
 | `ddev project:configure` | Host | **Interactive setup wizard** (configure project settings) | `ddev project:configure` | configure, project-configure, prc |
-| `ddev refresh [env]` | Host | Pull database from hosting provider and perform local setup | `ddev refresh live` | - |
-| `ddev restore-admin-user` | Web | Restore the admin user credentials | `ddev restore-admin-user` | - |
+| `ddev wp:restore-admin-user` | Web | Restore the admin user credentials | `ddev wp:restore-admin-user` | restore-admin-user, wp-restore-admin-user, wp-rau |
 | `ddev theme:activate` | Web | Activate the custom theme | `ddev theme:activate` | activate-theme, tha, theme-activate |
 | `ddev theme:build` | Web | Build production assets | `ddev theme:build` | production, theme-build, thb, theme-production |
 | `ddev theme:create-block <block-name>` | Web | Create a new WordPress block with proper scaffolding | `ddev theme:create-block my-block` | create-block, thcb, theme-create-block |
 | `ddev theme:install` | Web | Set up Node.js, NPM, and build tools using .nvmrc | `ddev theme:install` | install-theme-tools, thi, theme-install |
+| `ddev theme:npm <command>` | Web | Run npm commands (automatically runs in theme directory if available) | `ddev theme:npm run build` | npm, theme-npm |
+| `ddev theme:npx <command>` | Web | Run NPX commands in theme directory | `ddev theme:npx webpack --watch` | npx, theme-npx |
 | `ddev theme:watch` | Web | Start the development server with file watching | `ddev theme:watch` | development, thw, theme-watch, theme-development |
 
 ## Services Included

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
 ## Description: Runs NPM commands on the theme.
-## Usage: npm <command> [args...]
-## Example: ddev npm install
-##          ddev npm run build
+## Usage: theme:npm <command> [args...]
+## Example: ddev theme:npm install
+##          ddev theme:npm run build
+## Aliases: npm,theme-npm
 
 # Abort if anything fails
 set -e
