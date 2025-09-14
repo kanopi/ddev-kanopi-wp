@@ -23,15 +23,13 @@ health_checks() {
     docker ps | grep "ddev-${PROJNAME}-pma"
     
     # Check custom commands exist (may be skipped if conflicts with existing DDEV commands)
-    ddev create-block --help || echo "create-block command exists or skipped due to conflicts"
-    ddev development --help || echo "development command exists or skipped due to conflicts"
-    ddev production --help || echo "production command exists or skipped due to conflicts"
-    ddev refresh --help || echo "refresh command exists or skipped due to conflicts"
-    ddev activate-theme --help || echo "activate-theme command exists or skipped due to conflicts"
-    ddev restore-admin-user --help || echo "restore-admin-user command exists or skipped due to conflicts"
-    ddev phpcs --help || echo "phpcs command exists or skipped due to conflicts"
-    ddev phpcbf --help || echo "phpcbf command exists or skipped due to conflicts"
-    ddev npm --help || echo "npm command exists or skipped due to conflicts"
+    ddev theme:create-block --help || echo "theme:create-block command exists or skipped due to conflicts"
+    ddev theme:watch --help || echo "theme:watch command exists or skipped due to conflicts"
+    ddev theme:build --help || echo "theme:build command exists or skipped due to conflicts"
+    ddev db:refresh --help || echo "db:refresh command exists or skipped due to conflicts"
+    ddev theme:activate --help || echo "theme:activate command exists or skipped due to conflicts"
+    ddev wp:restore-admin-user --help || echo "wp:restore-admin-user command exists or skipped due to conflicts"
+    ddev theme:npm --help || echo "theme:npm command exists or skipped due to conflicts"
     ddev pantheon:terminus --help || echo "pantheon:terminus command exists or skipped due to conflicts"
     
     # Check configuration files exist
@@ -130,11 +128,11 @@ teardown() {
     # Check that block template directory exists
     [ -d ".ddev/config/wp/block-template" ]
     
-    # Check that create-block command exists and has proper structure
-    ddev exec "command -v create-block >/dev/null 2>&1" || echo "create-block command should exist"
-    
+    # Check that theme:create-block command exists and has proper structure
+    ddev exec "command -v theme:create-block >/dev/null 2>&1" || echo "theme:create-block command should exist"
+
     # Test block creation (this will fail without proper theme structure, but command should exist)
-    ddev create-block test-block || echo "create-block command executed (may fail without theme)"
+    ddev theme:create-block test-block || echo "theme:create-block command executed (may fail without theme)"
 }
 
 @test "docker services" {
