@@ -6,9 +6,6 @@
 
 #ddev-generated
 
-# Note: This command doesn't require config.kanopi.yaml
-# Configuration is handled by composer.json and phpcs.xml
-
 echo "Running PHP Code Sniffer..."
 
 ddev exec composer phpcs

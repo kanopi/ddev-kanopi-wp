@@ -6,11 +6,9 @@
 ##        ddev open      # Opens the site
 ##        ddev open cms  # Opens WordPress admin
 
-#ddev-generated
-
 SERVICE="${1:-}"
 
-if [ "$SERVICE" = "cms" ]; then
+if [ "$SERVICE" = "cms" ] || [ "$SERVICE" = "admin" ]; then
     echo "Opening WordPress admin..."
     if command -v xdg-open >/dev/null 2>&1; then
         xdg-open "https://${DDEV_SITENAME}.ddev.site/wp-admin"

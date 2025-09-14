@@ -158,8 +158,7 @@ ddev restart
 | `ddev cypress:users` | Host | Create default admin user for Cypress testing | `ddev cypress:users` | cyu, cypress-users |
 | `ddev init` | Host | **Initialize complete development environment** (runs all setup commands) | `ddev init` | - |
 | `ddev npm <command>` | Web | Run npm commands (automatically runs in theme directory if available) | `ddev npm run build` | - |
-| `ddev open` | Host | Open the site in your default browser | `ddev open` | - |
-| `ddev open cms` | Host | Open WordPress admin in your default browser | `ddev open cms` | - |
+| `ddev open [service]` | Web | Open the site or admin in your default browser | `ddev open` or `ddev open cms` | - |
 | `ddev pantheon:testenv <name> [type]` | Host | Create isolated testing environment (fresh or existing) | `ddev pantheon:testenv my-test fresh` | testenv, pantheon-testenv |
 | `ddev pantheon:terminus <command>` | Host | Run Terminus commands for Pantheon integration | `ddev pantheon:terminus site:list` | terminus, pantheon-terminus |
 | `ddev pantheon:tickle` | Web | Keep Pantheon environment awake during long operations | `ddev pantheon:tickle` | tickle, pantheon-tickle |

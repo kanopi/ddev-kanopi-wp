@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-## Description: Runs NPX commands on the theme.
-## Usage: npx <command> [args...]
-## Example: ddev npx webpack --watch
+## Description: Runs NPM commands on the theme.
+## Usage: npm <command> [args...]
+## Example: ddev npm install
+##          ddev npm run build
 
 # Abort if anything fails
 set -e
@@ -17,7 +18,7 @@ if [ -n "$THEME_PATH" ]; then
 
     if [ -d "${FULL_THEME_PATH}" ]; then
         cd "${FULL_THEME_PATH}"
-        npx "$@"
+        npm "$@"
     else
         echo "Theme directory not found: ${FULL_THEME_PATH}"
         echo "Please ensure your theme is located at the correct path or update THEME environment variable in .ddev/config.yaml"
@@ -25,5 +26,5 @@ if [ -n "$THEME_PATH" ]; then
     fi
 else
     # Run in project root if no theme configured
-    npx "$@"
+    npm "$@"
 fi
