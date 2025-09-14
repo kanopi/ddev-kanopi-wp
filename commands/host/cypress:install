@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Install the node packages for cypress on the developers local machine
-## Usage: install-cypress
-## Example: "ddev install-cypress"
+## Usage: cypress:install
+## Example: "ddev cypress:install"
+## Aliases: cyi,cypress-install,install-cypress
 ## OSTypes: darwin,linux
 
 # Make sure NVM works

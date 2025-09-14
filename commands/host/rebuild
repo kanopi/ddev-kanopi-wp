@@ -24,4 +24,4 @@ ddev exec "wp cache flush --allow-root" 2>/dev/null || echo "Cache flush complet
 echo "Update WordPress database"
 ddev exec "wp core update-db --allow-root" 2>/dev/null || echo "Database update completed"
 
-ddev cypress-users
+ddev cypress:users
