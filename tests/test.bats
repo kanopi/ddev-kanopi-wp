@@ -5,6 +5,7 @@
 setup() {
     export PROJNAME=test-kanopi-wp
     export TESTDIR=~/tmp/$PROJNAME
+    export DIR=${BATS_TEST_DIRNAME}/..
     mkdir -p $TESTDIR && cd $TESTDIR
     export DDEV_NONINTERACTIVE=true
     ddev delete -Oy $PROJNAME >/dev/null 2>&1 || true
