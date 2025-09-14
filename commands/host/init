@@ -27,8 +27,8 @@ lock='\xF0\x9F\x94\x92'
 arm='\xF0\x9F\x92\xAA'
 
 # WordPress-specific commands
-theme_dev_command='ddev development'
-theme_build_command='ddev production'
+theme_dev_command='ddev theme:watch'
+theme_build_command='ddev theme:build'
 
 # Handle Pantheon mu-plugin conflicts early (before any wp-cli commands)
 echo -e "\n${construction} ${yellow} Checking for Pantheon mu-plugin conflicts...${NC} ${construction}\n"

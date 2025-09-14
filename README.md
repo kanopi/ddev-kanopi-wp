@@ -154,10 +154,10 @@ ddev restart
 | `ddev configure` | **Interactive setup wizard** (configure project settings) |
 | `ddev init` | **Initialize complete development environment** (runs all setup commands) |
 | `ddev create-block <block-name>` | Create a new WordPress block with proper scaffolding |
-| `ddev development` | Start the development server with file watching |
-| `ddev production` | Build production assets |
+| `ddev theme:watch` | Start the development server with file watching |
+| `ddev theme:build` | Build production assets |
 | `ddev refresh [env]` | Pull database from hosting provider and perform local setup |
-| `ddev activate-theme` | Activate the custom theme |
+| `ddev theme:activate` | Activate the custom theme |
 | `ddev restore-admin-user` | Restore the admin user credentials |
 | `ddev phpcs` | Run PHP Code Sniffer |
 | `ddev phpcbf` | Run PHP Code Beautifier and Fixer |
@@ -194,7 +194,7 @@ The add-on automatically configures:
 
 2. Start development:
    ```bash
-   ddev development
+   ddev theme:watch
    ```
 
 3. Your block will be created in `web/wp-content/themes/custom/struts/assets/src/blocks/my-custom-block/` with:

@@ -1,8 +1,9 @@
 #!/bin/bash
 
-## Description: Run @wordpress/scripts in development mode for the theme
-## Usage: development
-## Example: "ddev development"
+## Description: Build production assets for the theme
+## Usage: theme:build
+## Example: "ddev theme:build"
+## Aliases: production,theme-build,thb,theme-production
 
 #ddev-generated
 
@@ -25,7 +26,7 @@ if [ ! -f "$THEME_PATH/package.json" ]; then
     exit 1
 fi
 
-echo "Starting development server for theme at: $THEME_PATH"
+echo "Building production assets for theme at: $THEME_PATH"
 cd "$THEME_PATH"
 
 # Install dependencies if node_modules doesn't exist
@@ -34,5 +35,7 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-# Start the development server
-npm run start
+# Build production assets
+npm run build
+
+echo "Production build completed successfully!"

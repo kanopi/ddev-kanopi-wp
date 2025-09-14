@@ -131,7 +131,7 @@ wp plugin deactivate wp-health --allow-root 2>/dev/null || true
 
 # Activate theme
 echo -e "${yellow}Activating theme...${NC}"
-ddev activate-theme 2>/dev/null || echo "Theme activation command not available"
+ddev theme:activate 2>/dev/null || echo "Theme activation command not available"
 
 # Restore admin user
 echo -e "${yellow}Restoring admin user...${NC}"

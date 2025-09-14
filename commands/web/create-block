@@ -81,4 +81,4 @@ find "$NEW_BLOCK_DIR" -type f | while read -r FILE; do
 done
 
 echo "Block created successfully at: ${NEW_BLOCK_DIR}"
-echo "Run 'ddev development' to start the development server and begin working on your block."
+echo "Run 'ddev theme:watch' to start the development server and begin working on your block."

@@ -185,7 +185,7 @@ ddev restore-admin-user 2>/dev/null || echo "Admin user restoration command not 
 
 # Activate theme
 echo -e "${yellow}Activating theme...${NC}"
-ddev activate-theme 2>/dev/null || echo "Theme activation command not available"
+ddev theme:activate 2>/dev/null || echo "Theme activation command not available"
 
 echo -e "${green}${divider}${NC}"
 echo -e "${green}Kinsta database refresh complete!${NC}"
