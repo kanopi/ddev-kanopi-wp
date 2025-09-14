@@ -635,6 +635,7 @@ removal_actions:
   rm -f commands/host/install-cypress 2>/dev/null || true
   rm -f commands/host/phpmyadmin 2>/dev/null || true
   rm -f commands/host/rebuild 2>/dev/null || true
+  rm -f commands/host/db:rebuild 2>/dev/null || true
   rm -f commands/host/testenv 2>/dev/null || true
   rm -f commands/host/configure 2>/dev/null || true
   rm -f commands/host/npm 2>/dev/null || true
@@ -647,6 +648,9 @@ removal_actions:
   rm -f commands/web/install-theme-tools 2>/dev/null || true
   rm -f commands/web/migrate-prep-db 2>/dev/null || true
   rm -f commands/web/npx 2>/dev/null || true
+  rm -f commands/web/db:prep-migrate 2>/dev/null || true
+  rm -f commands/web/theme:npm 2>/dev/null || true
+  rm -f commands/web/theme:npx 2>/dev/null || true
   rm -f commands/web/tickle 2>/dev/null || true
   rm -f commands/web/activate-theme 2>/dev/null || true
   rm -f commands/web/create-block 2>/dev/null || true
@@ -655,6 +659,8 @@ removal_actions:
   rm -f commands/web/production 2>/dev/null || true
   rm -f commands/web/refresh 2>/dev/null || true
   rm -f commands/web/restore-admin-user 2>/dev/null || true
+  rm -f commands/web/db:refresh 2>/dev/null || true
+  rm -f commands/web/wp:restore-admin-user 2>/dev/null || true
   
   echo "✅ Custom commands removed"
   

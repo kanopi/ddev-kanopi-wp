@@ -1,0 +1,95 @@
+name: Test DDEV Kanopi WordPress Add-on
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '25 08 * * *'
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        type: boolean
+        description: 'Enable debug mode'
+        required: false
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        ddev-version: [stable, HEAD]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Environment setup
+        run: |
+          # Configure DDEV environment for add-on testing
+          mkdir -p ~/.ddev
+          echo "instrumentation_opt_in: false" > ~/.ddev/global_config.yaml
+          echo "omit_containers: [ddev-ssh-agent]" >> ~/.ddev/global_config.yaml
+          echo "use_dns_when_possible: false" >> ~/.ddev/global_config.yaml
+          echo "router_bind_all_interfaces: true" >> ~/.ddev/global_config.yaml
+
+          # Set up dummy Terminus token for testing
+          echo "web_environment:" >> ~/.ddev/global_config.yaml
+          echo "  - TERMINUS_MACHINE_TOKEN=test_token_for_ci" >> ~/.ddev/global_config.yaml
+
+      - uses: ddev/github-action-add-on-test@v2
+        with:
+          ddev_version: ${{ matrix.ddev-version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          addon_repository: ${{ github.repository }}
+          addon_ref: ${{ github.ref }}
+          debug_enabled: ${{ github.event.inputs.debug_enabled }}
+
+  # Extended test using comprehensive bats tests
+  extended-test:
+    runs-on: ubuntu-latest
+    needs: test # Run after the standard test passes
+    if: success()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install DDEV
+        run: |
+          curl -fsSL https://ddev.com/install.sh | bash
+          echo "$HOME/.ddev/bin" >> $GITHUB_PATH
+
+      - name: Configure DDEV for extended testing
+        run: |
+          mkdir -p ~/.ddev
+          echo "instrumentation_opt_in: false" > ~/.ddev/global_config.yaml
+          echo "use_dns_when_possible: false" >> ~/.ddev/global_config.yaml
+          echo "web_environment:" >> ~/.ddev/global_config.yaml
+          echo "  - TERMINUS_MACHINE_TOKEN=test_token_for_ci" >> ~/.ddev/global_config.yaml
+
+      - name: Install bats-core
+        run: |
+          git clone https://github.com/bats-core/bats-core.git /tmp/bats-core
+          cd /tmp/bats-core
+          sudo ./install.sh /usr/local
+
+      - name: Run comprehensive bats tests
+        run: |
+          export CI=true
+          export GITHUB_ACTIONS=true
+          export PATH="$HOME/.ddev/bin:$PATH"
+
+          echo "BATS version:"
+          bats --version
+          echo "Running comprehensive bats tests"
+          bats --verbose-run tests/test.bats

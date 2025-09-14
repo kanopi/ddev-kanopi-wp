@@ -9,8 +9,8 @@
 #ddev-generated
 
 # Load configuration with local override support
-source /var/www/html/.ddev/config/helpers/load-config.sh
-load_kanopi_config "/var/www/html/.ddev"
+source /var/www/html/scripts/load-config.sh
+load_kanopi_config
 
 echo "Restoring admin user: $WP_ADMIN_USER"
 
