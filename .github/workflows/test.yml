@@ -55,8 +55,8 @@ jobs:
           addon_ref: ${{ github.ref }}
           debug_enabled: ${{ github.event.inputs.debug_enabled }}
 
-  # Extended test using comprehensive bats tests
-  extended-test:
+  # Comprehensive test using extended bats tests
+  comprehensive-test:
     runs-on: ubuntu-latest
     needs: test # Run after the standard test passes
     if: success()
