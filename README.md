@@ -81,13 +81,13 @@ After installation, configure and initialize your development environment:
 
 ```bash
 # 1. Configure your project settings (interactive wizard)
-ddev configure
+ddev project:configure
 
 # 2. Initialize your complete development environment
 ddev init
 ```
 
-**`ddev configure`** - Interactive setup wizard that prompts you for:
+**`ddev project:configure`** - Interactive setup wizard that prompts you for:
 
 1. **Hosting Provider**: Pantheon, WPEngine, or Kinsta
 2. **WordPress Admin**: Username, password, and email
@@ -123,7 +123,7 @@ ddev restart
 
 ## Configuration Management
 
-All configuration is handled through environment variables stored in `.ddev/config.yaml`. These are set during the interactive installation or can be updated using the `ddev configure` command.
+All configuration is handled through environment variables stored in `.ddev/config.yaml`. These are set during the interactive installation or can be updated using the `ddev project:configure` command.
 
 **Configuration is stored as environment variables:**
 - `HOSTING_PROVIDER` - Your hosting platform (pantheon/wpengine/kinsta)
@@ -140,7 +140,7 @@ All configuration is handled through environment variables stored in `.ddev/conf
 **To update configuration:**
 ```bash
 # Use the interactive reconfiguration wizard
-ddev configure
+ddev project:configure
 
 # Or manually update environment variables
 ddev config --web-environment-add HOSTING_SITE=new-site-name
@@ -151,7 +151,7 @@ ddev restart
 
 | Command | Description |
 |---------|-------------|
-| `ddev configure` | **Interactive setup wizard** (configure project settings) |
+| `ddev project:configure` | **Interactive setup wizard** (configure project settings) |
 | `ddev init` | **Initialize complete development environment** (runs all setup commands) |
 | `ddev theme:create-block <block-name>` | Create a new WordPress block with proper scaffolding |
 | `ddev theme:watch` | Start the development server with file watching |

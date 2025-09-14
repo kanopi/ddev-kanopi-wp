@@ -1,8 +1,9 @@
 #!/bin/bash
 
 ## Description: Interactive reconfiguration wizard for Kanopi WordPress DDEV
-## Usage: configure
-## Example: "ddev configure"
+## Usage: project:configure
+## Example: "ddev project:configure"
+## Aliases: configure,project-configure,prc
 
 #ddev-generated
 
