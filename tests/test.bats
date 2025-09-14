@@ -31,7 +31,7 @@ health_checks() {
     ddev phpcs --help || echo "phpcs command exists or skipped due to conflicts"
     ddev phpcbf --help || echo "phpcbf command exists or skipped due to conflicts"
     ddev npm --help || echo "npm command exists or skipped due to conflicts"
-    ddev terminus --help || echo "terminus command exists or skipped due to conflicts"
+    ddev pantheon:terminus --help || echo "pantheon:terminus command exists or skipped due to conflicts"
     
     # Check configuration files exist
     # Configuration is now handled via environment variables

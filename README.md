@@ -149,22 +149,30 @@ ddev restart
 
 ## Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `ddev project:configure` | **Interactive setup wizard** (configure project settings) |
-| `ddev init` | **Initialize complete development environment** (runs all setup commands) |
-| `ddev theme:create-block <block-name>` | Create a new WordPress block with proper scaffolding |
-| `ddev theme:watch` | Start the development server with file watching |
-| `ddev theme:build` | Build production assets |
-| `ddev refresh [env]` | Pull database from hosting provider and perform local setup |
-| `ddev theme:activate` | Activate the custom theme |
-| `ddev restore-admin-user` | Restore the admin user credentials |
-| `ddev phpcs` | Run PHP Code Sniffer |
-| `ddev phpcbf` | Run PHP Code Beautifier and Fixer |
-| `ddev npm <command>` | Run npm commands (automatically runs in theme directory if available) |
-| `ddev terminus <command>` | Run Terminus commands for Pantheon integration |
-| `ddev open` | Open the site in your default browser |
-| `ddev open cms` | Open WordPress admin in your default browser |
+| Command | Type | Description | Example | Aliases |
+|---------|------|-------------|---------|---------|
+| `ddev critical:install` | Web | Install Critical CSS generation tools | `ddev critical:install` | install-critical-tools, cri, critical-install |
+| `ddev critical:run` | Web | Run Critical CSS generation | `ddev critical:run` | critical, crr, critical-run |
+| `ddev cypress:install` | Host | Install Cypress E2E testing dependencies | `ddev cypress:install` | cyi, cypress-install, install-cypress |
+| `ddev cypress:run <command>` | Host | Run Cypress commands with environment support | `ddev cypress:run open` | cy, cypress, cypress-run, cyr |
+| `ddev cypress:users` | Host | Create default admin user for Cypress testing | `ddev cypress:users` | cyu, cypress-users |
+| `ddev init` | Host | **Initialize complete development environment** (runs all setup commands) | `ddev init` | - |
+| `ddev npm <command>` | Web | Run npm commands (automatically runs in theme directory if available) | `ddev npm run build` | - |
+| `ddev open` | Host | Open the site in your default browser | `ddev open` | - |
+| `ddev open cms` | Host | Open WordPress admin in your default browser | `ddev open cms` | - |
+| `ddev pantheon:testenv <name> [type]` | Host | Create isolated testing environment (fresh or existing) | `ddev pantheon:testenv my-test fresh` | testenv, pantheon-testenv |
+| `ddev pantheon:terminus <command>` | Host | Run Terminus commands for Pantheon integration | `ddev pantheon:terminus site:list` | terminus, pantheon-terminus |
+| `ddev pantheon:tickle` | Web | Keep Pantheon environment awake during long operations | `ddev pantheon:tickle` | tickle, pantheon-tickle |
+| `ddev phpcbf` | Host | Run PHP Code Beautifier and Fixer | `ddev phpcbf` | - |
+| `ddev phpcs` | Host | Run PHP Code Sniffer | `ddev phpcs` | - |
+| `ddev project:configure` | Host | **Interactive setup wizard** (configure project settings) | `ddev project:configure` | configure, project-configure, prc |
+| `ddev refresh [env]` | Host | Pull database from hosting provider and perform local setup | `ddev refresh live` | - |
+| `ddev restore-admin-user` | Web | Restore the admin user credentials | `ddev restore-admin-user` | - |
+| `ddev theme:activate` | Web | Activate the custom theme | `ddev theme:activate` | activate-theme, tha, theme-activate |
+| `ddev theme:build` | Web | Build production assets | `ddev theme:build` | production, theme-build, thb, theme-production |
+| `ddev theme:create-block <block-name>` | Web | Create a new WordPress block with proper scaffolding | `ddev theme:create-block my-block` | create-block, thcb, theme-create-block |
+| `ddev theme:install` | Web | Set up Node.js, NPM, and build tools using .nvmrc | `ddev theme:install` | install-theme-tools, thi, theme-install |
+| `ddev theme:watch` | Web | Start the development server with file watching | `ddev theme:watch` | development, thw, theme-watch, theme-development |
 
 ## Services Included
 

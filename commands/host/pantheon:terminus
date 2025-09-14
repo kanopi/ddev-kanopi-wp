@@ -2,10 +2,11 @@
 
 ## Run Terminus commands in the web container
 ##
-## Usage: terminus <command> [args...]
-##        ddev terminus site:list
-##        ddev terminus backup:create site.env --element=database
-##        ddev terminus backup:get site.env --element=database
+## Usage: pantheon:terminus <command> [args...]
+##        ddev pantheon:terminus site:list
+##        ddev pantheon:terminus backup:create site.env --element=database
+##        ddev pantheon:terminus backup:get site.env --element=database
+## Aliases: terminus,pantheon-terminus
 
 #ddev-generated
 

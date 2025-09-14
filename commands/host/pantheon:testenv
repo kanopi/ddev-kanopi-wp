@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+## Description: Initialize stack and testing environment in DDEV.
+## Usage: pantheon:testenv [environment_name] [optional install_type]
+## Example: ddev pantheon:testenv my-env fresh
+## Aliases: testenv,pantheon-testenv
+## OSTypes: darwin,linux
+
+# Abort if anything fails
+set -e
+
+#-------------------------- Helper functions ------------------------------
+
+green='\033[0;32m'
+yellow='\033[1;33m'
+NC='\033[0m'
+
+divider='===================================================\n'
+construction='\xF0\x9F\x9A\xA7'
+lock='\xF0\x9F\x94\x92'
+party='\xF0\x9F\x8E\x88 \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x8A'
+reverseparty='\xF0\x9F\x8E\x8A \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x88'
+shark='\xF0\x9F\xA6\x88'
+key='\xF0\x9F\x94\x91'
+
+#-------------------------- Execution -------------------------------------
+
+# Check if at least one argument is provided.
+if [ -z "$1" ]; then
+    echo -e "\n ❌  Usage: ddev pantheon:testenv <environment_name> [optional install_type]"
+    echo -e "    install_type: fresh (clean WordPress install) or existing (use current database)"
+    exit 1
+fi
+
+# Set the variables from the inputs.
+# Default to "fresh" install if not provided.
+ENVNAME=$1
+INSTALL_TYPE=${2:-fresh}
+
+echo -e "\n${construction} ${yellow} Initializing test environment: ${ENVNAME} ${NC} ${construction}"
+echo -e "${green}${divider}${NC}"
+
+# Ensure we are in the project root.
+cd ${DDEV_APPROOT}
+
+echo -e "\n${construction} ${yellow} Initializing Cypress.${NC} ${construction}\n"
+echo -e "This should require no input."
+echo -e "${green}${divider}${NC}"
+ddev cypress:install
+
+# Site initialization.
+echo -e "\n${construction} ${yellow} Composer install...${NC} ${construction}\n"
+echo -e "This should require no input."
+echo -e "${green}${divider}${NC}"
+ddev composer install
+
+# WordPress installation based on type
+if [ "$INSTALL_TYPE" = "fresh" ]; then
+    echo -e "\n${construction} ${yellow} Installing fresh WordPress...${NC} ${construction}\n"
+    ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='Test Environment: ${ENVNAME}' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=/var/www/html/web --allow-root"
+    ddev cypress:users
+else
+    echo -e "\n${construction} ${yellow} Using existing WordPress database...${NC} ${construction}\n"
+    ddev exec "wp core update-db --allow-root" 2>/dev/null || echo "Database update completed"
+fi
+
+# Generate login link
+echo -e "\n ${key} ${yellow} Generating login link. ${NC} ${key}"
+LOGIN_URL=$(ddev exec "wp user generate-login-url admin --allow-root" 2>/dev/null || echo "Login link generation failed")
+
+# Complete
+echo -e "\n ${party} ${yellow} Build complete!!! ${NC} ${reverseparty}"
+if [ "$LOGIN_URL" != "Login link generation failed" ]; then
+    echo -e "Admin login: ${yellow}${LOGIN_URL}${NC}"
+fi
+echo -e "${green}${divider}${NC}"
