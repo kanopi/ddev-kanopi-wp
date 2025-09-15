@@ -67,7 +67,7 @@ jobs:
       - name: Install DDEV
         run: |
           curl -fsSL https://ddev.com/install.sh | bash
-          echo "$HOME/.ddev/bin" >> $GITHUB_PATH
+          echo "/usr/local/bin" >> $GITHUB_PATH
 
       - name: Configure DDEV for extended testing
         run: |

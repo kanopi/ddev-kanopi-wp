@@ -35,7 +35,8 @@ jobs:
           command: |
             # Install DDEV stable version
             curl -fsSL https://ddev.com/install.sh | bash
-            echo "$HOME/.ddev/bin" >> $BASH_ENV
+            # DDEV installs to /usr/local/bin, add it to PATH if not already there
+            echo 'export PATH="/usr/local/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
             ddev version
 
@@ -56,6 +57,7 @@ jobs:
       - run:
           name: Basic DDEV usage test
           command: |
+            source $BASH_ENV
             ddev version
             mkdir -p ~/tmp/test-addon-test
             cd ~/tmp/test-addon-test
@@ -67,6 +69,7 @@ jobs:
       - run:
           name: Install add-on and run tests
           command: |
+            source $BASH_ENV
             export DIR="$(pwd)"
             echo "BATS version:"
             bats --version
