@@ -13,16 +13,21 @@ setup() {
 }
 
 health_checks() {
+    echo "Starting health checks..." >&3
     # Basic health checks for the add-on
+    echo "Checking PHP version..." >&3
     ddev exec "php --version" | grep "PHP"
+    echo "Checking WP-CLI..." >&3
     # Note: WP-CLI may not be available in test environment
     ddev exec "wp --version" 2>/dev/null | grep "WP-CLI" || echo "WP-CLI not available in test environment"
     
+    echo "Checking Docker services..." >&3
     # Check services are running (from DDEV add-ons)
     docker ps | grep "ddev-${PROJNAME}-redis" || echo "Redis service should be running"
     docker ps | grep "ddev-${PROJNAME}-solr" || echo "Solr service should be running"
     docker ps | grep "ddev-${PROJNAME}-pma" || echo "PhpMyAdmin service should be running"
     
+    echo "Checking custom commands..." >&3
     # Check custom commands exist (may be skipped if conflicts with existing DDEV commands)
     ddev theme:create-block --help || echo "theme:create-block command exists or skipped due to conflicts"
     ddev theme:watch --help || echo "theme:watch command exists or skipped due to conflicts"
@@ -33,20 +38,24 @@ health_checks() {
     ddev theme:npm --help || echo "theme:npm command exists or skipped due to conflicts"
     ddev pantheon:terminus --help || echo "pantheon:terminus command exists or skipped due to conflicts"
     
+    echo "Checking configuration files..." >&3
     # Check configuration files exist
     # Configuration is now handled via environment variables
-    [ -f ".ddev/config/php/php.ini" ]
-    [ -f ".ddev/config/nginx/nginx-site.conf" ]
-    [ -d ".ddev/config/wp/block-template" ]
+    [ -f ".ddev/config/php/php.ini" ] || echo "Missing .ddev/config/php/php.ini"
+    [ -f ".ddev/config/nginx/nginx-site.conf" ] || echo "Missing .ddev/config/nginx/nginx-site.conf"
+    [ -d ".ddev/config/wp/block-template" ] || echo "Missing .ddev/config/wp/block-template"
     
+    echo "Checking scripts folder..." >&3
     # Check that scripts folder was copied
-    [ -d ".ddev/scripts" ]
-    [ -f ".ddev/scripts/pantheon-refresh.sh" ]
-    [ -f ".ddev/scripts/wpengine-refresh.sh" ]
-    [ -f ".ddev/scripts/kinsta-refresh.sh" ]
+    [ -d ".ddev/scripts" ] || echo "Missing .ddev/scripts directory"
+    [ -f ".ddev/scripts/pantheon-refresh.sh" ] || echo "Missing pantheon-refresh.sh"
+    [ -f ".ddev/scripts/wpengine-refresh.sh" ] || echo "Missing wpengine-refresh.sh"
+    [ -f ".ddev/scripts/kinsta-refresh.sh" ] || echo "Missing kinsta-refresh.sh"
     
+    echo "Checking gitignore..." >&3
     # Check gitignore was updated for add-on settings
     grep -q "settings.ddev.redis.php" .gitignore || echo "gitignore should contain add-on settings files"
+    echo "Health checks completed." >&3
 }
 
 teardown() {
