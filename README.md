@@ -1,7 +1,6 @@
 # DDEV Kanopi WordPress Add-on
 
 [![tests](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/test.yml?query=branch%3Amain)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/kanopi/ddev-kanopi-wp/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/kanopi/ddev-kanopi-wp/tree/main)
 [![last commit](https://img.shields.io/github/last-commit/kanopi/ddev-kanopi-wp)](https://github.com/kanopi/ddev-kanopi-wp/commits)
 [![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)
 
