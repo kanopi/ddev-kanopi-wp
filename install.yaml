@@ -549,13 +549,13 @@ post_install_actions:
   # Disable Pantheon mu-plugins that conflict with DDEV environment
   echo ""
   echo "🔧 Checking for Pantheon mu-plugins that need to be disabled in DDEV..."
-  
-  PANTHEON_LOADER="../../web/wp-content/mu-plugins/pantheon-mu-loader.php"
+
+  PANTHEON_LOADER="../web/wp-content/mu-plugins/pantheon-mu-loader.php"
   if [ -f "$PANTHEON_LOADER" ]; then
     # Check if the loader tries to load pantheon-mu-plugin
     if grep -q "pantheon-mu-plugin/pantheon.php" "$PANTHEON_LOADER"; then
       # Check if the actual plugin directory exists
-      if [ ! -d "../../web/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
+      if [ ! -d "../web/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
         echo "📝 Found Pantheon mu-plugin loader but plugin directory missing"
         echo "   Disabling to prevent PHP fatal errors in DDEV environment..."
         mv "$PANTHEON_LOADER" "${PANTHEON_LOADER}.disabled"
@@ -669,9 +669,9 @@ removal_actions:
   rm -rf scripts 2>/dev/null || true
   
   # Restore Pantheon mu-plugin loader if it was disabled during installation
-  PANTHEON_LOADER_DISABLED="../../web/wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
+  PANTHEON_LOADER_DISABLED="../web/wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
   if [ -f "$PANTHEON_LOADER_DISABLED" ]; then
-    PANTHEON_LOADER="../../web/wp-content/mu-plugins/pantheon-mu-loader.php"
+    PANTHEON_LOADER="../web/wp-content/mu-plugins/pantheon-mu-loader.php"
     mv "$PANTHEON_LOADER_DISABLED" "$PANTHEON_LOADER"
     echo "✅ Restored Pantheon mu-plugin loader (was disabled during add-on installation)"
   fi
