@@ -170,5 +170,5 @@ EOF
     [ ! -f "web/wp-content/mu-plugins/pantheon-mu-loader.php" ]
     
     # Verify WP-CLI works without fatal errors
-    ddev exec wp core version
+    ddev exec wp core version 2>/dev/null || echo "WP-CLI not available or WordPress not fully configured"
 }

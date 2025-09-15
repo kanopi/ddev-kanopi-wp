@@ -87,7 +87,7 @@ jobs:
         run: |
           export CI=true
           export GITHUB_ACTIONS=true
-          export PATH="$HOME/.ddev/bin:$PATH"
+          export PATH="/usr/local/bin:$PATH"
 
           echo "BATS version:"
           bats --version
