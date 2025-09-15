@@ -499,16 +499,33 @@ post_install_actions:
 
 - |
   #ddev-description: Install required DDEV add-ons
-  # Install Redis add-on for all configurations
+  # Install DDEV add-ons with graceful failure handling for CI environments
+  set +e  # Allow commands to fail without stopping the script
   echo ""
   echo "📦 Installing Redis add-on..."
-  ddev add-on get ddev/ddev-redis  
+  if ddev add-on get ddev/ddev-redis 2>&1; then
+    echo "✅ Redis add-on installed successfully"
+  else
+    echo "⚠️  Redis add-on installation failed (likely GitHub API rate limit in CI)"
+    echo "   You can install it manually later with: ddev add-on get ddev/ddev-redis"
+  fi
   echo ""
   echo "📦 Installing Solr add-on..."
-  ddev add-on get ddev/ddev-solr
+  if ddev add-on get ddev/ddev-solr 2>&1; then
+    echo "✅ Solr add-on installed successfully"
+  else
+    echo "⚠️  Solr add-on installation failed (likely GitHub API rate limit in CI)"
+    echo "   You can install it manually later with: ddev add-on get ddev/ddev-solr"
+  fi
   echo ""
   echo "📦 Installing PhpMyAdmin add-on..."
-  ddev add-on get ddev/ddev-phpmyadmin
+  if ddev add-on get ddev/ddev-phpmyadmin 2>&1; then
+    echo "✅ PhpMyAdmin add-on installed successfully"
+  else
+    echo "⚠️  PhpMyAdmin add-on installation failed (likely GitHub API rate limit in CI)"
+    echo "   You can install it manually later with: ddev add-on get ddev/ddev-phpmyadmin"
+  fi
+  set -e  # Re-enable strict error checking
   echo ""
   echo "Ignore DDEV add-on settings files"
   echo "settings.ddev.redis.php" >> ../.gitignore

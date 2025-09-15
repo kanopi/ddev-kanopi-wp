@@ -46,6 +46,7 @@ jobs:
           # Set up dummy Terminus token for testing
           echo "web_environment:" >> ~/.ddev/global_config.yaml
           echo "  - TERMINUS_MACHINE_TOKEN=test_token_for_ci" >> ~/.ddev/global_config.yaml
+          echo "  - GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> ~/.ddev/global_config.yaml
 
       - uses: ddev/github-action-add-on-test@v2
         with:
@@ -76,6 +77,7 @@ jobs:
           echo "use_dns_when_possible: false" >> ~/.ddev/global_config.yaml
           echo "web_environment:" >> ~/.ddev/global_config.yaml
           echo "  - TERMINUS_MACHINE_TOKEN=test_token_for_ci" >> ~/.ddev/global_config.yaml
+          echo "  - GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> ~/.ddev/global_config.yaml
 
       - name: Install bats-core
         run: |
@@ -84,6 +86,8 @@ jobs:
           sudo ./install.sh /usr/local
 
       - name: Run comprehensive bats tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           export CI=true
           export GITHUB_ACTIONS=true
