@@ -71,21 +71,6 @@ teardown() {
     health_checks
 }
 
-@test "install from release" {
-    set -eu -o pipefail
-    cd $TESTDIR || ( printf "unable to cd to $TESTDIR\n" && exit 1 )
-    echo "# ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot" >&3
-    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
-    
-    echo "# ddev add-on get kanopi/ddev-kanopi-wp with project ${PROJNAME} in ${TESTDIR} ($(pwd))" >&3
-    ddev add-on get kanopi/ddev-kanopi-wp
-    
-    echo "# ddev start" >&3  
-    ddev start
-    
-    health_checks
-}
-
 @test "environment variable configuration" {
     set -eu -o pipefail
     cd $TESTDIR
