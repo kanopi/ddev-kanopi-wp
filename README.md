@@ -2,8 +2,8 @@
 
 [![tests](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/test.yml?query=branch%3Amain)
 [![last commit](https://img.shields.io/github/last-commit/kanopi/ddev-kanopi-wp)](https://github.com/kanopi/ddev-kanopi-wp/commits)
-[![release](https://img.shields.io/github/v/release/kanopi/ddev-kanopi-drupal)](https://github.com/kanopi/ddev-kanopi-drupal/releases/latest)
-[![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)
+[![release](https://img.shields.io/github/v/release/kanopi/ddev-kanopi-wp)](https://github.com/kanopi/ddev-kanopi-wp/releases/latest)
+[![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)]
 
 A comprehensive DDEV add-on that provides Kanopi's battle-tested workflow for WordPress development. This add-on includes complete tooling for modern WordPress development with multi-provider hosting support.
 
