@@ -20,7 +20,7 @@ if [ -z "$ENVIRONMENT" ]; then
   if [[ "$HOSTING_PROVIDER" == "pantheon" ]]; then
     ENVIRONMENT="dev"
   elif [[ "$HOSTING_PROVIDER" == "wpengine" ]]; then
-    ENVIRONMENT="production"
+    ENVIRONMENT="$HOSTING_SITE"
   elif [[ "$HOSTING_PROVIDER" == "kinsta" ]]; then
     ENVIRONMENT="live"
   else
