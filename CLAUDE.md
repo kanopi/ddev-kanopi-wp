@@ -13,6 +13,12 @@ Commands are organized into two categories:
 - **Host commands** (`commands/host/`): Execute on the host system outside containers
 - **Web commands** (`commands/web/`): Execute inside the DDEV web container
 
+The add-on uses a **modular command approach** where `project:init` orchestrates multiple smaller, focused commands:
+- `project:auth`: Handle SSH key authorization for hosting providers
+- `project:lefthook`: Install and initialize Lefthook git hooks
+- `project:wp`: Install WordPress core and database if needed
+- `project:configure`: Interactive configuration wizard
+
 ### Core Components
 - `install.yaml`: Add-on installation configuration and post-install actions
 - `commands/`: Custom DDEV commands for development workflow
@@ -21,10 +27,14 @@ Commands are organized into two categories:
 ## Common Development Commands
 
 ### Essential Commands
-- `ddev init`: Complete project initialization with dependencies, Lefthook, NVM, Cypress, and database refresh
+- `ddev project:init`: Complete project initialization with dependencies, Lefthook, NVM, and database refresh
+- `ddev project:auth`: Authorize SSH keys for hosting providers (called by project:init)
+- `ddev project:lefthook`: Install and initialize Lefthook git hooks (called by project:init)
+- `ddev project:wp`: Install WordPress core and database if needed (called by project:init)
+- `ddev project:configure`: Interactive setup wizard for project configuration
 - `ddev db:refresh [env] [-f]`: Smart database refresh from hosting provider with backup age detection (12-hour threshold)
 - `ddev db:rebuild`: Composer install followed by database refresh
-- `ddev open`: Open project URL in browser
+- `ddev wp:open`: Open project URL in browser
 
 ### Development Workflow Commands
 - `ddev theme:install`: Set up Node.js, NPM, and build tools for theme development
@@ -45,6 +55,7 @@ Commands are organized into two categories:
 - `ddev theme:create-block <name>`: Create new WordPress block with template
 - `ddev theme:activate`: Activate configured theme
 - `ddev wp:restore-admin-user`: Create/restore admin user with configured credentials
+- `ddev wp:open [service]`: Open site or admin in browser with auto-login (enhanced from open)
 
 ### Migration and Database Commands
 - `ddev db:prep-migrate`: Create secondary database for migrations
@@ -53,76 +64,71 @@ Commands are organized into two categories:
 
 ### Utility Commands
 - `ddev phpmyadmin`: Launch PhpMyAdmin
-- `ddev project:configure`: Interactive setup wizard for project configuration
 
 ## Hosting Provider Support
 
 ### Pantheon
-- **Docroot**: `web`
+- **Recommended Docroot**: `web` (set during `ddev config`)
 - **Environments**: dev, test, live, multidev
 - **Authentication**: Terminus machine token
 - **Database**: Automated backup management with age detection
 
 ### WPEngine
-- **Docroot**: `wp`
-- **Environments**: development, staging, production
-- **Authentication**: API username and password
-- **Database**: API-based backup retrieval
+- **Recommended Docroot**: `wp` (set during `ddev config`)
+- **Authentication**: Specific SSH key (WPEngine allows only one key per account)
+- **Database**: SSH-based backup retrieval using nightly backups
+- **Variables**: `HOSTING_SITE` (install name), `WPENGINE_SSH_KEY` (SSH key path)
 
 ### Kinsta
-- **Docroot**: `public`
-- **Environments**: staging, live
-- **Authentication**: API key
-- **Database**: API-based backup management
+- **Recommended Docroot**: `public` (set during `ddev config`)
+- **Authentication**: SSH keys
+- **Database**: SSH-based backup retrieval
+- **Variables**: `REMOTE_HOST`, `REMOTE_PORT`, `REMOTE_USER`, `REMOTE_PATH`
 
 ## Configuration System
 
-### Environment Variables (Legacy)
-Key environment variables configured in `.ddev/.env.web`:
+The add-on uses a simplified configuration approach with provider-specific variables managed through `ddev project:configure`.
+
+### Configuration Storage
+Variables are stored in two locations:
+- **`.ddev/config.yaml`** (web_environment section): For DDEV containers to access via `printenv`
+- **`.ddev/scripts/load-config.sh`**: For command scripts to source directly
+
+### Common Variables (All Providers)
 - `HOSTING_PROVIDER`: Platform identifier (pantheon, wpengine, kinsta)
-- `HOSTING_SITE`: Site identifier on hosting platform
-- `HOSTING_ENV`: Default environment for database pulls
 - `THEME`: Path to custom theme directory (e.g., `wp-content/themes/custom/themename`)
 - `THEMENAME`: Theme name for development tools
+- `WP_ADMIN_USER`: WordPress admin username
+- `WP_ADMIN_PASS`: WordPress admin password
+- `WP_ADMIN_EMAIL`: WordPress admin email
 
-### YAML Configuration (Recommended)
-Primary configuration in `.ddev/config.kanopi.yaml`:
-```yaml
-hosting:
-  provider: pantheon|wpengine|kinsta
-  
-pantheon:
-  site: your-site-name
-  env: dev
+### Provider-Specific Variables
 
-wpengine:
-  install: your-install-name
-  env: development
+#### Pantheon Configuration
+- `HOSTING_SITE`: Pantheon site machine name
+- `HOSTING_ENV`: Default environment for database pulls (dev/test/live)
+- `MIGRATE_DB_SOURCE`: Source site for migrations (optional)
+- `MIGRATE_DB_ENV`: Source environment for migrations (optional)
 
-kinsta:
-  site: your-site-name
-  env: staging
+#### WPEngine Configuration
+- `HOSTING_SITE`: WPEngine install name
+- `WPENGINE_SSH_KEY`: Path to SSH private key for WPEngine access
 
-theme:
-  relative_path: wp-content/themes/custom/themename
-  slug: themename
+#### Kinsta Configuration
+- `REMOTE_HOST`: SSH host (IP address or hostname)
+- `REMOTE_PORT`: SSH port number
+- `REMOTE_USER`: SSH username
+- `REMOTE_PATH`: Remote path on server (e.g., `/www/somepath/public`)
 
-wordpress:
-  admin_user: admin
-  admin_password: admin
-  admin_email: admin@example.com
-
-migration:
-  source_site: source-site-name
-  source_env: live
-```
+### Configuration Command
+Use `ddev project:configure` to set up all variables through an interactive wizard that collects only the variables needed for your chosen hosting provider.
 
 ## Smart Refresh System
 
 The `ddev db:refresh` command includes intelligent backup management:
-- **Pantheon**: Automatically detects backup age (12-hour threshold)
-- **WPEngine**: Uses API for backup retrieval and management
-- **Kinsta**: Leverages API for database synchronization
+- **Pantheon**: Automatically detects backup age (12-hour threshold) using Terminus API
+- **WPEngine**: Uses SSH for backup retrieval and management
+- **Kinsta**: Uses SSH for database synchronization
 - Uses `-f` flag to force new backup creation
 - Supports any provider environment
 - Includes automatic theme activation and admin user restoration after refresh
@@ -152,14 +158,12 @@ set -e
 
 set -e
 
-# Load configuration from YAML
-CONFIG_FILE="/var/www/html/.ddev/config.kanopi.yaml"
-if [ -f "$CONFIG_FILE" ]; then
-    # Use yq to parse YAML configuration
-    SETTING=$(yq eval '.path.to.setting // "default"' "$CONFIG_FILE" 2>/dev/null || echo "default")
-fi
+# Load Kanopi configuration
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
 
 # Command logic here
+# Variables like $HOSTING_PROVIDER, $THEME, etc. are now available
 ```
 
 ## Installation and Testing
@@ -187,33 +191,37 @@ Uses `ddev/github-action-add-on-test@v2` for standardized add-on validation in G
 
 ### Required Setup
 
-#### Global Configuration
+#### Global Authentication Setup
 1. **Pantheon**: Configure Terminus machine token globally:
    ```bash
    ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here
    ```
 
-2. **WPEngine**: Configure API credentials globally:
+2. **WPEngine**: Set up SSH key authentication:
    ```bash
-   ddev config global --web-environment-add=WPE_API_USERNAME=your_username
-   ddev config global --web-environment-add=WPE_API_PASSWORD=your_password
+   # Add your SSH public key to WPEngine User Portal
+   # Then start SSH agent in DDEV
+   ddev auth ssh
    ```
 
-3. **Kinsta**: Configure API key globally:
+3. **Kinsta**: Set up SSH key authentication:
    ```bash
-   ddev config global --web-environment-add=KINSTA_API_KEY=your_api_key
+   # Add your SSH public key in MyKinsta > User Settings > SSH Keys
+   # Then start SSH agent in DDEV
+   ddev auth ssh
    ```
 
 #### Project Setup
-The add-on installation includes interactive prompts for:
-- **HOSTING_PROVIDER**: Platform selection (pantheon/wpengine/kinsta)
-- **THEME**: Path to active WordPress theme (e.g., `wp-content/themes/custom/mytheme`)
-- **THEMENAME**: Theme name for development tools
-- **HOSTING_SITE**: Platform-specific site identifier
-- **HOSTING_ENV**: Default environment for database pulls
-- **Migration settings**: Optional source site configuration
+After installation, run the configuration wizard:
+```bash
+ddev project:configure
+```
 
-Alternatively, run `ddev configure` after installation for interactive setup.
+This wizard collects provider-specific variables:
+- **All Providers**: WordPress admin credentials, theme configuration
+- **Pantheon**: Site machine name, environment, migration settings (optional)
+- **WPEngine**: Install name only
+- **Kinsta**: SSH connection details (host, port, user, path)
 
 ## Dependencies
 

@@ -3,8 +3,6 @@
 ## Description: Install the node packages for cypress on the developers local machine
 ## Usage: cypress:install
 ## Example: "ddev cypress:install"
-## Aliases: cyi,cypress-install,install-cypress
-## OSTypes: darwin,linux
 
 # Make sure NVM works
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"

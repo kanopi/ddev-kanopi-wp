@@ -1,0 +1,109 @@
+#!/usr/bin/env bash
+
+## Description: Initialize local WordPress development environment.
+## Usage: project:init
+## Example: "ddev project:init"
+## Aliases: init,project-init
+
+#ddev-generated
+
+#-------------------------- Helper functions ------------------------------
+
+green='\033[0;32m'
+yellow='\033[1;33m'
+NC='\033[0m'
+
+divider='===================================================\n'
+check='\xE2\x9C\x85'
+construction='\xF0\x9F\x9A\xA7'
+crossmark='\xE2\x9D\x8C'
+party='\xF0\x9F\x8E\x88 \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x8A'
+reverseparty='\xF0\x9F\x8E\x8A \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x88'
+rocket='\xF0\x9F\x9A\x80'
+lightning='\xE2\x9A\xA1'
+gear='\xEF\xB8\x8F'
+key='\xF0\x9F\x94\x91'
+lock='\xF0\x9F\x94\x92'
+arm='\xF0\x9F\x92\xAA'
+
+# WordPress-specific commands
+theme_dev_command='ddev theme:watch'
+theme_build_command='ddev theme:build'
+refresh_command='ddev db:refresh'
+
+# Handle Pantheon mu-plugin conflicts early (before any wp-cli commands)
+echo -e "\n${construction} ${yellow} Checking for Pantheon mu-plugin conflicts...${NC} ${construction}\n"
+PANTHEON_LOADER="web/wp-content/mu-plugins/pantheon-mu-loader.php"
+if [ -f "$PANTHEON_LOADER" ]; then
+  # Check if the loader tries to load pantheon-mu-plugin
+  if grep -q "pantheon-mu-plugin/pantheon.php" "$PANTHEON_LOADER"; then
+    # Check if the actual plugin directory exists
+    if [ ! -d "web/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
+      echo "📝 Found Pantheon mu-plugin loader but plugin directory missing"
+      echo "   Disabling to prevent PHP fatal errors in DDEV environment..."
+      mv "$PANTHEON_LOADER" "${PANTHEON_LOADER}.disabled"
+      echo "✅ Pantheon mu-plugin loader disabled (renamed to .disabled)"
+      echo "   This prevents 'Failed to open stream' errors when running WP-CLI commands"
+    else
+      echo "📝 Pantheon mu-plugin found and appears complete - leaving enabled"
+    fi
+  else
+    echo "📝 Custom pantheon-mu-loader.php found - leaving as-is"
+  fi
+else
+  echo "📝 No Pantheon mu-plugin loader found - no action needed"
+fi
+
+#-------------------------- Execution -------------------------------------
+
+echo -e "\n${rocket} ${yellow} Initializing the Project.${NC} ${rocket}"
+echo -e "${green}${divider}${NC}"
+ddev start -y
+
+# Set up Lefthook.
+ddev project:lefthook
+
+# Add SSH keys for remote access.
+echo -e "\n${key} ${yellow} Adding SSH keys.${NC} ${key}"
+echo -e "${green}${divider}${NC}"
+ddev project:auth
+
+# Install Composer dependencies (if composer.json exists).
+if [ -f "composer.json" ]; then
+  echo -e "\n${construction} ${yellow} Installing Composer dependencies.${NC} ${construction}\n"
+  echo -e "${green}${divider}${NC}"
+  ddev composer install
+fi
+
+# Configure WordPress.
+ddev project:wp
+
+# Get the database from hosting provider (if configured).
+HOSTING_SITE_VALUE=$(ddev exec printenv HOSTING_SITE 2>/dev/null || echo "")
+if [ -n "$HOSTING_SITE_VALUE" ]; then
+  echo -e "\n${lightning} ${yellow} Refreshing database from hosting provider.${NC} ${lightning}"
+  echo -e "${green}${divider}${NC}"
+  ddev refresh
+fi
+
+# Install theme.
+ddev theme:install
+
+# Activate theme and restore admin user.
+echo -e "\n${lock} ${yellow} Restoring admin user and logging you in.${NC} ${lock}"
+echo -e "${green}${divider}${NC}"
+
+# Restore admin user
+ddev wp:restore-admin-user
+
+# Generate login link
+ddev wp:open admin
+
+# Complete
+echo -e "\n${party} ${yellow} WordPress development environment ready!${NC} ${reverseparty}"
+echo -e "Visit ${yellow}${DDEV_PRIMARY_URL}${NC} in a web browser."
+echo -e "\nDevelopment commands:"
+echo -e "Run ${yellow}${theme_dev_command}${NC} to start theme development with file watching."
+echo -e "Run ${yellow}${theme_build_command}${NC} to build production assets."
+echo -e "Run ${yellow}${refresh_command}${NC} to pull a fresh database."
+echo -e "${green}${divider}${NC}"

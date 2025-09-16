@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## Description: Run @wordpress/scripts in development mode for the theme
 ## Usage: theme:watch

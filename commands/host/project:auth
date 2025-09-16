@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+## Description: Authorizes you into DDEV.
+## Usage: project:auth
+## Example: "ddev project:auth"
+## Aliases: project-auth
+
+#ddev-generated
+
+# Load configuration to check hosting provider
+source .ddev/scripts/load-config.sh
+load_kanopi_config
+
+# Use specific SSH key for WPEngine, all keys for others
+if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
+    echo "🔍 WPEngine detected - using specific SSH key: $WPENGINE_SSH_KEY"
+
+    # Robust tilde and path expansion
+    if [[ "$WPENGINE_SSH_KEY" =~ ^\~/ ]]; then
+        # Handle ~/path
+        SSH_KEY_PATH="$HOME/${WPENGINE_SSH_KEY:2}"
+    elif [[ "$WPENGINE_SSH_KEY" =~ ^\~ ]]; then
+        # Handle just ~
+        SSH_KEY_PATH="$HOME"
+    else
+        # Use as-is for absolute paths
+        SSH_KEY_PATH="$WPENGINE_SSH_KEY"
+    fi
+
+    # Remove .pub extension if present
+    SSH_KEY_PATH="${SSH_KEY_PATH%.pub}"
+
+    echo "   Resolved to: $SSH_KEY_PATH"
+
+    # For WPEngine, we need to add the specific key to the host SSH agent first
+    # then use ddev auth ssh to import it into the container
+    echo "🔍 Adding SSH key to host agent..."
+
+    # Check if key exists on host
+    if [ -f "$SSH_KEY_PATH" ]; then
+        echo "✅ SSH key file found on host"
+
+        # For WPEngine, copy the key to container and add it to SSH agent
+        echo "🔑 Adding WPEngine SSH key to container..."
+        ddev exec "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
+        cat "$SSH_KEY_PATH" | ddev exec "cat > ~/.ssh/$(basename "$SSH_KEY_PATH") && chmod 600 ~/.ssh/$(basename "$SSH_KEY_PATH") && ssh-add ~/.ssh/$(basename "$SSH_KEY_PATH")"
+
+        echo "✅ Loaded only WPEngine SSH key: $(basename "$SSH_KEY_PATH")"
+    else
+        echo "⚠️  SSH key not found on host: $SSH_KEY_PATH"
+        echo "   Debugging information:"
+        echo "   - Original path: $WPENGINE_SSH_KEY"
+        echo "   - Resolved path: $SSH_KEY_PATH"
+        echo "   - Files in ~/.ssh/:"
+        ls -la ~/.ssh/ 2>/dev/null | grep "$(basename "$SSH_KEY_PATH")" || echo "   Key file not found"
+        echo ""
+        echo "   Please check your WPENGINE_SSH_KEY configuration"
+        echo "   Run 'ddev project:configure' to update it"
+        echo "   Falling back to loading all SSH keys..."
+        ddev auth ssh
+    fi
+else
+    echo "Loading all SSH keys for $HOSTING_PROVIDER"
+    ddev auth ssh
+fi

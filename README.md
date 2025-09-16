@@ -27,8 +27,11 @@ This add-on provides:
 ### For Existing DDEV Projects
 
 ```bash
-# Install the add-on (includes interactive configuration)
+# Install the add-on
 ddev add-on get kanopi/ddev-kanopi-wp
+
+# Configure your hosting provider and project settings
+ddev project:configure
 
 # Restart DDEV to apply changes
 ddev restart
@@ -63,6 +66,7 @@ lando destroy
 cd /path/to/your/wordpress/project
 
 # Initialize DDEV configuration
+# Set docroot based on your hosting provider: web (Pantheon), wp (WPEngine), or public (Kinsta)
 ddev config --project-name=your-project-name --project-type=wordpress --docroot=web --create-docroot
 
 # Configure wp-config.php (if you have an existing one)
@@ -80,36 +84,58 @@ if (is_readable($ddev_settings) && !defined('DB_USER')) {
 ```bash
 # Install the Kanopi WordPress add-on
 ddev add-on get kanopi/ddev-kanopi-wp
+
+# Configure your hosting provider and project settings
+ddev project:configure
 ```
 
 #### Step 3: Spin up project
 
 ```bash
 # Initialize
-ddev init
+ddev project:init
 ```
 
-## Interactive Installation
+## Configuration
 
-The add-on includes an interactive configuration wizard that prompts for:
-
-1. **Hosting Provider**: Pantheon, WPEngine, or Kinsta
-2. **WordPress Admin**: Username, password, and email
-3. **Hosting Details**: Site-specific configuration (e.g., Pantheon site name)
-4. **Theme Configuration**: Theme path and name
-5. **Migration Settings**: Source project for database migrations (optional)
-
-After installation, initialize your development environment:
+The add-on uses a simple configuration approach with provider-specific variables. After installation, run the configuration wizard:
 
 ```bash
-# Configure your project settings (interactive wizard)
+# Configure your hosting provider and project settings
 ddev project:configure
-
-# Initialize your complete development environment
-ddev init
 ```
 
-**`ddev init`** performs the following automatically:
+The configuration wizard collects different information based on your hosting provider:
+
+### Pantheon Configuration
+- Site machine name (e.g., `my-site`)
+- Default environment (`dev`/`test`/`live`)
+- Migration source project (optional)
+
+### WPEngine Configuration
+- Install name (e.g., `my-site`)
+- SSH private key path (e.g., `~/.ssh/id_rsa_wpengine`)
+- Uses specific SSH key for authentication (WPEngine only allows one key per account)
+
+### Kinsta Configuration
+- SSH Host (e.g., IP address)
+- SSH Port (e.g., `12345`)
+- SSH User (e.g., `username`)
+- Remote Path (e.g., `/www/somepath/public`)
+- Uses SSH keys for authentication
+
+All providers also collect:
+- WordPress admin credentials
+- Theme path and name
+
+After configuration, initialize your development environment:
+
+```bash
+# Initialize your complete development environment
+ddev project:init
+```
+
+**`ddev project:init`** performs the following automatically:
 - Start DDEV
 - Install Lefthook (git hooks) if configured
 - Set up NVM for Node.js management
@@ -133,13 +159,15 @@ ddev init
 | `ddev db:prep-migrate` | Web | Create secondary database for migrations | `ddev db:prep-migrate` | migrate-prep-db, db-prep-migrate, db-mpdb |
 | `ddev db:rebuild` | Host | Run composer install followed by database refresh | `ddev db:rebuild` | rebuild, db-rebuild, dbreb |
 | `ddev db:refresh [env] [-f]` | Web | Smart database refresh with 12-hour backup age detection | `ddev db:refresh live -f` | refresh, db-refresh, dbref |
-| `ddev init` | Host | **Initialize complete development environment** (runs all setup commands) | `ddev init` | - |
-| `ddev open [service]` | Web | Open the site or admin in your default browser | `ddev open` or `ddev open cms` | - |
 | `ddev pantheon:testenv <name> [type]` | Host | Create isolated testing environment (fresh or existing) | `ddev pantheon:testenv my-test fresh` | testenv, pantheon-testenv |
 | `ddev pantheon:terminus <command>` | Host | Run Terminus commands for Pantheon integration | `ddev pantheon:terminus site:list` | terminus, pantheon-terminus |
 | `ddev pantheon:tickle` | Web | Keep Pantheon environment awake during long operations | `ddev pantheon:tickle` | tickle, pantheon-tickle |
 | `ddev phpmyadmin` | Host | Launch PhpMyAdmin database interface | `ddev phpmyadmin` | - |
+| `ddev project:auth` | Host | Authorize SSH keys and credentials for hosting providers | `ddev project:auth` | project-auth |
 | `ddev project:configure` | Host | **Interactive setup wizard** (configure project settings) | `ddev project:configure` | configure, project-configure, prc |
+| `ddev project:init` | Host | **Initialize complete development environment** (runs all setup commands) | `ddev project:init` | init, project-init |
+| `ddev project:lefthook` | Host | Install and initialize Lefthook git hooks | `ddev project:lefthook` | project-lefthook |
+| `ddev project:wp` | Host | Install WordPress core and database if needed | `ddev project:wp` | project-wp |
 | `ddev theme:activate` | Web | Activate the custom theme | `ddev theme:activate` | activate-theme, tha, theme-activate |
 | `ddev theme:build` | Web | Build production assets | `ddev theme:build` | production, theme-build, thb, theme-production |
 | `ddev theme:create-block <block-name>` | Web | Create a new WordPress block with proper scaffolding | `ddev theme:create-block my-block` | create-block, thcb, theme-create-block |
@@ -147,6 +175,7 @@ ddev init
 | `ddev theme:npm <command>` | Web | Run npm commands (automatically runs in theme directory if available) | `ddev theme:npm run build` | npm, theme-npm |
 | `ddev theme:npx <command>` | Web | Run NPX commands in theme directory | `ddev theme:npx webpack --watch` | npx, theme-npx |
 | `ddev theme:watch` | Web | Start the development server with file watching | `ddev theme:watch` | development, thw, theme-watch, theme-development |
+| `ddev wp:open [service]` | Web | Open the site or admin with auto-login in your default browser | `ddev wp:open` or `ddev wp:open admin` | open, wp-open |
 | `ddev wp:restore-admin-user` | Web | Restore the admin user credentials | `ddev wp:restore-admin-user` | restore-admin-user, wp-restore-admin-user, wp-rau |
 
 ## Smart Database Refresh
@@ -171,6 +200,28 @@ ddev db:refresh -f
 # Refresh from specific environment
 ddev db:refresh staging
 ```
+
+## Enhanced WordPress Opening
+
+The `ddev wp:open` command provides seamless browser access with automatic login:
+
+- **Site Access**: `ddev wp:open` opens your local WordPress site
+- **Admin Auto-Login**: `ddev wp:open admin` automatically logs you into the WordPress admin
+- **Smart Fallback**: Falls back to regular admin URL if auto-login fails
+- **Cross-Platform**: Works on macOS, Linux, and Windows
+
+```bash
+# Open the site homepage
+ddev wp:open
+
+# Open WordPress admin with automatic login (no password needed)
+ddev wp:open admin
+
+# Alternative admin access (cms is an alias for admin)
+ddev wp:open cms
+```
+
+The admin auto-login feature uses the WP-CLI login command and respects your configured `WP_ADMIN_USER` environment variable.
 
 ## Theme Development Workflow
 
@@ -228,18 +279,31 @@ ddev critical:run
 
 ## Environment Variables
 
-Key environment variables configured in `.ddev/config.yaml`:
+The add-on configures provider-specific variables in both `.ddev/config.yaml` and `.ddev/scripts/load-config.sh`:
 
+### Common Variables (All Providers)
 - `HOSTING_PROVIDER` - Your hosting platform (pantheon/wpengine/kinsta)
-- `HOSTING_SITE` - Your site identifier (e.g., pantheon site name)
-- `HOSTING_ENV` - Default environment for database pulls (dev/staging/live)
 - `THEME` - Path to your custom theme
 - `THEMENAME` - Theme name for development tools
 - `WP_ADMIN_USER` - WordPress admin username
 - `WP_ADMIN_PASS` - WordPress admin password
 - `WP_ADMIN_EMAIL` - WordPress admin email
+
+### Pantheon-Specific Variables
+- `HOSTING_SITE` - Pantheon site machine name
+- `HOSTING_ENV` - Default environment for database pulls (dev/test/live)
 - `MIGRATE_DB_SOURCE` - Source project for migrations (optional)
 - `MIGRATE_DB_ENV` - Source environment for migrations (optional)
+
+### WPEngine-Specific Variables
+- `HOSTING_SITE` - WPEngine install name
+- `WPENGINE_SSH_KEY` - Path to SSH private key for WPEngine access
+
+### Kinsta-Specific Variables
+- `REMOTE_HOST` - SSH host (IP address or hostname)
+- `REMOTE_PORT` - SSH port number
+- `REMOTE_USER` - SSH username
+- `REMOTE_PATH` - Remote path on server (e.g., `/www/somepath/public`)
 
 ## Managing This Add-on
 
@@ -273,22 +337,25 @@ ddev restart
 
 **For Pantheon:**
 ```bash
-# Set the token globally for all DDEV projects
+# Set the machine token globally for all DDEV projects
 ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here
 ddev restart
+
+# Get your token at: https://dashboard.pantheon.io/machine-token/create
 ```
 
 **For WPEngine:**
 ```bash
-# Configure SSH access (add your SSH key to WPEngine account)
-ddev auth ssh
+# Add your SSH public key to your WPEngine User Portal
+# The add-on will automatically use the specific SSH key you configured
+# Note: WPEngine only allows one SSH key per account, so specify the correct one during configuration
 ```
 
 **For Kinsta:**
 ```bash
-# Set Kinsta API credentials globally for all DDEV projects
-ddev config global --web-environment-add=KINSTA_API_KEY=your_api_key
-ddev restart
+# Add your SSH public key in MyKinsta > User Settings > SSH Keys
+# Then start SSH agent in DDEV
+ddev auth ssh
 ```
 
 #### 2. Stop Conflicting Development Tools
@@ -342,14 +409,18 @@ Update your project's README and documentation to reference the new commands and
 
 ```bash
 # Start DDEV and run initialization
-ddev init
+ddev project:init
 
 # This will:
-# - Install Lefthook git hooks
-# - Set up NVM for Node.js
-# - Install Cypress for testing
+# - Start DDEV
+# - Handle Pantheon mu-plugin conflicts
+# - Install and initialize Lefthook git hooks (ddev project:lefthook)
+# - Authorize SSH keys (ddev project:auth)
+# - Install Composer dependencies
+# - Install WordPress core and database (ddev project:wp)
 # - Refresh database from hosting provider
-# - Create Cypress test users
+# - Install theme dependencies and build assets
+# - Restore admin user and open admin with auto-login
 ```
 
 ### Available DDEV Commands
@@ -358,14 +429,35 @@ ddev init
 
 ```bash
 # Start DDEV and run initialization
-ddev init
+ddev project:init
 
 # This will:
-# - Install Lefthook git hooks
-# - Set up NVM for Node.js
-# - Install Cypress for testing
+# - Start DDEV
+# - Handle Pantheon mu-plugin conflicts
+# - Install and initialize Lefthook git hooks (ddev project:lefthook)
+# - Authorize SSH keys (ddev project:auth)
+# - Install Composer dependencies
+# - Install WordPress core and database (ddev project:wp)
 # - Refresh database from hosting provider
-# - Create Cypress test users
+# - Install theme dependencies and build assets
+# - Restore admin user and open admin with auto-login
+```
+
+#### Modular Commands
+
+The `project:init` command now uses a modular approach with individual commands that can also be run separately:
+
+```bash
+# Individual setup commands (called by project:init)
+ddev project:auth      # Authorize SSH keys for hosting providers
+ddev project:lefthook  # Install and initialize Lefthook git hooks
+ddev project:wp        # Install WordPress core and database if needed
+
+# You can run these individually if needed
+ddev project:auth      # Just setup authentication
+ddev project:lefthook  # Just setup git hooks
+ddev project:wp        # Just install WordPress
+ddev project:configure # Configure project settings interactively
 ```
 
 ### Verification Steps
@@ -380,7 +472,7 @@ ddev init
 ### Common Workflow
 ```bash
 # Daily development workflow
-ddev init
+ddev project:init
 
 # or individually
 ddev start                    # Start DDEV
@@ -399,13 +491,18 @@ ddev theme:build            # Build production assets
 
 ### Key Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `HOSTING_PROVIDER` | Hosting platform | `pantheon`, `wpengine`, `kinsta` |
-| `HOSTING_SITE` | Site identifier | `my-wp-site` |
-| `HOSTING_ENV` | Default environment | `dev`, `test`, `live` |
-| `THEME` | Theme path | `wp-content/themes/custom/mytheme` |
-| `WP_ADMIN_USER` | Admin username | `admin` |
+| Variable | Description | Used By | Example |
+|----------|-------------|---------|---------|
+| `HOSTING_PROVIDER` | Hosting platform | All | `pantheon`, `wpengine`, `kinsta` |
+| `HOSTING_SITE` | Site identifier | Pantheon, WPEngine | `my-wp-site` |
+| `HOSTING_ENV` | Default environment | Pantheon | `dev`, `test`, `live` |
+| `WPENGINE_SSH_KEY` | SSH private key path | WPEngine | `~/.ssh/id_rsa_wpengine` |
+| `REMOTE_HOST` | SSH host | Kinsta | `11.111.111.111` |
+| `REMOTE_PORT` | SSH port | Kinsta | `12345` |
+| `REMOTE_USER` | SSH username | Kinsta | `username` |
+| `REMOTE_PATH` | Remote path | Kinsta | `/www/somepath/public` |
+| `THEME` | Theme path | All | `wp-content/themes/custom/mytheme` |
+| `WP_ADMIN_USER` | Admin username | All | `admin` |
 
 ## Troubleshooting
 
@@ -429,11 +526,13 @@ ssh your-install@your-install.ssh.wpengine.net
 
 ### Kinsta Authentication Issues
 ```bash
-# Check if API credentials are set
-ddev exec printenv KINSTA_API_KEY
+# Check SSH configuration
+ddev exec printenv REMOTE_HOST
+ddev exec printenv REMOTE_PORT
+ddev exec printenv REMOTE_USER
 
-# Test API access (if available)
-# Kinsta CLI commands would go here
+# Test SSH connection
+ddev auth ssh
 ```
 
 ### Theme Build Issues
@@ -467,8 +566,11 @@ ddev auth ssh
 
 **For Kinsta:**
 ```bash
-# Check API connection and credentials
-# Kinsta-specific debugging commands
+# Check SSH connection and configuration
+ddev auth ssh
+
+# Test SSH connectivity
+# SSH debug commands would go here
 ```
 
 ## Platform-Specific Configurations

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ## Description: Create a new WordPress block
 ## Usage: theme:create-block <block-name>

@@ -9,6 +9,10 @@ red='\033[0;31m'
 NC='\033[0m'
 divider='===================================================\n'
 
+# Load Kanopi configuration
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
+
 # Parameters from main refresh command
 ENVIRONMENT=${1:-live}
 FORCE_REFRESH=${2:-false}
@@ -21,53 +25,41 @@ fi
 echo -e "${green}${divider}${NC}"
 
 # Get Kinsta configuration from environment variables
-KINSTA_SITE=$(printenv HOSTING_SITE 2>/dev/null)
-KINSTA_SSH_HOST=$(printenv KINSTA_SSH_HOST 2>/dev/null)
-KINSTA_SSH_PORT=$(printenv KINSTA_SSH_PORT 2>/dev/null)
-KINSTA_SSH_USER=$(printenv KINSTA_SSH_USER 2>/dev/null)
+KINSTA_SSH_HOST=$(printenv REMOTE_HOST 2>/dev/null)
+KINSTA_SSH_PORT=$(printenv REMOTE_PORT 2>/dev/null)
+KINSTA_SSH_USER=$(printenv REMOTE_USER 2>/dev/null)
+KINSTA_REMOTE_PATH=$(printenv REMOTE_PATH 2>/dev/null)
 
 # Check for required environment variables
-if [ -z "${KINSTA_SITE:-}" ]; then
-  echo -e "${red}Error: HOSTING_SITE environment variable not set. Check .ddev/config.yaml web_environment section.${NC}"
-  exit 1
-fi
-
 if [ -z "${KINSTA_SSH_HOST:-}" ]; then
-  echo -e "${red}Error: KINSTA_SSH_HOST environment variable not set${NC}"
-  echo -e "${red}Please set this in ~/.ddev/global_config.yaml or your environment${NC}"
-  echo -e "${red}Example in ~/.ddev/global_config.yaml:${NC}"
-  echo -e "${red}web_environment:${NC}"
-  echo -e "${red}  - KINSTA_SSH_HOST=your.kinsta.server.ip${NC}"
+  echo -e "${red}Error: REMOTE_HOST not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
   exit 1
 fi
 
 if [ -z "${KINSTA_SSH_PORT:-}" ]; then
-  echo -e "${red}Error: KINSTA_SSH_PORT environment variable not set${NC}"
-  echo -e "${red}Please set this in ~/.ddev/global_config.yaml or your environment${NC}"
-  echo -e "${red}Example in ~/.ddev/global_config.yaml:${NC}"
-  echo -e "${red}web_environment:${NC}"
-  echo -e "${red}  - KINSTA_SSH_PORT=60490${NC}"
+  echo -e "${red}Error: REMOTE_PORT not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
   exit 1
 fi
 
 if [ -z "${KINSTA_SSH_USER:-}" ]; then
-  echo -e "${red}Error: KINSTA_SSH_USER environment variable not set${NC}"
-  echo -e "${red}Please set this in ~/.ddev/global_config.yaml or your environment${NC}"
-  echo -e "${red}Example in ~/.ddev/global_config.yaml:${NC}"
-  echo -e "${red}web_environment:${NC}"
-  echo -e "${red}  - KINSTA_SSH_USER=your_kinsta_user${NC}"
+  echo -e "${red}Error: REMOTE_USER not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
+  exit 1
+fi
+
+if [ -z "${KINSTA_REMOTE_PATH:-}" ]; then
+  echo -e "${red}Error: REMOTE_PATH not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
   exit 1
 fi
 
 # Set up SSH connection details
-REMOTE_HOST="${KINSTA_SSH_USER}@${KINSTA_SSH_HOST}"
-REMOTE_PORT="${KINSTA_SSH_PORT}"
-REMOTE_PATH="public"
-DBFILE="/tmp/kinsta_${KINSTA_SITE}.sql"
+SSH_CONNECTION="${KINSTA_SSH_USER}@${KINSTA_SSH_HOST}"
+SSH_PORT="${KINSTA_SSH_PORT}"
+REMOTE_PATH="${KINSTA_REMOTE_PATH}"
+DBFILE="/tmp/kinsta_${KINSTA_SSH_USER}.sql"
 
-echo -e "${green}Using Kinsta site: ${KINSTA_SITE}${NC}"
+echo -e "${green}Using Kinsta SSH connection: ${SSH_CONNECTION}:${SSH_PORT}${NC}"
 echo -e "${green}Environment: ${ENVIRONMENT}${NC}"
-echo -e "${green}SSH connection: ${REMOTE_HOST}:${REMOTE_PORT}${NC}"
+echo -e "${green}Remote path: ${REMOTE_PATH}${NC}"
 
 # Change to docroot
 DOCROOT="${DOCROOT:-web}"
@@ -102,7 +94,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to Kinsta...${NC}"
-    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -p "${REMOTE_PORT}" "${REMOTE_HOST}" "echo 'SSH connection successful'" 2>/dev/null; then
+    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -p "${SSH_PORT}" "${SSH_CONNECTION}" "echo 'SSH connection successful'" 2>/dev/null; then
         echo -e "${red}Error: Cannot connect to Kinsta via SSH${NC}"
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your SSH key is properly configured with Kinsta${NC}"
@@ -117,8 +109,8 @@ if [ "$EXPORT_DATABASE" = true ]; then
     echo -e "${yellow}Exporting the remote database...${NC}"
     
     # Export database on remote server
-    REMOTE_DBFILE="${KINSTA_SITE}.sql"
-    if ssh -p "${REMOTE_PORT}" "${REMOTE_HOST}" "cd ${REMOTE_PATH}; wp db export ${REMOTE_DBFILE} --allow-root"; then
+    REMOTE_DBFILE="${KINSTA_SSH_USER}.sql"
+    if ssh -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${REMOTE_PATH}; wp db export ${REMOTE_DBFILE} --allow-root"; then
         echo -e "${green}Database exported successfully on remote server.${NC}"
     else
         echo -e "${red}Failed to export database on remote server${NC}"
@@ -126,7 +118,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     fi
     
     echo -e "${yellow}Downloading Database...${NC}"
-    if rsync -arv -e "ssh -p ${REMOTE_PORT}" --progress "${REMOTE_HOST}:${REMOTE_PATH}/${REMOTE_DBFILE}" "${DBFILE}"; then
+    if rsync -arv -e "ssh -p ${SSH_PORT}" --progress "${SSH_CONNECTION}:${REMOTE_PATH}/${REMOTE_DBFILE}" "${DBFILE}"; then
         echo -e "${green}Database downloaded successfully!${NC}"
     else
         echo -e "${red}Failed to download database${NC}"
@@ -134,7 +126,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     fi
     
     echo -e "${yellow}Database downloaded. Removing remote db file...${NC}"
-    ssh -p "${REMOTE_PORT}" "${REMOTE_HOST}" "rm ${REMOTE_PATH}/${REMOTE_DBFILE}" || echo "Warning: Could not remove remote database file"
+    ssh -p "${SSH_PORT}" "${SSH_CONNECTION}" "rm ${REMOTE_PATH}/${REMOTE_DBFILE}" || echo "Warning: Could not remove remote database file"
 fi
 
 echo -e "${yellow}Importing Database...${NC}"
@@ -157,12 +149,13 @@ BASIC_DDEV_URL="https://$LOCAL_DOMAIN"
 wp search-replace "https://" "http://" --include-columns=option_value --allow-root --quiet || true
 
 # Determine source domains based on environment
+# For Kinsta, we need the user to configure the domain since it varies by site
 if [[ "$ENVIRONMENT" == "live" ]]; then
-    SOURCE_DOMAIN=$(printenv KINSTA_LIVE_DOMAIN 2>/dev/null || echo "${KINSTA_SITE}.kinsta.cloud")
+    SOURCE_DOMAIN=$(printenv KINSTA_LIVE_DOMAIN 2>/dev/null || echo "${KINSTA_SSH_USER}.kinsta.cloud")
 elif [[ "$ENVIRONMENT" == "staging" ]]; then
-    SOURCE_DOMAIN=$(printenv KINSTA_STAGING_DOMAIN 2>/dev/null || echo "staging-${KINSTA_SITE}.kinsta.cloud")
+    SOURCE_DOMAIN=$(printenv KINSTA_STAGING_DOMAIN 2>/dev/null || echo "staging-${KINSTA_SSH_USER}.kinsta.cloud")
 else
-    SOURCE_DOMAIN=$(printenv KINSTA_LIVE_DOMAIN 2>/dev/null || echo "${KINSTA_SITE}.kinsta.cloud")
+    SOURCE_DOMAIN=$(printenv KINSTA_LIVE_DOMAIN 2>/dev/null || echo "${KINSTA_SSH_USER}.kinsta.cloud")
 fi
 
 echo -e "${yellow}Replacing domains: ${SOURCE_DOMAIN} -> ${LOCAL_DOMAIN}${NC}"

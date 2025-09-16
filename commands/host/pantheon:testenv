@@ -4,7 +4,6 @@
 ## Usage: pantheon:testenv [environment_name] [optional install_type]
 ## Example: ddev pantheon:testenv my-env fresh
 ## Aliases: testenv,pantheon-testenv
-## OSTypes: darwin,linux
 
 # Abort if anything fails
 set -e

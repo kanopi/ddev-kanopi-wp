@@ -20,6 +20,7 @@ party='\xF0\x9F\x8E\x88 \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x8A'
 reverseparty='\xF0\x9F\x8E\x8A \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x88'
 rocket='\xF0\x9F\x9A\x80'
 shark='\xF0\x9F\xA6\x88'
+watch_command='ddev theme:watch'
 
 #-------------------------- Settings --------------------------------
 
@@ -76,7 +77,15 @@ echo -e "\n ${construction} ${yellow} Compiling theme assets. ${NC} ${constructi
 echo -e "${green}${divider}${NC}"
 npm run build || echo "npm run build"
 
+# Activate the custom theme (if configured and WordPress is available)
+if [ -f "${DOCROOT}/index.php" ]; then
+  THEME_SLUG=$(ddev exec printenv THEMENAME 2>/dev/null || echo "struts")
+  ddev exec "wp theme activate ${THEME_SLUG} --allow-root" 2>/dev/null || echo "Theme activation skipped (theme not found)"
+else
+  echo "Theme activation skipped (WordPress not installed)"
+fi
+
 # Completion message
 echo -e "\n ${party} ${yellow} Theme setup complete! ${NC} ${reverseparty}"
-echo -e "To start watching for file changes, run: ${yellow}ddev npm run watch${NC}"
+echo -e "To start watching for file changes, run: ${yellow}${watch_command}${NC}"
 echo -e "${green}${divider}${NC}"

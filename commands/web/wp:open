@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+## Open the site or admin in your default browser
+##
+## Usage: wp:open [service]
+## Example: "ddev wp:open" or "ddev wp:open admin"
+## Aliases: open,wp-open
+
+SERVICE="${1:-}"
+
+# Function to open URL in browser
+open_browser() {
+    local url="$1"
+    local description="$2"
+
+    echo "$description"
+    if command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$url"
+    elif command -v open >/dev/null 2>&1; then
+        open "$url"
+    else
+        echo "Please open $url in your browser"
+    fi
+}
+
+if [ "$SERVICE" = "cms" ] || [ "$SERVICE" = "admin" ]; then
+    echo "🔐 Generating admin login link..."
+
+    # Get admin user from environment variable or default to 'admin'
+    ADMIN_USER="${WP_ADMIN_USER:-admin}"
+
+    # Install wp-cli login command if not already installed
+    wp package install wp-cli/login-command --allow-root 2>/dev/null || echo "Login command already installed"
+
+    # Generate login URL
+    LOGIN_URL=$(wp login create "$ADMIN_USER" --allow-root 2>/dev/null)
+
+    if [ -n "$LOGIN_URL" ] && [ "$LOGIN_URL" != "Login link generation failed" ]; then
+        open_browser "$LOGIN_URL" "🚀 Opening WordPress admin with auto-login..."
+    else
+        # Fallback to regular admin URL
+        echo "⚠️  Could not generate login link, opening regular admin page..."
+        open_browser "https://${DDEV_SITENAME}.ddev.site/wp-admin" "Opening WordPress admin..."
+    fi
+else
+    open_browser "https://${DDEV_SITENAME}.ddev.site" "🌐 Opening site..."
+fi

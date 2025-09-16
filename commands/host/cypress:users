@@ -4,7 +4,6 @@
 ## Usage: cypress:users
 ## Example: "ddev cypress:users"
 ## Aliases: cyu,cypress-users
-## OSTypes: darwin,linux
 
 # Abort if anything fails
 set -e

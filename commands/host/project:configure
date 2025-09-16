@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-## Description: Interactive reconfiguration wizard for Kanopi WordPress DDEV
+## Description: Interactive configuration wizard for Kanopi WordPress DDEV
 ## Usage: project:configure
 ## Example: "ddev project:configure"
 ## Aliases: configure,project-configure,prc
@@ -14,23 +14,23 @@ red='\033[0;31m'
 NC='\033[0m'
 divider='===================================================\n'
 
-echo -e "\n🔧 ${yellow}Kanopi WordPress DDEV Reconfiguration Wizard${NC} 🔧"
+echo -e "\n🔧 ${yellow}Kanopi WordPress DDEV Configuration Wizard${NC} 🔧"
 echo -e "${green}${divider}${NC}"
-echo "This tool allows you to reconfigure your existing DDEV environment."
-echo "Environment variables will be updated in .ddev/config.yaml"
+echo "This tool sets up configuration variables for your hosting provider and development settings."
+echo "Variables are stored in .ddev/scripts/load-config.sh"
 echo "Press Ctrl+C anytime to exit."
 echo ""
 
 # Check if DDEV project exists
 if [ ! -f ".ddev/config.yaml" ]; then
     echo "❌ DDEV project not found. Please run this command from your DDEV project root."
-    echo "💡 If this is a new project, run 'ddev add-on get kanopi/ddev-kanopi-wp' instead."
+    echo "💡 If this is a new project, run 'ddev add-on get kanopi/ddev-kanopi-wp' first."
     exit 1
 fi
 
-# Check if Kanopi add-on is installed
-if ! ddev exec printenv HOSTING_PROVIDER >/dev/null 2>&1; then
-    echo "❌ Kanopi WordPress add-on environment not found."
+# Check if load-config.sh exists
+if [ ! -f ".ddev/scripts/load-config.sh" ]; then
+    echo "❌ Kanopi WordPress add-on scripts not found."
     echo "Please run 'ddev add-on get kanopi/ddev-kanopi-wp' first"
     exit 1
 fi
@@ -77,28 +77,42 @@ select_option() {
     fi
 }
 
+# Load current configuration from load-config.sh
+source .ddev/scripts/load-config.sh
+load_kanopi_config
+
 # Show current configuration
 echo "📋 Current Configuration:"
 echo "------------------------"
-CURRENT_PROVIDER=$(ddev exec printenv HOSTING_PROVIDER 2>/dev/null || echo "not set")
-CURRENT_SITE=$(ddev exec printenv HOSTING_SITE 2>/dev/null || echo "not set")
-CURRENT_ENV=$(ddev exec printenv HOSTING_ENV 2>/dev/null || echo "not set")
-CURRENT_THEME=$(ddev exec printenv THEME 2>/dev/null || echo "not set")
-CURRENT_THEMENAME=$(ddev exec printenv THEMENAME 2>/dev/null || echo "not set")
-CURRENT_WP_USER=$(ddev exec printenv WP_ADMIN_USER 2>/dev/null || echo "not set")
-CURRENT_WP_EMAIL=$(ddev exec printenv WP_ADMIN_EMAIL 2>/dev/null || echo "not set")
-CURRENT_MIGRATE_SOURCE=$(ddev exec printenv MIGRATE_DB_SOURCE 2>/dev/null || echo "not set")
-CURRENT_MIGRATE_ENV=$(ddev exec printenv MIGRATE_DB_ENV 2>/dev/null || echo "not set")
+echo "Hosting Provider: ${HOSTING_PROVIDER:-not set}"
 
-echo "Hosting Provider: $CURRENT_PROVIDER"
-echo "Site: $CURRENT_SITE"
-echo "Environment: $CURRENT_ENV"
-echo "Theme Path: $CURRENT_THEME"
-echo "Theme Name: $CURRENT_THEMENAME"
-echo "WordPress Admin User: $CURRENT_WP_USER"
-echo "WordPress Admin Email: $CURRENT_WP_EMAIL"
-echo "Migration Source: $CURRENT_MIGRATE_SOURCE"
-echo "Migration Environment: $CURRENT_MIGRATE_ENV"
+# Show provider-specific configuration
+case "${HOSTING_PROVIDER:-not set}" in
+    "pantheon")
+        echo "Pantheon Site: ${HOSTING_SITE:-not set}"
+        echo "Pantheon Environment: ${HOSTING_ENV:-not set}"
+        echo "Migration Source: ${MIGRATE_DB_SOURCE:-not set}"
+        echo "Migration Environment: ${MIGRATE_DB_ENV:-not set}"
+        ;;
+    "wpengine")
+        echo "WPEngine Site: ${HOSTING_SITE:-not set}"
+        echo "WPEngine Key: ${WPENGINE_SSH_KEY:-not set}"
+        ;;
+    "kinsta")
+        echo "Kinsta Remote Host: ${REMOTE_HOST:-not set}"
+        echo "Kinsta Remote Port: ${REMOTE_PORT:-not set}"
+        echo "Kinsta Remote User: ${REMOTE_USER:-not set}"
+        echo "Kinsta Remote Path: ${REMOTE_PATH:-not set}"
+        ;;
+    *)
+        echo "(Provider-specific settings will appear after selecting a provider)"
+        ;;
+esac
+
+echo "Theme Path: ${THEME:-not set}"
+echo "Theme Name: ${THEMENAME:-not set}"
+echo "WordPress Admin User: ${WP_ADMIN_USER:-not set}"
+echo "WordPress Admin Email: ${WP_ADMIN_EMAIL:-not set}"
 echo ""
 
 # Get hosting provider
@@ -113,20 +127,30 @@ case "$HOST_PROVIDER" in
     "pantheon")
         echo "🏛️ Pantheon Configuration:"
         echo "--------------------------"
-        prompt_input "Site machine name (e.g., my-site)" "$CURRENT_SITE" HOSTING_SITE
-        prompt_input "Default environment" "${CURRENT_ENV:-dev}" HOSTING_ENV
+        prompt_input "Site machine name (e.g., my-site)" "${HOSTING_SITE}" HOSTING_SITE
+        prompt_input "Default environment (dev/test/live)" "${HOSTING_ENV:-dev}" HOSTING_ENV
         ;;
     "wpengine")
         echo "⚡ WPEngine Configuration:"
         echo "-------------------------"
-        prompt_input "Install name (e.g., my-site)" "$CURRENT_SITE" HOSTING_SITE
-        prompt_input "Default environment" "${CURRENT_ENV:-production}" HOSTING_ENV
+        prompt_input "Install name (e.g., my-site)" "${HOSTING_SITE}" HOSTING_SITE
+        prompt_input "SSH private key path (e.g., ~/.ssh/keyname)" "${WPENGINE_SSH_KEY:-~/.ssh/id_rsa}" WPENGINE_SSH_KEY_RAW
+
+        # Store the path as-is (with tilde) - don't expand here
+        # Let the project:auth command handle expansion at runtime
+        WPENGINE_SSH_KEY="${WPENGINE_SSH_KEY_RAW%.pub}"
+
+        echo "💡 WPEngine only allows one SSH key per account, so we'll use this specific key."
+        echo "💡 SSH key path configured: $WPENGINE_SSH_KEY (will be expanded at runtime)"
         ;;
     "kinsta")
         echo "🔷 Kinsta Configuration:"
         echo "-----------------------"
-        prompt_input "Site name (e.g., my-site)" "$CURRENT_SITE" HOSTING_SITE
-        prompt_input "Default environment" "${CURRENT_ENV:-live}" HOSTING_ENV
+        prompt_input "Remote Host (e.g., 11.111.111.111)" "${REMOTE_HOST}" REMOTE_HOST
+        prompt_input "Remote Port (e.g., 12345)" "${REMOTE_PORT}" REMOTE_PORT
+        prompt_input "Remote User (e.g., yourusername)" "${REMOTE_USER}" REMOTE_USER
+        prompt_input "Remote Path (e.g., /www/somethingsomething/public)" "${REMOTE_PATH:-public}" REMOTE_PATH
+        echo "💡 Kinsta uses SSH keys for authentication."
         ;;
 esac
 
@@ -134,14 +158,14 @@ esac
 echo ""
 echo "🎨 Theme Configuration:"
 echo "----------------------"
-prompt_input "Theme path (e.g., wp-content/themes/custom/mytheme)" "$CURRENT_THEME" THEME_PATH
-prompt_input "Theme name/slug (e.g., mytheme)" "$CURRENT_THEMENAME" THEME_NAME
+prompt_input "Theme path (e.g., wp-content/themes/custom/struts)" "${THEME}" THEME_PATH
+prompt_input "Theme name/slug (e.g., mytheme or custom/themename if in a custom folder)" "${THEMENAME}" THEME_NAME
 
 # Get WordPress admin configuration
 echo ""
 echo "👤 WordPress Admin Configuration:"
 echo "--------------------------------"
-prompt_input "WordPress admin username" "${CURRENT_WP_USER:-admin}" WP_ADMIN_USER
+prompt_input "WordPress admin username" "${WP_ADMIN_USER:-admin}" WP_ADMIN_USER
 
 # Get password securely
 echo -n "WordPress admin password: "
@@ -156,66 +180,96 @@ if [ "$WP_ADMIN_PASS" != "$WP_ADMIN_PASS_CONFIRM" ]; then
     WP_ADMIN_PASS="admin"
 fi
 
-prompt_input "WordPress admin email" "${CURRENT_WP_EMAIL:-admin@example.com}" WP_ADMIN_EMAIL
+prompt_input "WordPress admin email" "${WP_ADMIN_EMAIL:-admin@example.com}" WP_ADMIN_EMAIL
 
-# Get migration settings (optional)
-echo ""
-echo "🔄 Migration Settings (optional):"
-echo "---------------------------------"
-prompt_input "Source site for migrations (optional)" "$CURRENT_MIGRATE_SOURCE" MIGRATE_SOURCE
-if [ -n "$MIGRATE_SOURCE" ]; then
-    prompt_input "Source environment" "${CURRENT_MIGRATE_ENV:-live}" MIGRATE_ENV
+# Get migration settings (optional, Pantheon only)
+if [[ "$HOST_PROVIDER" == "pantheon" ]]; then
+    echo ""
+    echo "🔄 Migration Settings (optional):"
+    echo "---------------------------------"
+    prompt_input "Source site for migrations (optional)" "${MIGRATE_DB_SOURCE}" MIGRATE_SOURCE
+    if [ -n "$MIGRATE_SOURCE" ]; then
+        prompt_input "Source environment (dev/test/live)" "${MIGRATE_DB_ENV:-live}" MIGRATE_ENV
+    fi
 fi
 
-# Get plugin licenses
-echo ""
-echo "🔑 Premium Plugin Licenses (optional):"
-echo "--------------------------------------"
-prompt_input "ACF Pro license key" "" ACF_LICENSE
-prompt_input "Gravity Forms license key" "" GF_LICENSE
+# Function to write variable to load-config.sh and DDEV config
+write_config_var() {
+    local var_name="$1"
+    local var_value="$2"
+    local config_file=".ddev/scripts/load-config.sh"
+
+    # Set the variable in DDEV's web environment
+    ddev config --web-environment-add "${var_name}=${var_value}"
+
+    # Escape special characters for sed
+    local escaped_value=$(echo "$var_value" | sed 's/[[\.*^$()+?{|]/\\&/g')
+
+    # Check if variable already exists as export
+    if grep -q "^export $var_name=" "$config_file"; then
+        # Update existing variable
+        sed -i.bak "s/^export $var_name=.*/export $var_name=\"$escaped_value\"/" "$config_file"
+    else
+        # Add new variable before load_kanopi_config function
+        sed -i.bak "/^load_kanopi_config() {/i\\
+export $var_name=\"$escaped_value\"\\
+" "$config_file"
+    fi
+
+    # Remove backup file
+    rm -f "${config_file}.bak"
+}
 
 # Update configuration
 echo ""
-echo "💾 Updating configuration..."
+echo "💾 Updating configuration in .ddev/scripts/load-config.sh and DDEV environment..."
 
-# Stop DDEV to safely update configuration
-echo "Stopping DDEV to update configuration..."
-ddev stop
+# Write hosting provider configuration
+echo "Setting hosting provider configuration..."
+write_config_var "HOSTING_PROVIDER" "$HOST_PROVIDER"
 
-# Update environment variables in .ddev/config.yaml
-echo "Setting hosting provider environment variables..."
-ddev config --web-environment-add HOSTING_PROVIDER="$HOST_PROVIDER"
-ddev config --web-environment-add HOSTING_SITE="$HOSTING_SITE"
-ddev config --web-environment-add HOSTING_ENV="$HOSTING_ENV"
+case "$HOST_PROVIDER" in
+    "pantheon")
+        write_config_var "HOSTING_SITE" "$HOSTING_SITE"
+        write_config_var "HOSTING_ENV" "$HOSTING_ENV"
+        ;;
+    "wpengine")
+        write_config_var "HOSTING_SITE" "$HOSTING_SITE"
+        write_config_var "WPENGINE_SSH_KEY" "$WPENGINE_SSH_KEY"
+        ;;
+    "kinsta")
+        write_config_var "REMOTE_HOST" "$REMOTE_HOST"
+        write_config_var "REMOTE_PORT" "$REMOTE_PORT"
+        write_config_var "REMOTE_USER" "$REMOTE_USER"
+        write_config_var "REMOTE_PATH" "$REMOTE_PATH"
+        ;;
+esac
 
-# Update theme environment variables
-echo "Setting theme environment variables..."
-ddev config --web-environment-add THEME="$THEME_PATH"
-ddev config --web-environment-add THEMENAME="$THEME_NAME"
+# Write theme variables
+echo "Setting theme configuration..."
+write_config_var "THEME" "$THEME_PATH"
+write_config_var "THEMENAME" "$THEME_NAME"
 
-# Update WordPress admin environment variables
-echo "Setting WordPress admin environment variables..."
-ddev config --web-environment-add WP_ADMIN_USER="$WP_ADMIN_USER"
-ddev config --web-environment-add WP_ADMIN_PASS="$WP_ADMIN_PASS"
-ddev config --web-environment-add WP_ADMIN_EMAIL="$WP_ADMIN_EMAIL"
+# Write WordPress admin variables
+echo "Setting WordPress admin configuration..."
+write_config_var "WP_ADMIN_USER" "$WP_ADMIN_USER"
+write_config_var "WP_ADMIN_PASS" "$WP_ADMIN_PASS"
+write_config_var "WP_ADMIN_EMAIL" "$WP_ADMIN_EMAIL"
 
-# Update migration settings if provided
-if [ -n "$MIGRATE_SOURCE" ]; then
-    echo "Setting migration environment variables..."
-    ddev config --web-environment-add MIGRATE_DB_SOURCE="$MIGRATE_SOURCE"
-    ddev config --web-environment-add MIGRATE_DB_ENV="$MIGRATE_ENV"
+# Write migration settings if provided (Pantheon only)
+if [[ "$HOST_PROVIDER" == "pantheon" ]] && [ -n "$MIGRATE_SOURCE" ]; then
+    echo "Setting migration configuration..."
+    write_config_var "MIGRATE_DB_SOURCE" "$MIGRATE_SOURCE"
+    write_config_var "MIGRATE_DB_ENV" "$MIGRATE_ENV"
 fi
 
-# Note: Plugin licenses are no longer managed by this add-on
-
-# Start DDEV with new configuration
-echo "Starting DDEV with updated configuration..."
-ddev start
 
 echo ""
-echo -e "🎉 ${green}Reconfiguration complete!${NC}"
+echo -e "🎉 ${green}Configuration complete!${NC}"
 echo ""
-echo "📁 All settings updated as environment variables in: .ddev/config.yaml"
+echo "📁 Settings saved in:"
+echo "   • .ddev/scripts/load-config.sh (for command scripts)"
+echo "   • .ddev/config.yaml web_environment (for DDEV containers)"
 echo ""
 echo -e "${yellow}Next steps:${NC}"
 
@@ -228,29 +282,24 @@ case "$HOST_PROVIDER" in
         echo ""
         ;;
     "wpengine")
-        echo "1. 🔑 Set your WPEngine SSH credentials globally (if needed):"
-        echo "   💡 Ensure your SSH key is added to your WPEngine account"
-        echo "   💡 Run: ddev auth ssh (to start SSH agent)"
+        echo "1. 🔑 Ensure your SSH key is set up for WPEngine:"
+        echo "   💡 Add your SSH public key to your WPEngine User Portal"
+        echo "   💡 The public key should correspond to: $WPENGINE_SSH_KEY"
+        echo "   💡 The init script will automatically load this specific key"
         echo ""
         ;;
     "kinsta")
-        echo "1. 🔑 Set your Kinsta API credentials globally (if needed):"
-        echo "   ddev config global --web-environment-add=KINSTA_API_KEY=your_api_key"
-        echo "   ddev config global --web-environment-add=KINSTA_SSH_HOST=your.server.ip"
-        echo "   ddev config global --web-environment-add=KINSTA_SSH_PORT=your_port"
-        echo "   ddev config global --web-environment-add=KINSTA_SSH_USER=your_user"
-        echo "   💡 Get API key: https://my.kinsta.com/api-keys"
+        echo "1. 🔑 Ensure your SSH key is set up for Kinsta:"
+        echo "   💡 Add your SSH public key in MyKinsta > User Settings > SSH Keys"
+        echo "   💡 The init script will load all your keys"
         echo ""
         ;;
 esac
 
-echo "2. 🗄️ Refresh your database from $HOST_PROVIDER:"
-echo "   ddev refresh"
+echo "2. 🌐 Run the init script!"
+echo "   ddev project:init"
 echo ""
-echo "3. 🎨 Install theme development tools (if needed):"
-echo "   ddev theme:install"
-echo ""
-echo "4. 🌐 Start developing:"
+echo "3. 🎨 Start developing:"
 echo "   ddev theme:watch"
 echo ""
 echo -e "${green}${divider}${NC}"
