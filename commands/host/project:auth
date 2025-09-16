@@ -40,16 +40,10 @@ if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
     if [ -f "$SSH_KEY_PATH" ]; then
         echo "✅ SSH key file found on host"
 
-        # For WPEngine, copy the key and SSH config to container
-        echo "🔑 Adding WPEngine SSH key and config to container..."
+        # For WPEngine, just copy the key and add to SSH agent
+        echo "🔑 Adding WPEngine SSH key to container..."
         ddev exec "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
         cat "$SSH_KEY_PATH" | ddev exec "cat > ~/.ssh/$(basename "$SSH_KEY_PATH") && chmod 600 ~/.ssh/$(basename "$SSH_KEY_PATH") && ssh-add ~/.ssh/$(basename "$SSH_KEY_PATH")"
-
-        # Also copy SSH config if it exists, so container knows about host aliases
-        if [ -f "$HOME/.ssh/config" ]; then
-            echo "📋 Copying SSH config to container..."
-            cat "$HOME/.ssh/config" | ddev exec "cat > ~/.ssh/config && chmod 600 ~/.ssh/config"
-        fi
 
         echo "✅ Loaded only WPEngine SSH key: $(basename "$SSH_KEY_PATH")"
     else
