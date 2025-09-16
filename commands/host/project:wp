@@ -7,24 +7,77 @@
 
 #ddev-generated
 
+# Colors and formatting
+green='\033[0;32m'
+yellow='\033[1;33m'
+NC='\033[0m'
+divider='===================================================\n'
+construction='\xF0\x9F\x9A\xA7'
+
+# Load configuration to get hosting provider
+source .ddev/scripts/load-config.sh
+load_kanopi_config
+
+# Determine docroot based on hosting provider
+case "${HOSTING_PROVIDER}" in
+    "pantheon")
+        DOCROOT="web"
+        ;;
+    "wpengine")
+        # Use configured DOCROOT from environment, fallback to 'web'
+        DOCROOT="${DOCROOT:-web}"
+        # Handle application root case (. or empty)
+        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
+            DOCROOT=""
+            DOCROOT_PATH="/var/www/html"
+            echo "Using application root (no subfolder) for WPEngine"
+        else
+            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+            echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
+        fi
+        ;;
+    "kinsta")
+        DOCROOT="public"
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
+        ;;
+    *)
+        DOCROOT="web"  # Default fallback
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
+        ;;
+esac
+
+# Set DOCROOT_PATH for non-WPEngine providers
+if [ -z "$DOCROOT_PATH" ]; then
+    DOCROOT_PATH="/var/www/html/${DOCROOT}"
+fi
+
+# For local file checks, use DOCROOT or "." for application root
+if [ -z "$DOCROOT" ]; then
+    LOCAL_PATH="."
+else
+    LOCAL_PATH="${DOCROOT}"
+fi
+
 # Install WordPress core (if not already installed)
-if [ ! -f "web/index.php" ] || [ ! -f "web/wp-load.php" ]; then
+if [ ! -f "${LOCAL_PATH}/index.php" ] || [ ! -f "${LOCAL_PATH}/wp-load.php" ]; then
   echo -e "\n${construction} ${yellow} Installing WordPress...${NC} ${construction}\n"
   echo -e "${green}${divider}${NC}"
-  ddev exec "wp core download --path=/var/www/html/web --allow-root"
+  ddev exec "wp core download --path=${DOCROOT_PATH} --allow-root"
   # Only create config if it doesn't exist
-  if [ ! -f "web/wp-config.php" ] && [ ! -f "web/wp-config-ddev.php" ]; then
-    ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=/var/www/html/web --allow-root"
+  if [ ! -f "${LOCAL_PATH}/wp-config.php" ] && [ ! -f "${LOCAL_PATH}/wp-config-ddev.php" ]; then
+    ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=${DOCROOT_PATH} --allow-root"
   fi
 fi
 
 # Install WordPress database (if not already installed)
-if [ -f "web/index.php" ]; then
+if [ -f "${LOCAL_PATH}/index.php" ]; then
   # Check if WordPress is installed by trying to get the site URL
-  WP_INSTALLED=$(ddev exec "wp core is-installed --path=/var/www/html/web --allow-root" 2>/dev/null && echo "true" || echo "false")
+  WP_INSTALLED=$(ddev exec "wp core is-installed --path=${DOCROOT_PATH} --allow-root" 2>/dev/null && echo "true" || echo "false")
   if [ "$WP_INSTALLED" = "false" ]; then
     echo -e "\n${construction} ${yellow} Setting up WordPress database...${NC} ${construction}\n"
     echo -e "${green}${divider}${NC}"
-    ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=/var/www/html/web --allow-root" 2>/dev/null || echo "WordPress database setup completed"
+    ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=${DOCROOT_PATH} --allow-root" 2>/dev/null || echo "WordPress database setup completed"
   fi
 fi

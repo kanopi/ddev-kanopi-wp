@@ -96,6 +96,7 @@ case "${HOSTING_PROVIDER:-not set}" in
         ;;
     "wpengine")
         echo "WPEngine Site: ${HOSTING_SITE:-not set}"
+        echo "WPEngine Docroot: ${DOCROOT:-not set}"
         echo "WPEngine Key: ${WPENGINE_SSH_KEY:-not set}"
         ;;
     "kinsta")
@@ -134,6 +135,7 @@ case "$HOST_PROVIDER" in
         echo "⚡ WPEngine Configuration:"
         echo "-------------------------"
         prompt_input "Install name (e.g., my-site)" "${HOSTING_SITE}" HOSTING_SITE
+        prompt_input "Document root directory (e.g., wp, public, web, or . for application root)" "${DOCROOT:-web}" DOCROOT
         prompt_input "SSH private key path (e.g., ~/.ssh/keyname)" "${WPENGINE_SSH_KEY:-~/.ssh/id_rsa}" WPENGINE_SSH_KEY_RAW
 
         # Store the path as-is (with tilde) - don't expand here
@@ -142,6 +144,7 @@ case "$HOST_PROVIDER" in
 
         echo "💡 WPEngine only allows one SSH key per account, so we'll use this specific key."
         echo "💡 SSH key path configured: $WPENGINE_SSH_KEY (will be expanded at runtime)"
+        echo "💡 Document root configured: $DOCROOT"
         ;;
     "kinsta")
         echo "🔷 Kinsta Configuration:"
@@ -235,6 +238,7 @@ case "$HOST_PROVIDER" in
         ;;
     "wpengine")
         write_config_var "HOSTING_SITE" "$HOSTING_SITE"
+        write_config_var "DOCROOT" "$DOCROOT"
         write_config_var "WPENGINE_SSH_KEY" "$WPENGINE_SSH_KEY"
         ;;
     "kinsta")

@@ -14,10 +14,36 @@ load_kanopi_config
 
 echo "Restoring admin user: $WP_ADMIN_USER"
 
+# Determine docroot based on hosting provider
+case "${HOSTING_PROVIDER}" in
+    "pantheon")
+        DOCROOT="web"
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+    "wpengine")
+        # Use configured DOCROOT from environment, fallback to 'web'
+        DOCROOT="${DOCROOT:-web}"
+        # Handle application root case (. or empty)
+        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
+            DOCROOT_PATH="/var/www/html"
+            echo "Using application root (no subfolder) for WordPress"
+        else
+            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        fi
+        ;;
+    "kinsta")
+        DOCROOT="public"
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+    *)
+        DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+esac
+
 # Check if WordPress is installed
-DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
-if [ ! -f "/var/www/html/${DOCROOT}/index.php" ]; then
-    echo "WordPress not found. Skipping admin user restoration."
+if [ ! -f "${DOCROOT_PATH}/index.php" ]; then
+    echo "WordPress not found at ${DOCROOT_PATH}. Skipping admin user restoration."
     exit 0
 fi
 
