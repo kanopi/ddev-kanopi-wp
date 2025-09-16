@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Build production assets for the theme
-## Usage: theme:build
-## Example: "ddev theme:build"
-## Aliases: production,theme-build,thb,theme-production
+## Usage: theme-build
+## Example: "ddev theme-build"
+## Aliases: production,theme:build,thb,theme-production
 
 #ddev-generated
 

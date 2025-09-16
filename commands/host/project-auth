@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ## Description: Authorizes you into DDEV.
-## Usage: project:auth
-## Example: "ddev project:auth"
+## Usage: project-auth
+## Example: "ddev project-auth"
 ## Aliases: project-auth
 
 #ddev-generated

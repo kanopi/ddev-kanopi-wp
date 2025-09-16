@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Install the node packages for cypress on the developers local machine
-## Usage: cypress:install
-## Example: "ddev cypress:install"
+## Usage: cypress-install
+## Example: "ddev cypress-install"
+## Aliases: cypress:install,cyi
 
 # Make sure NVM works
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"

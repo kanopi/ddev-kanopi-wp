@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Run Critical CSS Commands
-## Usage: critical:run
-## Example: "ddev critical:run"
-## Aliases: critical,crr,critical-run
+## Usage: critical-run
+## Example: "ddev critical-run"
+## Aliases: critical,crr,critical:run
 
 # Abort if anything fails
 set -e

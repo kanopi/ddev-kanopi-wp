@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Create and configure the migration database inside the DDEV web container
-## Usage: db:prep-migrate
-## Example: ddev db:prep-migrate
-## Aliases: migrate-prep-db,db-prep-migrate,db-mpdb
+## Usage: db-prep-migrate
+## Example: ddev db-prep-migrate
+## Aliases: migrate-prep-db,db:prep-migrate
 
 # Abort if anything fails
 set -e

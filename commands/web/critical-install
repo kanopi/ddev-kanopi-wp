@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Initialize/reinstall tools needed for critical CSS.
-## Usage: critical:install
-## Example: ddev critical:install
-## Aliases: install-critical-tools,cri,critical-install
+## Usage: critical-install
+## Example: ddev critical-install
+## Aliases: install-critical-tools,cri,critical:install
 
 #-------------------------- Helper functions -----------------------------------
 

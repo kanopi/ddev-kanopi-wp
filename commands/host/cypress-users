@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Create Cypress users
-## Usage: cypress:users
-## Example: "ddev cypress:users"
-## Aliases: cyu,cypress-users
+## Usage: cypress-users
+## Example: "ddev cypress-users"
+## Aliases: cypress:users,cyu
 
 # Abort if anything fails
 set -e

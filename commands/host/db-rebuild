@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Runs composer install and database refresh.
-## Usage: db:rebuild
-## Example: "ddev db:rebuild"
-## Aliases: rebuild,db-rebuild,dbreb
+## Usage: db-rebuild
+## Example: "ddev db-rebuild"
+## Aliases: rebuild,db:rebuild
 
 green='\033[0;32m'
 yellow='\033[1;33m'

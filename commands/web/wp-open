@@ -2,9 +2,10 @@
 
 ## Open the site or admin in your default browser
 ##
-## Usage: wp:open [service]
-## Example: "ddev wp:open" or "ddev wp:open admin"
-## Aliases: open,wp-open
+## Usage: wp-open [service]
+## Example: "ddev wp-open"
+## Example: "ddev wp-open admin"
+## Aliases: open,wp:open
 
 SERVICE="${1:-}"
 

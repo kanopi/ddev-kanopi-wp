@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Install & WordPress if needed.
-## Usage: project:wp
-## Example: "ddev project:wp"
-## Aliases: project-wp
+## Usage: project-wp
+## Example: "ddev project-wp"
+## Aliases: project:wp
 
 #ddev-generated
 

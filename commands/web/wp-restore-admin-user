@@ -2,9 +2,9 @@
 
 ## Restore the admin user credentials
 ##
-## Usage: wp:restore-admin-user
-## Example: ddev wp:restore-admin-user
-## Aliases: restore-admin-user,wp-restore-admin-user,wp-rau
+## Usage: wp-restore-admin-user
+## Example: ddev wp-restore-admin-user
+## Aliases: restore-admin-user,wp:restore-admin-user
 
 #ddev-generated
 

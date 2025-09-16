@@ -2,9 +2,9 @@
 
 ## Refresh DB
 ## Description: Downloads the database from the hosting provider. Supports Pantheon, WPEngine, and Kinsta platforms.
-## Usage: db:refresh [environment id]
-## Example: ddev db:refresh pr-123
-## Aliases: refresh,db-refresh,dbref
+## Usage: db-refresh [environment id]
+## Example: ddev db-refresh pr-123
+## Aliases: refresh,db:refresh
 ## Flags: [{"Name":"force","Shorthand":"f","Usage":"Force creation of new backup regardless of age"}]
 
 green='\033[0;32m'

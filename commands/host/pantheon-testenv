@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Initialize stack and testing environment in DDEV.
-## Usage: pantheon:testenv [environment_name] [optional install_type]
-## Example: ddev pantheon:testenv my-env fresh
-## Aliases: testenv,pantheon-testenv
+## Usage: pantheon-testenv [environment_name] [optional install_type]
+## Example: ddev pantheon-testenv my-env fresh
+## Aliases: testenv,pantheon:testenv
 
 # Abort if anything fails
 set -e

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Install and set up theme development tools in DDEV
-## Usage: theme:install
-## Example: ddev theme:install
-## Aliases: install-theme-tools,thi,theme-install
+## Usage: theme-install
+## Example: ddev theme-install
+## Aliases: install-theme-tools,thi,theme:install
 
 # Abort if anything fails
 set -e

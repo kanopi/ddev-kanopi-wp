@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Continuously wake up a Pantheon environment.
-## Usage: pantheon:tickle
-## Example: ddev pantheon:tickle
-## Aliases: tickle,pantheon-tickle
+## Usage: pantheon-tickle
+## Example: ddev pantheon-tickle
+## Aliases: tickle,pantheon:tickle
 
 # Abort if anything fails
 set -e

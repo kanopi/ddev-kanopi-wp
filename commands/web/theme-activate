@@ -2,8 +2,9 @@
 
 ## Activate the custom theme
 ##
-## Usage: theme:activate
-## Aliases: activate-theme,tha,theme-activate
+## Usage: theme-activate
+## Example: "ddev theme-activate"
+## Aliases: activate-theme,tha,theme:activate
 
 #ddev-generated
 

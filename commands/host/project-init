@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Initialize local WordPress development environment.
-## Usage: project:init
-## Example: "ddev project:init"
-## Aliases: init,project-init
+## Usage: project-init
+## Example: "ddev project-init"
+## Aliases: init,project:init
 
 #ddev-generated
 

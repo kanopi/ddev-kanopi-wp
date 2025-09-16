@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Interactive configuration wizard for Kanopi WordPress DDEV
-## Usage: project:configure
-## Example: "ddev project:configure"
-## Aliases: configure,project-configure,prc
+## Usage: project-configure
+## Example: "ddev project-configure"
+## Aliases: configure,project:configure,prc
 
 #ddev-generated
 

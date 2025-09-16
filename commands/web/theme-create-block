@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Create a new WordPress block
-## Usage: theme:create-block <block-name>
-## Example: "ddev theme:create-block my-awesome-block"
-## Aliases: create-block,thcb,theme-create-block
+## Usage: theme-create-block <block-name>
+## Example: "ddev theme-create-block my-awesome-block"
+## Aliases: create-block,thcb,theme:create-block
 
 #ddev-generated
 

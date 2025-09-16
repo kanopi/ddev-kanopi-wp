@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Initialize Lefthook.
-## Usage: project:lefthook
-## Example: "ddev project:lefthook"
-## Aliases: project-lefthook
+## Usage: project-lefthook
+## Example: "ddev project-lefthook"
+## Aliases: project:lefthook
 
 #ddev-generated
 

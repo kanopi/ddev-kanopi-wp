@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Description: Run @wordpress/scripts in development mode for the theme
-## Usage: theme:watch
-## Example: "ddev theme:watch"
-## Aliases: development,thw,theme-watch,theme-development
+## Usage: theme-watch
+## Example: "ddev theme-watch"
+## Aliases: development,thw,theme:watch,theme-development
 
 #ddev-generated
 
