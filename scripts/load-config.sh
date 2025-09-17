@@ -53,31 +53,6 @@ load_kanopi_config() {
         export REMOTE_USER=${REMOTE_USER:-''}
         export REMOTE_PATH=${REMOTE_PATH:-'public'}
     fi
-
-    # Debug output if requested
-    if [ "$KANOPI_CONFIG_DEBUG" = "true" ]; then
-        echo "Configuration loaded:"
-        echo "  WordPress Admin: $WP_ADMIN_USER ($WP_ADMIN_EMAIL)"
-        echo "  Theme: $THEMENAME at $THEME"
-        echo "  Hosting Provider: $HOSTING_PROVIDER"
-
-        case "$HOSTING_PROVIDER" in
-            "pantheon")
-                echo "  Pantheon Site: $HOSTING_SITE ($HOSTING_ENV)"
-                if [ -n "$MIGRATE_DB_SOURCE" ]; then
-                    echo "  Migration Source: $MIGRATE_DB_SOURCE ($MIGRATE_DB_ENV)"
-                fi
-                ;;
-            "wpengine")
-                echo "  WPEngine Install: $HOSTING_SITE"
-                echo "  WPEngine SSH Key: $WPENGINE_SSH_KEY"
-                ;;
-            "kinsta")
-                echo "  Kinsta SSH: $REMOTE_USER@$REMOTE_HOST:$REMOTE_PORT"
-                echo "  Remote Path: $REMOTE_PATH"
-                ;;
-        esac
-    fi
 }
 
 # Function to update configuration variables in this file
