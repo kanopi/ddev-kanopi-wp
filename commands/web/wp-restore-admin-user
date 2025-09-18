@@ -47,9 +47,9 @@ if [ ! -f "${DOCROOT_PATH}/index.php" ]; then
     exit 0
 fi
 
-# Create or update admin user
-wp user create "$WP_ADMIN_USER" "$WP_ADMIN_EMAIL" --role=administrator --user_pass="$WP_ADMIN_PASS" --allow-root 2>/dev/null || \
-wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASS" --user_email="$WP_ADMIN_EMAIL" --allow-root
+# Create or update admin user with proper path
+wp user create "$WP_ADMIN_USER" "$WP_ADMIN_EMAIL" --role=administrator --user_pass="$WP_ADMIN_PASS" --path="${DOCROOT_PATH}" --allow-root 2>/dev/null || \
+wp user update "$WP_ADMIN_USER" --user_pass="$WP_ADMIN_PASS" --user_email="$WP_ADMIN_EMAIL" --path="${DOCROOT_PATH}" --allow-root
 
 echo "Admin user restored successfully!"
 echo "Username: $WP_ADMIN_USER"

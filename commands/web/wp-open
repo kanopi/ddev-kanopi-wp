@@ -10,6 +10,36 @@
 
 SERVICE="${1:-}"
 
+# Load configuration to get hosting provider and docroot
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
+
+# Determine docroot based on hosting provider
+case "${HOSTING_PROVIDER}" in
+    "pantheon")
+        DOCROOT="web"
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+    "wpengine")
+        # Use configured DOCROOT from environment, fallback to 'web'
+        DOCROOT="${DOCROOT:-web}"
+        # Handle application root case (. or empty)
+        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
+            DOCROOT_PATH="/var/www/html"
+        else
+            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        fi
+        ;;
+    "kinsta")
+        DOCROOT="public"
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+    *)
+        DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+esac
+
 # Function to open URL in browser
 open_browser() {
     local url="$1"
@@ -30,7 +60,7 @@ if [ "$SERVICE" = "cms" ] || [ "$SERVICE" = "admin" ]; then
     ADMIN_USER="${WP_ADMIN_USER:-admin}"
 
     # Install and set up the login command
-    if ! wp login --help --allow-root >/dev/null 2>&1; then
+    if ! wp login --help --path="${DOCROOT_PATH}" --allow-root >/dev/null 2>&1; then
         echo "📦 Installing login command..."
         if wp package install aaemnnosttv/wp-cli-login-command --allow-root 2>/dev/null; then
             echo "✅ Login command installed successfully"
@@ -42,14 +72,14 @@ if [ "$SERVICE" = "cms" ] || [ "$SERVICE" = "admin" ]; then
     fi
 
     # Check if login plugin is already active, install if needed
-    if ! wp plugin is-active wp-cli-login-server --allow-root >/dev/null 2>&1; then
+    if ! wp plugin is-active wp-cli-login-server --path="${DOCROOT_PATH}" --allow-root >/dev/null 2>&1; then
         echo "📦 Setting up login plugin..."
         # Try to activate first in case it's installed but not active
-        if wp plugin activate wp-cli-login-server --allow-root >/dev/null 2>&1; then
+        if wp plugin activate wp-cli-login-server --path="${DOCROOT_PATH}" --allow-root >/dev/null 2>&1; then
             echo "✅ Login plugin activated"
         else
             # Install and activate if not installed
-            if wp login install --activate --allow-root >/dev/null 2>&1; then
+            if wp login install --activate --path="${DOCROOT_PATH}" --allow-root >/dev/null 2>&1; then
                 echo "✅ Login plugin installed and activated"
             else
                 echo "ℹ️  Login plugin setup failed - using fallback"
@@ -60,7 +90,7 @@ if [ "$SERVICE" = "cms" ] || [ "$SERVICE" = "admin" ]; then
     fi
 
     # Generate login URL
-    LOGIN_RESULT=$(wp login create "$ADMIN_USER" --allow-root 2>&1)
+    LOGIN_RESULT=$(wp login create "$ADMIN_USER" --path="${DOCROOT_PATH}" --allow-root 2>&1)
 
     # Extract just the URL from the success message
     LOGIN_URL=$(echo "$LOGIN_RESULT" | grep -o 'https://[^[:space:]]*')
