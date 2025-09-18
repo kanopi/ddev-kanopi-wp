@@ -25,9 +25,38 @@ watch_command='ddev theme:watch'
 
 #-------------------------- Settings --------------------------------
 
+# Load configuration to get hosting provider and docroot
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
+
 # Get theme configuration from environment variables
 THEME_PATH=$(printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
-DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+
+# Determine docroot based on hosting provider
+case "${HOSTING_PROVIDER}" in
+    "pantheon")
+        DOCROOT="web"
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+    "wpengine")
+        # Use configured DOCROOT from environment, fallback to 'web'
+        DOCROOT="${DOCROOT:-web}"
+        # Handle application root case (. or empty)
+        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
+            DOCROOT_PATH="/var/www/html"
+        else
+            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        fi
+        ;;
+    "kinsta")
+        DOCROOT="public"
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+    *)
+        DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+esac
 
 # Define full theme path
 FULL_THEME_PATH="/var/www/html/${DOCROOT}/${THEME_PATH}"
@@ -80,10 +109,11 @@ npm run build || echo "npm run build"
 
 # Activate the custom theme (if configured and WordPress is available)
 if [ -f "${DOCROOT}/index.php" ]; then
-  THEME_SLUG=$(ddev exec printenv THEMENAME 2>/dev/null || echo "struts")
-  ddev exec "wp theme activate ${THEME_SLUG} --allow-root" 2>/dev/null || echo "Theme activation skipped (theme not found)"
+  THEME_SLUG=$(printenv THEMENAME 2>/dev/null || echo "struts")
+  echo "Activating theme: ${THEME_SLUG}"
+  wp theme activate "${THEME_SLUG}" --path="${DOCROOT_PATH}" --allow-root 2>/dev/null && echo "✅ Theme '${THEME_SLUG}' activated successfully" || echo "⚠️  Theme activation skipped (theme not found or WordPress not accessible)"
 else
-  echo "Theme activation skipped (WordPress not installed)"
+  echo "⚠️  Theme activation skipped (WordPress not found at ${DOCROOT}/index.php)"
 fi
 
 # Completion message

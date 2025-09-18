@@ -8,12 +8,39 @@
 
 #ddev-generated
 
+# Load configuration to get hosting provider and docroot
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
+
+# Determine docroot based on hosting provider
+case "${HOSTING_PROVIDER}" in
+    "pantheon")
+        DOCROOT_PATH="/var/www/html/web"
+        ;;
+    "wpengine")
+        # Use configured DOCROOT from environment, fallback to 'web'
+        DOCROOT="${DOCROOT:-web}"
+        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
+            DOCROOT_PATH="/var/www/html"
+        else
+            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        fi
+        ;;
+    "kinsta")
+        DOCROOT_PATH="/var/www/html/public"
+        ;;
+    *)
+        DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        ;;
+esac
+
 # Get theme configuration from environment variables
 WP_THEME_SLUG=$(printenv THEMENAME 2>/dev/null || echo "struts")
 
 echo "Activating theme: $WP_THEME_SLUG"
 
-# Activate the theme
-wp theme activate "$WP_THEME_SLUG" --allow-root
+# Activate the theme with proper path
+wp theme activate "$WP_THEME_SLUG" --path="${DOCROOT_PATH}" --allow-root
 
 echo "Theme '$WP_THEME_SLUG' activated successfully!"
