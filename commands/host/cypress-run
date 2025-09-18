@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Run Cypress Commands
 ## Usage: cypress-run [command]

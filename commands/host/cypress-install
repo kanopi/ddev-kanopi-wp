@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Install the node packages for cypress on the developers local machine
 ## Usage: cypress-install

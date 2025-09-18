@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Create Cypress users
 ## Usage: cypress-users

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Create and configure the migration database inside the DDEV web container
 ## Usage: db-prep-migrate

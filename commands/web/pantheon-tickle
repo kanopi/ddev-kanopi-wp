@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Continuously wake up a Pantheon environment.
 ## Usage: pantheon-tickle

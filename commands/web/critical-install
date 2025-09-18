@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Initialize/reinstall tools needed for critical CSS.
 ## Usage: critical-install

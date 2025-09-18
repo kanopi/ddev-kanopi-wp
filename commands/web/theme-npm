@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Runs NPM commands on the theme.
 ## Usage: theme-npm [flags] [args]

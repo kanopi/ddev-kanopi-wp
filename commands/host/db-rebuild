@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Runs composer install and database refresh.
 ## Usage: db-rebuild

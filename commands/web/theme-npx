@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Runs NPX commands on the theme.
 ## Usage: theme-npx <command> [args...]

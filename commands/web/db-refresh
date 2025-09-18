@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Refresh DB
 ## Description: Downloads the database from the hosting provider. Supports Pantheon, WPEngine, and Kinsta platforms.

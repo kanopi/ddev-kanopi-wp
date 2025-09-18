@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Pantheon Database Refresh Script
 ## Called by the main refresh command for Pantheon platforms

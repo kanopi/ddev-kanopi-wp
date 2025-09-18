@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Description: Initialize stack and testing environment in DDEV.
 ## Usage: pantheon-testenv [environment_name] [optional install_type]
