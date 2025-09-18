@@ -102,9 +102,12 @@ fi
 if [ "$WP_CORE_EXISTS" = "true" ]; then
   # Check if WordPress database is installed
   echo "📝 Checking WordPress database installation status..."
-  WP_INSTALLED=$(ddev exec "wp core is-installed --path=${DOCROOT_PATH} --allow-root" 2>/dev/null && echo "true" || echo "false")
 
-  if [ "$WP_INSTALLED" = "false" ]; then
+  # Use a more robust check for WordPress installation
+  if ddev exec "wp core is-installed --path=${DOCROOT_PATH} --allow-root" >/dev/null 2>&1; then
+    echo "✅ WordPress database is already installed"
+  else
+    echo "📝 WordPress database is not installed"
     echo -e "\n${construction} ${yellow} Setting up WordPress database...${NC} ${construction}\n"
     echo -e "${green}${divider}${NC}"
 
@@ -117,15 +120,17 @@ if [ "$WP_CORE_EXISTS" = "true" ]; then
     # Install WordPress
     echo "📝 Installing WordPress database tables..."
     INSTALL_RESULT=$(ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=${DOCROOT_PATH} --allow-root" 2>&1)
+    INSTALL_EXIT_CODE=$?
 
-    if echo "$INSTALL_RESULT" | grep -q "Success"; then
+    if [ $INSTALL_EXIT_CODE -eq 0 ] && echo "$INSTALL_RESULT" | grep -q "Success"; then
       echo "✅ WordPress database installed successfully"
+    elif echo "$INSTALL_RESULT" | grep -q "already installed"; then
+      echo "✅ WordPress database was already configured"
     else
-      echo "📝 WordPress database setup completed (may have been already configured)"
+      echo "⚠️  WordPress database installation had issues:"
+      echo "   Exit code: $INSTALL_EXIT_CODE"
       echo "   Output: $INSTALL_RESULT"
     fi
-  else
-    echo "✅ WordPress database is already installed"
   fi
 else
   echo "⚠️  WordPress core files not found - please check your composer setup"
