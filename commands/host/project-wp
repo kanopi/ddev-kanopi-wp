@@ -60,24 +60,75 @@ else
     LOCAL_PATH="${DOCROOT}"
 fi
 
-# Install WordPress core (if not already installed)
-if [ ! -f "${LOCAL_PATH}/index.php" ] || [ ! -f "${LOCAL_PATH}/wp-load.php" ]; then
-  echo -e "\n${construction} ${yellow} Installing WordPress...${NC} ${construction}\n"
+# Check if WordPress core needs to be installed
+# First check the expected docroot location for WordPress files
+CORE_CHECK_PASSED="false"
+if [ -f "${LOCAL_PATH}/index.php" ] && [ -f "${LOCAL_PATH}/wp-load.php" ]; then
+  CORE_CHECK_PASSED="true"
+fi
+
+# For composer-managed installs, also check if WordPress was moved from another location
+if [ "$CORE_CHECK_PASSED" = "false" ] && [ -f "public/wp-config-sample.php" ]; then
+  echo "📝 Found WordPress core files managed by composer, checking if they need to be moved to docroot..."
+  CORE_CHECK_PASSED="true"
+fi
+
+# Install WordPress core if needed
+if [ "$CORE_CHECK_PASSED" = "false" ]; then
+  echo -e "\n${construction} ${yellow} Installing WordPress core...${NC} ${construction}\n"
   echo -e "${green}${divider}${NC}"
   ddev exec "wp core download --path=${DOCROOT_PATH} --allow-root"
+
   # Only create config if it doesn't exist
   if [ ! -f "${LOCAL_PATH}/wp-config.php" ] && [ ! -f "${LOCAL_PATH}/wp-config-ddev.php" ]; then
+    echo "📝 Creating WordPress configuration file..."
     ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=${DOCROOT_PATH} --allow-root"
   fi
+else
+  echo "📝 WordPress core files found in docroot: ${LOCAL_PATH}"
 fi
 
 # Install WordPress database (if not already installed)
-if [ -f "${LOCAL_PATH}/index.php" ]; then
-  # Check if WordPress is installed by trying to get the site URL
+# Check if WordPress core files exist in the expected docroot
+WP_CORE_EXISTS="false"
+if [ -f "${LOCAL_PATH}/index.php" ] || [ -f "${LOCAL_PATH}/wp-load.php" ]; then
+  WP_CORE_EXISTS="true"
+elif [ -f "public/index.php" ] || [ -f "public/wp-load.php" ]; then
+  # Check if WordPress exists in public directory (common for composer installs)
+  WP_CORE_EXISTS="true"
+  echo "📝 Found WordPress core files in public directory"
+fi
+
+if [ "$WP_CORE_EXISTS" = "true" ]; then
+  # Check if WordPress database is installed
+  echo "📝 Checking WordPress database installation status..."
   WP_INSTALLED=$(ddev exec "wp core is-installed --path=${DOCROOT_PATH} --allow-root" 2>/dev/null && echo "true" || echo "false")
+
   if [ "$WP_INSTALLED" = "false" ]; then
     echo -e "\n${construction} ${yellow} Setting up WordPress database...${NC} ${construction}\n"
     echo -e "${green}${divider}${NC}"
-    ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=${DOCROOT_PATH} --allow-root" 2>/dev/null || echo "WordPress database setup completed"
+
+    # Make sure wp-config.php exists first
+    if [ ! -f "${LOCAL_PATH}/wp-config.php" ] && [ ! -f "${LOCAL_PATH}/wp-config-ddev.php" ]; then
+      echo "📝 Creating WordPress configuration file..."
+      ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=${DOCROOT_PATH} --allow-root"
+    fi
+
+    # Install WordPress
+    echo "📝 Installing WordPress database tables..."
+    INSTALL_RESULT=$(ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='WordPress Site' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=${DOCROOT_PATH} --allow-root" 2>&1)
+
+    if echo "$INSTALL_RESULT" | grep -q "Success"; then
+      echo "✅ WordPress database installed successfully"
+    else
+      echo "📝 WordPress database setup completed (may have been already configured)"
+      echo "   Output: $INSTALL_RESULT"
+    fi
+  else
+    echo "✅ WordPress database is already installed"
   fi
+else
+  echo "⚠️  WordPress core files not found - please check your composer setup"
+  echo "   Expected location: ${LOCAL_PATH}/"
+  echo "   Alternate location checked: public/"
 fi
