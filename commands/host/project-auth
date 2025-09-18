@@ -3,7 +3,7 @@
 ## Description: Authorizes you into DDEV.
 ## Usage: project-auth
 ## Example: "ddev project-auth"
-## Aliases: project-auth
+## Aliases: project:auth
 
 #ddev-generated
 

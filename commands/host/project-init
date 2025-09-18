@@ -27,9 +27,9 @@ lock='\xF0\x9F\x94\x92'
 arm='\xF0\x9F\x92\xAA'
 
 # WordPress-specific commands
-theme_dev_command='ddev theme:watch'
-theme_build_command='ddev theme:build'
-refresh_command='ddev db:refresh'
+theme_dev_command='ddev theme-watch'
+theme_build_command='ddev theme-build'
+refresh_command='ddev db-refresh'
 
 # Handle Pantheon mu-plugin conflicts early (before any wp-cli commands)
 echo -e "\n${construction} ${yellow} Checking for Pantheon mu-plugin conflicts...${NC} ${construction}\n"
@@ -61,12 +61,12 @@ echo -e "${green}${divider}${NC}"
 ddev start -y
 
 # Set up Lefthook.
-ddev project:lefthook
+ddev project-lefthook
 
 # Add SSH keys for remote access.
 echo -e "\n${key} ${yellow} Adding SSH keys.${NC} ${key}"
 echo -e "${green}${divider}${NC}"
-ddev project:auth
+ddev project-auth
 
 # Install Composer dependencies (if composer.json exists).
 if [ -f "composer.json" ]; then
@@ -76,7 +76,7 @@ if [ -f "composer.json" ]; then
 fi
 
 # Configure WordPress.
-ddev project:wp
+ddev project-wp
 
 # Get the database from hosting provider (if configured).
 HOSTING_SITE_VALUE=$(ddev exec printenv HOSTING_SITE 2>/dev/null || echo "")
@@ -87,17 +87,17 @@ if [ -n "$HOSTING_SITE_VALUE" ]; then
 fi
 
 # Install theme.
-ddev theme:install
+ddev theme-install
 
 # Activate theme and restore admin user.
 echo -e "\n${lock} ${yellow} Restoring admin user and logging you in.${NC} ${lock}"
 echo -e "${green}${divider}${NC}"
 
 # Restore admin user
-ddev wp:restore-admin-user
+ddev wp-restore-admin-user
 
 # Generate login link
-ddev wp:open admin
+ddev wp-open admin
 
 # Complete
 echo -e "\n${party} ${yellow} WordPress development environment ready!${NC} ${reverseparty}"

@@ -119,21 +119,11 @@ post_install_actions:
   echo ""
   echo "✅ Kanopi WordPress Add-on installed successfully!"
   echo ""
-  echo "📦 Installed components:"
-  echo "   • Enhanced multi-provider hosting support (Pantheon, WPEngine, Kinsta)"
-  echo "   • 20+ custom commands for WordPress development workflow"
-  echo "   • Nginx proxy configuration so you dont have to download assets locally"
-  echo "   • Theme development tools with Node.js/NPM support"
-  echo "   • Cypress testing integration"
-  echo "   • WordPress block creation tools"
-  echo "   • Migration and backup utilities"
-  echo "   • Redis, Solr, and PhpMyAdmin add-ons installed"
-  echo "   • Automatic Pantheon mu-plugin conflict resolution for DDEV compatibility"
-  echo ""
   echo "🔧 Next steps:"
   echo "   1. Run 'ddev project:configure' to set up your hosting provider and variables"
-  echo "   2. Run 'ddev restart' to apply configuration changes"
-  echo "   3. Run 'ddev init' to complete project initialization"
+  echo "   2. Review wp-config settings if your project already has a wp-config.php"
+  echo "   3. Review the theme commands in .ddev/command/web if your project was not built on Struts."
+  echo "   4. Run 'ddev project:init' to complete project initialization"
   echo ""
   echo "📚 Run 'ddev help' to see available commands"
   echo ""
@@ -173,38 +163,34 @@ removal_actions:
   echo "🔧 Removing custom commands..."
   
   # Remove host commands
-  rm -f commands/host/cypress 2>/dev/null || true
+  rm -f commands/host/cypress-install 2>/dev/null || true
+  rm -f commands/host/cypress-run 2>/dev/null || true
   rm -f commands/host/cypress-users 2>/dev/null || true
-  rm -f commands/host/init 2>/dev/null || true
-  rm -f commands/host/install-cypress 2>/dev/null || true
+  rm -f commands/host/db-rebuild 2>/dev/null || true
+  rm -f commands/host/pantheon-terminus 2>/dev/null || true
+  rm -f commands/host/pantheon-testenv 2>/dev/null || true
   rm -f commands/host/phpmyadmin 2>/dev/null || true
-  rm -f commands/host/rebuild 2>/dev/null || true
-  rm -f commands/host/db:rebuild 2>/dev/null || true
-  rm -f commands/host/testenv 2>/dev/null || true
-  rm -f commands/host/configure 2>/dev/null || true
-  rm -f commands/host/npm 2>/dev/null || true
-  rm -f commands/host/phpcbf 2>/dev/null || true
-  rm -f commands/host/phpcs 2>/dev/null || true
-  rm -f commands/host/terminus 2>/dev/null || true
+  rm -f commands/host/project-auth 2>/dev/null || true
+  rm -f commands/host/project-configure 2>/dev/null || true
+  rm -f commands/host/project-init 2>/dev/null || true
+  rm -f commands/host/project-lefthook 2>/dev/null || true
+  rm -f commands/host/project-wp 2>/dev/null || true
   
   # Remove web commands
-  rm -f commands/web/install-critical-tools 2>/dev/null || true
-  rm -f commands/web/install-theme-tools 2>/dev/null || true
-  rm -f commands/web/migrate-prep-db 2>/dev/null || true
-  rm -f commands/web/npx 2>/dev/null || true
-  rm -f commands/web/db:prep-migrate 2>/dev/null || true
-  rm -f commands/web/theme:npm 2>/dev/null || true
-  rm -f commands/web/theme:npx 2>/dev/null || true
-  rm -f commands/web/tickle 2>/dev/null || true
-  rm -f commands/web/activate-theme 2>/dev/null || true
-  rm -f commands/web/create-block 2>/dev/null || true
-  rm -f commands/web/development 2>/dev/null || true
-  rm -f commands/web/open 2>/dev/null || true
-  rm -f commands/web/production 2>/dev/null || true
-  rm -f commands/web/refresh 2>/dev/null || true
-  rm -f commands/web/restore-admin-user 2>/dev/null || true
-  rm -f commands/web/db:refresh 2>/dev/null || true
-  rm -f commands/web/wp:restore-admin-user 2>/dev/null || true
+  rm -f commands/web/critical-install 2>/dev/null || true
+  rm -f commands/web/critical-run 2>/dev/null || true
+  rm -f commands/web/db-prep-migrate 2>/dev/null || true
+  rm -f commands/web/db-refresh 2>/dev/null || true
+  rm -f commands/web/pantheon-tickle 2>/dev/null || true
+  rm -f commands/web/theme-activate 2>/dev/null || true
+  rm -f commands/web/theme-build 2>/dev/null || true
+  rm -f commands/web/theme-create-block 2>/dev/null || true
+  rm -f commands/web/theme-install 2>/dev/null || true
+  rm -f commands/web/theme-npm 2>/dev/null || true
+  rm -f commands/web/theme-npx 2>/dev/null || true
+  rm -f commands/web/theme-watch 2>/dev/null || true
+  rm -f commands/web/wp-open 2>/dev/null || true
+  rm -f commands/web/wp-restore-admin-user 2>/dev/null || true
   
   echo "✅ Custom commands removed"
   
@@ -233,7 +219,7 @@ removal_actions:
   echo ""
   echo "✅ Kanopi WordPress Add-on removed successfully!"
   echo "   • Redis, Solr, and PhpMyAdmin add-ons uninstalled"
-  echo "   • All 20+ custom commands removed"
+  echo "   • All 26 custom commands removed"
   echo "   • Nginx proxy configuration removed"
   echo "   • Environment variables preserved (remove manually if needed)"
   echo ""

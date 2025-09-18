@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a DDEV add-on that provides Kanopi's battle-tested workflow for WordPress development with multi-provider hosting support. The add-on includes 22 custom commands, enhanced provider integration for Pantheon, WPEngine, and Kinsta, and complete tooling for modern WordPress development.
+This is a DDEV add-on that provides Kanopi's battle-tested workflow for WordPress development with multi-provider hosting support. The add-on includes 26 custom commands, enhanced provider integration for Pantheon, WPEngine, and Kinsta, and complete tooling for modern WordPress development.
 
 ## Architecture
 
@@ -27,40 +27,40 @@ The add-on uses a **modular command approach** where `project:init` orchestrates
 ## Common Development Commands
 
 ### Essential Commands
-- `ddev project:init`: Complete project initialization with dependencies, Lefthook, NVM, and database refresh
-- `ddev project:auth`: Authorize SSH keys for hosting providers (called by project:init)
-- `ddev project:lefthook`: Install and initialize Lefthook git hooks (called by project:init)
-- `ddev project:wp`: Install WordPress core and database if needed (called by project:init)
-- `ddev project:configure`: Interactive setup wizard for project configuration
-- `ddev db:refresh [env] [-f]`: Smart database refresh from hosting provider with backup age detection (12-hour threshold)
-- `ddev db:rebuild`: Composer install followed by database refresh
-- `ddev wp:open`: Open project URL in browser
+- `ddev project-init`: Complete project initialization with dependencies, Lefthook, NVM, and database refresh
+- `ddev project-auth`: Authorize SSH keys for hosting providers (called by project-init)
+- `ddev project-lefthook`: Install and initialize Lefthook git hooks (called by project-init)
+- `ddev project-wp`: Install WordPress core and database if needed (called by project-init)
+- `ddev project-configure`: Interactive setup wizard for project configuration
+- `ddev db-refresh [env] [-f]`: Smart database refresh from hosting provider with backup age detection (12-hour threshold)
+- `ddev db-rebuild`: Composer install followed by database refresh
+- `ddev wp-open`: Open project URL in browser
 
 ### Development Workflow Commands
-- `ddev theme:install`: Set up Node.js, NPM, and build tools for theme development
-- `ddev theme:npm <command>`: Run NPM commands in theme directory
-- `ddev theme:npx <command>`: Run NPX commands in theme directory
-- `ddev critical:install`: Install Critical CSS generation tools
-- `ddev critical:run`: Run Critical CSS generation
-- `ddev theme:watch`: Start theme development with file watching
-- `ddev theme:build`: Build production theme assets
+- `ddev theme-install`: Set up Node.js, NPM, and build tools for theme development
+- `ddev theme-npm <command>`: Run NPM commands in theme directory
+- `ddev theme-npx <command>`: Run NPX commands in theme directory
+- `ddev critical-install`: Install Critical CSS generation tools
+- `ddev critical-run`: Run Critical CSS generation
+- `ddev theme-watch`: Start theme development with file watching
+- `ddev theme-build`: Build production theme assets
 
 ### Testing Commands
-- `ddev cypress:install`: Install Cypress E2E testing dependencies
-- `ddev cypress:run <command>`: Run Cypress commands with environment support
-- `ddev cypress:users`: Create default admin user for Cypress testing
-- `ddev pantheon:testenv <name> [type]`: Create isolated testing environment
+- `ddev cypress-install`: Install Cypress E2E testing dependencies
+- `ddev cypress-run <command>`: Run Cypress commands with environment support
+- `ddev cypress-users`: Create default admin user for Cypress testing
+- `ddev pantheon-testenv <name> [type]`: Create isolated testing environment
 
 ### WordPress-Specific Commands
-- `ddev theme:create-block <name>`: Create new WordPress block with template
-- `ddev theme:activate`: Activate configured theme
-- `ddev wp:restore-admin-user`: Create/restore admin user with configured credentials
-- `ddev wp:open [service]`: Open site or admin in browser with auto-login (enhanced from open)
+- `ddev theme-create-block <name>`: Create new WordPress block with template
+- `ddev theme-activate`: Activate configured theme
+- `ddev wp-restore-admin-user`: Create/restore admin user with configured credentials
+- `ddev wp-open [service]`: Open site or admin in browser with auto-login (enhanced from open)
 
 ### Migration and Database Commands
-- `ddev db:prep-migrate`: Create secondary database for migrations
-- `ddev pantheon:tickle`: Keep Pantheon environment awake (useful for long migrations)
-- `ddev pantheon:terminus <command>`: Run Terminus commands for Pantheon integration
+- `ddev db-prep-migrate`: Create secondary database for migrations
+- `ddev pantheon-tickle`: Keep Pantheon environment awake (useful for long migrations)
+- `ddev pantheon-terminus <command>`: Run Terminus commands for Pantheon integration
 
 ### Utility Commands
 - `ddev phpmyadmin`: Launch PhpMyAdmin
@@ -121,11 +121,11 @@ Variables are stored in two locations:
 - `REMOTE_PATH`: Remote path on server (e.g., `/www/somepath/public`)
 
 ### Configuration Command
-Use `ddev project:configure` to set up all variables through an interactive wizard that collects only the variables needed for your chosen hosting provider.
+Use `ddev project-configure` to set up all variables through an interactive wizard that collects only the variables needed for your chosen hosting provider.
 
 ## Smart Refresh System
 
-The `ddev db:refresh` command includes intelligent backup management:
+The `ddev db-refresh` command includes intelligent backup management:
 - **Pantheon**: Automatically detects backup age (12-hour threshold) using Terminus API
 - **WPEngine**: Uses SSH for backup retrieval and management
 - **Kinsta**: Uses SSH for database synchronization
@@ -214,7 +214,7 @@ Uses `ddev/github-action-add-on-test@v2` for standardized add-on validation in G
 #### Project Setup
 After installation, run the configuration wizard:
 ```bash
-ddev project:configure
+ddev project-configure
 ```
 
 This wizard collects provider-specific variables:
@@ -238,14 +238,14 @@ The add-on automatically installs and configures:
 ## WordPress-Specific Features
 
 ### Block Development
-- **Template-based block creation**: `ddev create-block <name>`
+- **Template-based block creation**: `ddev theme-create-block <name>`
 - **Modern WordPress development patterns**
 - **React/JSX support for blocks**
 - **SCSS compilation for block styles**
 
 ### Theme Development
-- **Automated asset compilation**: `ddev production`
-- **Development watching**: `ddev development`
+- **Automated asset compilation**: `ddev theme-build`
+- **Development watching**: `ddev theme-watch`
 - **Critical CSS generation**: Enhanced tooling for performance
 - **Multi-environment asset management**
 

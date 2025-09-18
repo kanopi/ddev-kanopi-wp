@@ -3,7 +3,7 @@
 [![tests](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/kanopi/ddev-kanopi-wp/actions/workflows/test.yml?query=branch%3Amain)
 [![last commit](https://img.shields.io/github/last-commit/kanopi/ddev-kanopi-wp)](https://github.com/kanopi/ddev-kanopi-wp/commits)
 [![release](https://img.shields.io/github/v/release/kanopi/ddev-kanopi-wp)](https://github.com/kanopi/ddev-kanopi-wp/releases/latest)
-[![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)]
+![project is maintained](https://img.shields.io/maintenance/yes/2025.svg)
 
 A comprehensive DDEV add-on that provides Kanopi's battle-tested workflow for WordPress development. This add-on includes complete tooling for modern WordPress development with multi-provider hosting support.
 
@@ -11,7 +11,7 @@ A comprehensive DDEV add-on that provides Kanopi's battle-tested workflow for Wo
 
 This add-on provides:
 
-- **22 Custom Commands**: Complete WordPress development workflow with namespaced commands
+- **26 Custom Commands**: Complete WordPress development workflow with namespaced commands
 - **Multi-Provider Hosting**: Support for Pantheon, WPEngine, and Kinsta hosting platforms
 - **Block Creation Tooling**: Command to generate custom WordPress blocks with proper scaffolding
 - **Asset Compilation**: Webpack-based build system using `@wordpress/scripts`
@@ -179,7 +179,7 @@ ddev project-init
 | `ddev theme-create-block <block-name>` | Web | Create a new WordPress block with proper scaffolding | `ddev theme-create-block my-block` | create-block, thcb, theme:create-block |
 | `ddev theme-install` | Web | Set up Node.js, NPM, and build tools using .nvmrc | `ddev theme-install` | install-theme-tools, thi, theme:install |
 | `ddev theme-npm <command>` | Web | Run npm commands (automatically runs in theme directory if available) | `ddev theme-npm run build` | theme:npm |
-| `ddev theme-npx <command>` | Web | Run NPX commands in theme directory | `ddev theme-npx webpack --watch` | npx, theme:npx  d|
+| `ddev theme-npx <command>` | Web | Run NPX commands in theme directory | `ddev theme-npx webpack --watch` | npx, theme:npx |
 | `ddev theme-watch` | Web | Start the development server with file watching | `ddev theme-watch` | development, thw, theme:watch, theme-development |
 | `ddev wp-open [service]` | Web | Open the site or admin with auto-login in your default browser | `ddev wp-open` or `ddev wp-open admin` | open, wp:open |
 | `ddev wp-restore-admin-user` | Web | Restore the admin user credentials | `ddev wp-restore-admin-user` | restore-admin-user, wp:restore-admin-user |
@@ -195,36 +195,36 @@ The enhanced `ddev db-refresh` command includes intelligent backup management:
 
 ```bash
 # Refresh from dev (default)
-ddev db:refresh
+ddev db-refresh
 
 # Refresh from live environment
-ddev db:refresh live
+ddev db-refresh live
 
 # Force new backup creation
-ddev db:refresh -f
+ddev db-refresh -f
 
 # Refresh from specific environment
-ddev db:refresh staging
+ddev db-refresh staging
 ```
 
 ## Enhanced WordPress Opening
 
-The `ddev wp:open` command provides seamless browser access with automatic login:
+The `ddev wp-open` command provides seamless browser access with automatic login:
 
-- **Site Access**: `ddev wp:open` opens your local WordPress site
-- **Admin Auto-Login**: `ddev wp:open admin` automatically logs you into the WordPress admin
+- **Site Access**: `ddev wp-open` opens your local WordPress site
+- **Admin Auto-Login**: `ddev wp-open admin` automatically logs you into the WordPress admin
 - **Smart Fallback**: Falls back to regular admin URL if auto-login fails
 - **Cross-Platform**: Works on macOS, Linux, and Windows
 
 ```bash
 # Open the site homepage
-ddev wp:open
+ddev wp-open
 
 # Open WordPress admin with automatic login (no password needed)
-ddev wp:open admin
+ddev wp-open admin
 
 # Alternative admin access (cms is an alias for admin)
-ddev wp:open cms
+ddev wp-open cms
 ```
 
 The admin auto-login feature uses the WP-CLI login command and respects your configured `WP_ADMIN_USER` environment variable.
@@ -234,22 +234,22 @@ The admin auto-login feature uses the WP-CLI login command and respects your con
 ### Set up Node.js and build tools
 ```bash
 # Install Node.js, NPM, and build tools (one-time setup)
-ddev theme:install
+ddev theme-install
 
 # Start theme development with file watching
-ddev theme:watch
+ddev theme-watch
 
 # Build production assets
-ddev theme:build
+ddev theme-build
 ```
 
 ### Block Development
 ```bash
 # Create a new WordPress block
-ddev theme:create-block my-custom-block
+ddev theme-create-block my-custom-block
 
 # Start development server
-ddev theme:watch
+ddev theme-watch
 ```
 
 Your block will be created in `web/wp-content/themes/[theme]/assets/src/blocks/my-custom-block/` with:
@@ -265,10 +265,10 @@ Your block will be created in `web/wp-content/themes/[theme]/assets/src/blocks/m
 
 ```bash
 # Install Critical CSS tools (one-time setup)
-ddev critical:install
+ddev critical-install
 
 # Generate critical CSS for improved performance
-ddev critical:run
+ddev critical-run
 ```
 
 ## Search Integration
@@ -328,8 +328,8 @@ ddev restart
 
 ### Remove the Add-on
 ```bash
-# Remove the add-on completely (includes Redis, Solr, and all 22 commands)
-ddev add-on remove kanopi-wordpress
+# Remove the add-on completely (includes Redis, Solr, and all 26 commands)
+ddev add-on remove kanopi-wp
 
 # Restart DDEV to apply changes
 ddev restart
@@ -387,10 +387,10 @@ if (is_readable($ddev_settings) && !defined('DB_USER')) {
 
 ```bash
 # Review the command
-ddev theme:install --help
+ddev theme-install --help
 
 # Test the command in your theme directory
-ddev theme:install
+ddev theme-install
 ```
 
 #### 5. Convert Existing Custom Commands
@@ -415,15 +415,15 @@ Update your project's README and documentation to reference the new commands and
 
 ```bash
 # Start DDEV and run initialization
-ddev project:init
+ddev project-init
 
 # This will:
 # - Start DDEV
 # - Handle Pantheon mu-plugin conflicts
-# - Install and initialize Lefthook git hooks (ddev project:lefthook)
-# - Authorize SSH keys (ddev project:auth)
+# - Install and initialize Lefthook git hooks (ddev project-lefthook)
+# - Authorize SSH keys (ddev project-auth)
 # - Install Composer dependencies
-# - Install WordPress core and database (ddev project:wp)
+# - Install WordPress core and database (ddev project-wp)
 # - Refresh database from hosting provider
 # - Install theme dependencies and build assets
 # - Restore admin user and open admin with auto-login
@@ -435,15 +435,15 @@ ddev project:init
 
 ```bash
 # Start DDEV and run initialization
-ddev project:init
+ddev project-init
 
 # This will:
 # - Start DDEV
 # - Handle Pantheon mu-plugin conflicts
-# - Install and initialize Lefthook git hooks (ddev project:lefthook)
-# - Authorize SSH keys (ddev project:auth)
+# - Install and initialize Lefthook git hooks (ddev project-lefthook)
+# - Authorize SSH keys (ddev project-auth)
 # - Install Composer dependencies
-# - Install WordPress core and database (ddev project:wp)
+# - Install WordPress core and database (ddev project-wp)
 # - Refresh database from hosting provider
 # - Install theme dependencies and build assets
 # - Restore admin user and open admin with auto-login
@@ -455,22 +455,22 @@ The `project:init` command now uses a modular approach with individual commands 
 
 ```bash
 # Individual setup commands (called by project:init)
-ddev project:auth      # Authorize SSH keys for hosting providers
-ddev project:lefthook  # Install and initialize Lefthook git hooks
-ddev project:wp        # Install WordPress core and database if needed
+ddev project-auth      # Authorize SSH keys for hosting providers
+ddev project-lefthook  # Install and initialize Lefthook git hooks
+ddev project-wp        # Install WordPress core and database if needed
 
 # You can run these individually if needed
-ddev project:auth      # Just setup authentication
-ddev project:lefthook  # Just setup git hooks
-ddev project:wp        # Just install WordPress
-ddev project:configure # Configure project settings interactively
+ddev project-auth      # Just setup authentication
+ddev project-lefthook  # Just setup git hooks
+ddev project-wp        # Just install WordPress
+ddev project-configure # Configure project settings interactively
 ```
 
 ### Verification Steps
 
-1. **Test database refresh**: `ddev db:refresh`
-2. **Test theme tools**: `ddev theme:install`
-3. **Verify hosting connection**: `ddev pantheon:terminus site:list` (or appropriate provider command)
+1. **Test database refresh**: `ddev db-refresh`
+2. **Test theme tools**: `ddev theme-install`
+3. **Verify hosting connection**: `ddev pantheon-terminus site:list` (or appropriate provider command)
 4. **Test development server**: Visit your local site and check if assets load properly
 
 ## Quick Reference
@@ -478,21 +478,21 @@ ddev project:configure # Configure project settings interactively
 ### Common Workflow
 ```bash
 # Daily development workflow
-ddev project:init
+ddev project-init
 
 # or individually
 ddev start                    # Start DDEV
-ddev db:refresh               # Get latest database
-ddev theme:install           # Set up theme tools (first time)
-ddev theme:watch             # Start theme development
+ddev db-refresh               # Get latest database
+ddev theme-install           # Set up theme tools (first time)
+ddev theme-watch             # Start theme development
 
 # Testing workflow
-ddev cypress:install         # Set up Cypress (first time)
-ddev cypress:users          # Create test users
-ddev cypress:run open       # Open Cypress
+ddev cypress-install         # Set up Cypress (first time)
+ddev cypress-users          # Create test users
+ddev cypress-run open       # Open Cypress
 
 # Deployment preparation
-ddev theme:build            # Build production assets
+ddev theme-build            # Build production assets
 ```
 
 ### Key Environment Variables
@@ -518,7 +518,7 @@ ddev theme:build            # Build production assets
 ddev exec printenv TERMINUS_MACHINE_TOKEN
 
 # Re-authenticate manually
-ddev pantheon:terminus auth:login --machine-token="your_token"
+ddev pantheon-terminus auth:login --machine-token="your_token"
 ```
 
 ### WPEngine Authentication Issues
@@ -547,7 +547,7 @@ ddev auth ssh
 ddev exec node --version
 
 # Reinstall dependencies
-ddev theme:install
+ddev theme-install
 ```
 
 ### Database Refresh Issues
@@ -555,10 +555,10 @@ ddev theme:install
 **For Pantheon:**
 ```bash
 # Check Pantheon connection
-ddev pantheon:terminus site:list
+ddev pantheon-terminus site:list
 
 # Force new backup
-ddev db:refresh -f
+ddev db-refresh -f
 ```
 
 **For WPEngine:**
