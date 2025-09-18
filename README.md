@@ -66,8 +66,14 @@ lando destroy
 cd /path/to/your/wordpress/project
 
 # Initialize DDEV configuration
-# Set docroot based on your hosting provider: web (Pantheon), web (WPEngine), or public (Kinsta)
-ddev config --project-name=your-project-name --project-type=wordpress --docroot=web --create-docroot
+#
+# Set docroot based on your hosting provider:
+# - public (Kinsta)
+# - web (Pantheon)
+# - web or public or wp 0r... (WPEngine)
+#
+# Remove --create-docroot if the docroot already exists in your project.
+ddev config --project-type=wordpress --docroot=public --create-docroot
 
 # Configure wp-config.php (if you have an existing one)
 # Add this snippet to your wp-config.php before the wp-settings.php line:
