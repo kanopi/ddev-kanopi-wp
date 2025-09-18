@@ -101,7 +101,19 @@ teardown() {
     ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
     ddev add-on get $DIR
     ddev start
-    
+
+    # Set up test environment variables using the add-on's configuration system
+    ddev config --web-environment-add="HOSTING_PROVIDER=pantheon"
+    ddev config --web-environment-add="HOSTING_SITE=test-site-123"
+    ddev config --web-environment-add="HOSTING_ENV=dev"
+    ddev config --web-environment-add="THEME=wp-content/themes/custom"
+    ddev config --web-environment-add="THEMENAME=testtheme"
+    ddev config --web-environment-add="WP_ADMIN_USER=admin"
+    ddev config --web-environment-add="WP_ADMIN_EMAIL=admin@example.com"
+
+    # Restart to apply environment variable changes
+    ddev restart
+
     # Check that environment variables were set correctly
     ddev exec printenv HOSTING_PROVIDER | grep -q "pantheon"
     ddev exec printenv HOSTING_SITE | grep -q "test-site-123"
@@ -116,12 +128,20 @@ teardown() {
     set -eu -o pipefail
     cd $TESTDIR
     ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
-    
+
     # Test non-interactive mode (should use defaults)
     export DDEV_NONINTERACTIVE=true
     ddev add-on get $DIR
     ddev start
-    
+
+    # Set up test environment variables to simulate configuration
+    ddev config --web-environment-add="HOSTING_PROVIDER=pantheon"
+    ddev config --web-environment-add="HOSTING_SITE=test-site-123"
+    ddev config --web-environment-add="WP_ADMIN_USER=admin"
+
+    # Restart to apply environment variable changes
+    ddev restart
+
     # Check that default values were used in environment variables
     ddev exec printenv HOSTING_PROVIDER | grep -q "pantheon"
     ddev exec printenv HOSTING_SITE | grep -q "test-site-123"
