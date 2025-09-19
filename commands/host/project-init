@@ -79,12 +79,9 @@ fi
 ddev project-wp
 
 # Get the database from hosting provider (if configured).
-HOSTING_SITE_VALUE=$(ddev exec printenv HOSTING_SITE 2>/dev/null || echo "")
-if [ -n "$HOSTING_SITE_VALUE" ]; then
-  echo -e "\n${lightning} ${yellow} Refreshing database from hosting provider.${NC} ${lightning}"
-  echo -e "${green}${divider}${NC}"
-  ddev refresh
-fi
+echo -e "\n${lightning} ${yellow} Refreshing database from hosting provider.${NC} ${lightning}"
+echo -e "${green}${divider}${NC}"
+ddev db-refresh
 
 # Install theme.
 ddev theme-install

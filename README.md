@@ -402,7 +402,7 @@ If you have custom DDEV commands, convert them to use the new namespace structur
 find .ddev/commands -name "*" -type f
 
 # Copy a similar command as a template
-cp .ddev/commands/web/theme:watch .ddev/commands/web/my-custom-command
+cp .ddev/commands/web/theme-watch .ddev/commands/web/my-custom-command
 ```
 
 #### 6. Update Project Documentation

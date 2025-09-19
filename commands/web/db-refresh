@@ -51,7 +51,55 @@ cd ${DDEV_APPROOT}
 # Get the hosting provider
 HOSTING_PROVIDER="${HOSTING_PROVIDER:-pantheon}"
 
-echo -e "\n${yellow}Refreshing database from ${HOSTING_PROVIDER} environment: ${ENVIRONMENT}${NC}"
+# Check if hosting provider is properly configured before attempting refresh
+PROVIDER_CONFIGURED=false
+
+case "${HOSTING_PROVIDER}" in
+    "pantheon")
+        HOSTING_SITE_VALUE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
+        if [ -n "$HOSTING_SITE_VALUE" ]; then
+            PROVIDER_CONFIGURED=true
+        else
+            echo -e "${red}Error: HOSTING_SITE not configured for Pantheon. Run 'ddev project-configure' to set up your Pantheon configuration.${NC}"
+            exit 1
+        fi
+        ;;
+    "wpengine")
+        HOSTING_SITE_VALUE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
+        if [ -n "$HOSTING_SITE_VALUE" ]; then
+            PROVIDER_CONFIGURED=true
+        else
+            echo -e "${red}Error: HOSTING_SITE not configured for WPEngine. Run 'ddev project-configure' to set up your WPEngine configuration.${NC}"
+            exit 1
+        fi
+        ;;
+    "kinsta")
+        REMOTE_HOST_VALUE=$(printenv REMOTE_HOST 2>/dev/null || echo "")
+        if [ -n "$REMOTE_HOST_VALUE" ]; then
+            PROVIDER_CONFIGURED=true
+        else
+            echo -e "${red}Error: REMOTE_HOST not configured for Kinsta. Run 'ddev project-configure' to set up your Kinsta SSH configuration.${NC}"
+            exit 1
+        fi
+        ;;
+    *)
+        # Fallback to old behavior for backward compatibility
+        HOSTING_SITE_VALUE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
+        if [ -n "$HOSTING_SITE_VALUE" ]; then
+            PROVIDER_CONFIGURED=true
+        else
+            echo -e "${red}Error: No hosting provider configuration found. Run 'ddev project-configure' to set up your hosting configuration.${NC}"
+            exit 1
+        fi
+        ;;
+esac
+
+if [ "$PROVIDER_CONFIGURED" = true ]; then
+    echo -e "\n${yellow}Refreshing database from ${HOSTING_PROVIDER} environment: ${ENVIRONMENT}${NC}"
+else
+    echo -e "${red}Hosting provider configuration not found. Please run 'ddev project-configure' first.${NC}"
+    exit 1
+fi
 
 # Platform-specific database refresh
 if [[ "$HOSTING_PROVIDER" == "pantheon" ]]; then

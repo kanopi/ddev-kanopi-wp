@@ -12,7 +12,7 @@ set -e
 
 # Check if block name is provided
 if [ -z "$1" ]; then
-    echo "Usage: ddev theme:create-block <block-name>"
+    echo "Usage: ddev theme-create-block <block-name>"
     exit 1
 fi
 
@@ -82,4 +82,4 @@ find "$NEW_BLOCK_DIR" -type f | while read -r FILE; do
 done
 
 echo "Block created successfully at: ${NEW_BLOCK_DIR}"
-echo "Run 'ddev theme:watch' to start the development server and begin working on your block."
+echo "Run 'ddev theme-watch' to start the development server and begin working on your block."

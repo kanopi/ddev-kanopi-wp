@@ -46,7 +46,7 @@ cd ${DDEV_APPROOT}
 echo -e "\n${construction} ${yellow} Initializing Cypress.${NC} ${construction}\n"
 echo -e "This should require no input."
 echo -e "${green}${divider}${NC}"
-ddev cypress:install
+ddev cypress-install
 
 # Site initialization.
 echo -e "\n${construction} ${yellow} Composer install...${NC} ${construction}\n"
@@ -58,7 +58,7 @@ ddev composer install
 if [ "$INSTALL_TYPE" = "fresh" ]; then
     echo -e "\n${construction} ${yellow} Installing fresh WordPress...${NC} ${construction}\n"
     ddev exec "wp core install --url=\$DDEV_PRIMARY_URL --title='Test Environment: ${ENVNAME}' --admin_user=admin --admin_password=admin --admin_email=admin@example.com --path=/var/www/html/web --allow-root"
-    ddev cypress:users
+    ddev cypress-users
 else
     echo -e "\n${construction} ${yellow} Using existing WordPress database...${NC} ${construction}\n"
     ddev exec "wp core update-db --allow-root" 2>/dev/null || echo "Database update completed"

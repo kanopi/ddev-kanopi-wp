@@ -34,7 +34,7 @@ HOSTING_PROVIDER="${HOSTING_PROVIDER:-pantheon}"
 # Ensure the script is running inside the DDEV web container
 if [ -z "$DDEV_HOSTNAME" ]; then
     echo -e "\n ❌ ${yellow} This command must be run inside the DDEV web container. ${NC}"
-    echo -e "Use: ${green}ddev db:prep-migrate${NC} instead of running it manually."
+    echo -e "Use: ${green}ddev db-prep-migrate${NC} instead of running it manually."
     exit 1
 fi
 

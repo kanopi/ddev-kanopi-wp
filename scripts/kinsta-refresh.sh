@@ -33,22 +33,22 @@ KINSTA_REMOTE_PATH=$(printenv REMOTE_PATH 2>/dev/null)
 
 # Check for required environment variables
 if [ -z "${KINSTA_SSH_HOST:-}" ]; then
-  echo -e "${red}Error: REMOTE_HOST not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
+  echo -e "${red}Error: REMOTE_HOST not configured. Run 'ddev project-configure' to set up your Kinsta SSH configuration.${NC}"
   exit 1
 fi
 
 if [ -z "${KINSTA_SSH_PORT:-}" ]; then
-  echo -e "${red}Error: REMOTE_PORT not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
+  echo -e "${red}Error: REMOTE_PORT not configured. Run 'ddev project-configure' to set up your Kinsta SSH configuration.${NC}"
   exit 1
 fi
 
 if [ -z "${KINSTA_SSH_USER:-}" ]; then
-  echo -e "${red}Error: REMOTE_USER not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
+  echo -e "${red}Error: REMOTE_USER not configured. Run 'ddev project-configure' to set up your Kinsta SSH configuration.${NC}"
   exit 1
 fi
 
 if [ -z "${KINSTA_REMOTE_PATH:-}" ]; then
-  echo -e "${red}Error: REMOTE_PATH not configured. Run 'ddev project:configure' to set up your Kinsta SSH configuration.${NC}"
+  echo -e "${red}Error: REMOTE_PATH not configured. Run 'ddev project-configure' to set up your Kinsta SSH configuration.${NC}"
   exit 1
 fi
 

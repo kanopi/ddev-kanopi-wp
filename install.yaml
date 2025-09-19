@@ -17,7 +17,7 @@ pre_install_actions:
   echo ""
   echo "🔧 Configuring Kanopi WordPress Add-on..."
   echo ""
-  echo "💡 Note: Configuration variables can be set later using 'ddev project:configure'"
+  echo "💡 Note: Configuration variables can be set later using 'ddev project-configure'"
   echo ""
 
 # Post-install actions
@@ -120,10 +120,10 @@ post_install_actions:
   echo "✅ Kanopi WordPress Add-on installed successfully!"
   echo ""
   echo "🔧 Next steps:"
-  echo "   1. Run 'ddev project:configure' to set up your hosting provider and variables"
+  echo "   1. Run 'ddev project-configure' to set up your hosting provider and variables"
   echo "   2. Review wp-config settings if your project already has a wp-config.php"
   echo "   3. Review the theme commands in .ddev/command/web if your project was not built on Struts."
-  echo "   4. Run 'ddev project:init' to complete project initialization"
+  echo "   4. Run 'ddev project-init' to complete project initialization"
   echo ""
   echo "📚 Run 'ddev help' to see available commands"
   echo ""

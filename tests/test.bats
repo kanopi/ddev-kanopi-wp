@@ -29,28 +29,28 @@ health_checks() {
     
     echo "Checking custom commands..." >&3
     # Check new modular project commands
-    ddev project:init --help || echo "project:init command exists or skipped due to conflicts"
-    ddev project:configure --help || echo "project:configure command exists or skipped due to conflicts"
-    ddev project:auth --help || echo "project:auth command exists or skipped due to conflicts"
-    ddev project:lefthook --help || echo "project:lefthook command exists or skipped due to conflicts"
-    ddev project:wp --help || echo "project:wp command exists or skipped due to conflicts"
+    ddev project-init --help || echo "project-init command exists or skipped due to conflicts"
+    ddev project-configure --help || echo "project-configure command exists or skipped due to conflicts"
+    ddev project-auth --help || echo "project-auth command exists or skipped due to conflicts"
+    ddev project-lefthook --help || echo "project-lefthook command exists or skipped due to conflicts"
+    ddev project-wp --help || echo "project-wp command exists or skipped due to conflicts"
 
     # Check theme development commands
-    ddev theme:create-block --help || echo "theme:create-block command exists or skipped due to conflicts"
-    ddev theme:watch --help || echo "theme:watch command exists or skipped due to conflicts"
-    ddev theme:build --help || echo "theme:build command exists or skipped due to conflicts"
-    ddev theme:activate --help || echo "theme:activate command exists or skipped due to conflicts"
-    ddev theme:npm --help || echo "theme:npm command exists or skipped due to conflicts"
-    ddev theme:install --help || echo "theme:install command exists or skipped due to conflicts"
+    ddev theme-create-block --help || echo "theme-create-block command exists or skipped due to conflicts"
+    ddev theme-watch --help || echo "theme-watch command exists or skipped due to conflicts"
+    ddev theme-build --help || echo "theme-build command exists or skipped due to conflicts"
+    ddev theme-activate --help || echo "theme-activate command exists or skipped due to conflicts"
+    ddev theme-npm --help || echo "theme-npm command exists or skipped due to conflicts"
+    ddev theme-install --help || echo "theme-install command exists or skipped due to conflicts"
 
     # Check WordPress specific commands
-    ddev wp:open --help || echo "wp:open command exists or skipped due to conflicts"
-    ddev wp:restore-admin-user --help || echo "wp:restore-admin-user command exists or skipped due to conflicts"
+    ddev wp-open --help || echo "wp-open command exists or skipped due to conflicts"
+    ddev wp-restore-admin-user --help || echo "wp-restore-admin-user command exists or skipped due to conflicts"
 
     # Check database and hosting commands
-    ddev db:refresh --help || echo "db:refresh command exists or skipped due to conflicts"
-    ddev db:rebuild --help || echo "db:rebuild command exists or skipped due to conflicts"
-    ddev pantheon:terminus --help || echo "pantheon:terminus command exists or skipped due to conflicts"
+    ddev db-refresh --help || echo "db-refresh command exists or skipped due to conflicts"
+    ddev db-rebuild --help || echo "db-rebuild command exists or skipped due to conflicts"
+    ddev pantheon-terminus --help || echo "pantheon-terminus command exists or skipped due to conflicts"
     
     echo "Checking configuration files..." >&3
     # Check configuration files exist
@@ -158,11 +158,11 @@ teardown() {
     # Check that block template directory exists
     [ -d ".ddev/config/wp/block-template" ]
     
-    # Check that theme:create-block command exists and has proper structure
-    ddev theme:create-block --help >/dev/null 2>&1 || echo "theme:create-block command should exist"
+    # Check that theme-create-block command exists and has proper structure
+    ddev theme-create-block --help >/dev/null 2>&1 || echo "theme-create-block command should exist"
 
     # Test block creation (this will fail without proper theme structure, but command should exist)
-    ddev theme:create-block test-block || echo "theme:create-block command executed (may fail without theme)"
+    ddev theme-create-block test-block || echo "theme-create-block command executed (may fail without theme)"
 }
 
 @test "docker services" {
@@ -193,10 +193,10 @@ teardown() {
     ddev start
 
     # Test modular project commands exist and can show help
-    ddev project:configure --help >/dev/null 2>&1 || echo "project:configure should exist"
-    ddev project:auth --help >/dev/null 2>&1 || echo "project:auth should exist"
-    ddev project:lefthook --help >/dev/null 2>&1 || echo "project:lefthook should exist"
-    ddev project:wp --help >/dev/null 2>&1 || echo "project:wp should exist"
+    ddev project-configure --help >/dev/null 2>&1 || echo "project-configure should exist"
+    ddev project-auth --help >/dev/null 2>&1 || echo "project-auth should exist"
+    ddev project-lefthook --help >/dev/null 2>&1 || echo "project-lefthook should exist"
+    ddev project-wp --help >/dev/null 2>&1 || echo "project-wp should exist"
 
     # Test that aliases work (backwards compatibility)
     ddev configure --help >/dev/null 2>&1 || echo "configure alias should work"
@@ -250,14 +250,14 @@ teardown() {
     ddev add-on get $DIR
     ddev start
 
-    # Test that wp:open command exists and can show help
-    ddev wp:open --help >/dev/null 2>&1 || echo "wp:open should exist"
+    # Test that wp-open command exists and can show help
+    ddev wp-open --help >/dev/null 2>&1 || echo "wp:open should exist"
 
     # Test that old 'open' alias still works
     ddev open --help >/dev/null 2>&1 || echo "open alias should still work"
 
-    # Test wp:open without arguments (should work but won't actually open browser in CI)
-    timeout 10 ddev wp:open >/dev/null 2>&1 || echo "wp:open executed (expected to timeout in CI)"
+    # Test wp-open without arguments (should work but won't actually open browser in CI)
+    timeout 10 ddev wp-open >/dev/null 2>&1 || echo "wp-open executed (expected to timeout in CI)"
 }
 
 @test "pantheon mu-plugin handling" {
@@ -284,9 +284,9 @@ EOF
     ddev start
 
     # The init command should have handled the Pantheon mu-plugin conflict
-    # Note: In test environment, the project:init may not run automatically
+    # Note: In test environment, the project-init may not run automatically
     # so we test the functionality exists
-    ddev project:init --help >/dev/null 2>&1 || echo "project:init command should exist to handle mu-plugin conflicts"
+    ddev project-init --help >/dev/null 2>&1 || echo "project-init command should exist to handle mu-plugin conflicts"
 
     # Verify WP-CLI works without fatal errors
     ddev exec wp core version 2>/dev/null || echo "WP-CLI not available or WordPress not fully configured"

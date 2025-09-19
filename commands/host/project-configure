@@ -139,7 +139,7 @@ case "$HOST_PROVIDER" in
         prompt_input "SSH private key path (e.g., ~/.ssh/keyname)" "${WPENGINE_SSH_KEY:-~/.ssh/id_rsa}" WPENGINE_SSH_KEY_RAW
 
         # Store the path as-is (with tilde) - don't expand here
-        # Let the project:auth command handle expansion at runtime
+        # Let the project-auth command handle expansion at runtime
         WPENGINE_SSH_KEY="${WPENGINE_SSH_KEY_RAW%.pub}"
 
         echo "💡 WPEngine only allows one SSH key per account, so we'll use this specific key."
@@ -300,10 +300,10 @@ case "$HOST_PROVIDER" in
         ;;
 esac
 
-echo "2. 🌐 Run the init script!"
-echo "   ddev project:init"
+echo "2. 🌐 Run the init script to launch the site."
+echo "   ddev project-init"
 echo ""
-echo "3. 🎨 Start developing:"
-echo "   ddev theme:watch"
+echo "3. 🎨 Start developing on the theme."
+echo "   ddev theme-watch"
 echo ""
 echo -e "${green}${divider}${NC}"

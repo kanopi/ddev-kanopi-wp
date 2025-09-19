@@ -29,7 +29,7 @@ echo -e "${green}${divider}${NC}"
 
 # Check for required environment variables
 if [ -z "${HOSTING_SITE:-}" ]; then
-  echo -e "${red}Error: HOSTING_SITE not configured. Run 'ddev project:configure' to set up your WPEngine configuration.${NC}"
+  echo -e "${red}Error: HOSTING_SITE not configured. Run 'ddev project-configure' to set up your WPEngine configuration.${NC}"
   exit 1
 fi
 

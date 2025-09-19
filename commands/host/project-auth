@@ -55,7 +55,7 @@ if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
         ls -la ~/.ssh/ 2>/dev/null | grep "$(basename "$SSH_KEY_PATH")" || echo "   Key file not found"
         echo ""
         echo "   Please check your WPENGINE_SSH_KEY configuration"
-        echo "   Run 'ddev project:configure' to update it"
+        echo "   Run 'ddev project-configure' to update it"
         echo "   Falling back to loading all SSH keys..."
         ddev auth ssh
     fi

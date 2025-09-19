@@ -13,11 +13,11 @@ Commands are organized into two categories:
 - **Host commands** (`commands/host/`): Execute on the host system outside containers
 - **Web commands** (`commands/web/`): Execute inside the DDEV web container
 
-The add-on uses a **modular command approach** where `project:init` orchestrates multiple smaller, focused commands:
-- `project:auth`: Handle SSH key authorization for hosting providers
-- `project:lefthook`: Install and initialize Lefthook git hooks
-- `project:wp`: Install WordPress core and database if needed
-- `project:configure`: Interactive configuration wizard
+The add-on uses a **modular command approach** where `project-init` orchestrates multiple smaller, focused commands:
+- `project-auth`: Handle SSH key authorization for hosting providers
+- `project-lefthook`: Install and initialize Lefthook git hooks
+- `project-wp`: Install WordPress core and database if needed
+- `project-configure`: Interactive configuration wizard
 
 ### Core Components
 - `install.yaml`: Add-on installation configuration and post-install actions
@@ -74,7 +74,7 @@ The add-on uses a **modular command approach** where `project:init` orchestrates
 - **Database**: Automated backup management with age detection
 
 ### WPEngine
-- **Recommended Docroot**: `wp` (set during `ddev config`)
+- **Recommended Docroot**: `public` (set during `ddev config`)
 - **Authentication**: Specific SSH key (WPEngine allows only one key per account)
 - **Database**: SSH-based backup retrieval using nightly backups
 - **Variables**: `HOSTING_SITE` (install name), `WPENGINE_SSH_KEY` (SSH key path)
@@ -87,7 +87,7 @@ The add-on uses a **modular command approach** where `project:init` orchestrates
 
 ## Configuration System
 
-The add-on uses a simplified configuration approach with provider-specific variables managed through `ddev project:configure`.
+The add-on uses a simplified configuration approach with provider-specific variables managed through `ddev project-configure`.
 
 ### Configuration Storage
 Variables are stored in two locations:
@@ -142,7 +142,6 @@ The `ddev db-refresh` command includes intelligent backup management:
 ## Description: Brief description of what the command does
 ## Usage: command-name [arguments]
 ## Example: "ddev command-name arg1 arg2"
-## OSTypes: darwin,linux,windows
 
 set -e
 # Command logic here
@@ -276,8 +275,8 @@ When making changes to this repository:
 
 ### Platform-Specific Differences
 While maintaining consistency, respect platform differences:
-- **WordPress-specific**: Block creation (`theme:create-block`), admin user management (`wp:restore-admin-user`), multi-provider hosting support
-- **Drupal-specific**: Recipe commands (`recipe:apply`, `recipe:uuid-rm`)
+- **WordPress-specific**: Block creation (`theme-create-block`), admin user management (`wp:restore-admin-user`), multi-provider hosting support
+- **Drupal-specific**: Recipe commands (`recipe-apply`, `recipe-uuid-rm`)
 - **Hosting providers**: WordPress supports Pantheon, WPEngine, and Kinsta; Drupal focuses primarily on Pantheon
 - **File structures**: WordPress uses different directory conventions than Drupal
 
