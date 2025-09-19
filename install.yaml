@@ -189,7 +189,7 @@ removal_actions:
   rm -f commands/web/theme-npm 2>/dev/null || true
   rm -f commands/web/theme-npx 2>/dev/null || true
   rm -f commands/web/theme-watch 2>/dev/null || true
-  rm -f commands/web/wp-open 2>/dev/null || true
+  rm -f commands/host/wp-open 2>/dev/null || true
   rm -f commands/web/wp-restore-admin-user 2>/dev/null || true
   
   echo "✅ Custom commands removed"

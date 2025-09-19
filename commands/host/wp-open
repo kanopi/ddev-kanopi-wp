@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-#ddev-generated
 
-## Open the site or admin in your default browser using ddev launch
-##
+## Description: Open the site or admin in your default browser using ddev launch
 ## Usage: wp-open [service]
 ## Example: "ddev wp-open" (opens the site)
 ## Example: "ddev wp-open admin" (opens WordPress admin)
 ## Aliases: open,wp:open
+## OSTypes: darwin,linux,windows
+
+#ddev-generated
 
 SERVICE="${1:-}"
 

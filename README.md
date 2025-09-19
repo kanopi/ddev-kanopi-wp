@@ -181,7 +181,7 @@ ddev project-init
 | `ddev theme-npm <command>` | Web | Run npm commands (automatically runs in theme directory if available) | `ddev theme-npm run build` | theme:npm |
 | `ddev theme-npx <command>` | Web | Run NPX commands in theme directory | `ddev theme-npx webpack --watch` | npx, theme:npx |
 | `ddev theme-watch` | Web | Start the development server with file watching | `ddev theme-watch` | development, thw, theme:watch, theme-development |
-| `ddev wp-open [service]` | Web | Open the site or admin with auto-login in your default browser | `ddev wp-open` or `ddev wp-open admin` | open, wp:open |
+| `ddev wp-open [service]` | Host | Open the site or admin in your default browser | `ddev wp-open` or `ddev wp-open admin` | open, wp:open |
 | `ddev wp-restore-admin-user` | Web | Restore the admin user credentials | `ddev wp-restore-admin-user` | restore-admin-user, wp:restore-admin-user |
 
 ## Smart Database Refresh
@@ -207,13 +207,12 @@ ddev db-refresh -f
 ddev db-refresh staging
 ```
 
-## Enhanced WordPress Opening
+## WordPress Site Opening
 
-The `ddev wp-open` command provides seamless browser access with automatic login:
+The `ddev wp-open` command provides simple browser access:
 
 - **Site Access**: `ddev wp-open` opens your local WordPress site
-- **Admin Auto-Login**: `ddev wp-open admin` automatically logs you into the WordPress admin
-- **Smart Fallback**: Falls back to regular admin URL if auto-login fails
+- **Admin Access**: `ddev wp-open admin` opens the WordPress admin login page
 - **Cross-Platform**: Works on macOS, Linux, and Windows
 
 ```bash
@@ -227,7 +226,7 @@ ddev wp-open admin
 ddev wp-open cms
 ```
 
-The admin auto-login feature uses the WP-CLI login command and respects your configured `WP_ADMIN_USER` environment variable.
+The wp-open command uses DDEV's built-in launch functionality for reliable cross-platform browser opening.
 
 ## Theme Development Workflow
 
@@ -426,7 +425,7 @@ ddev project-init
 # - Install WordPress core and database (ddev project-wp)
 # - Refresh database from hosting provider
 # - Install theme dependencies and build assets
-# - Restore admin user and open admin with auto-login
+# - Restore admin user and open admin login page
 ```
 
 ### Available DDEV Commands
@@ -446,7 +445,7 @@ ddev project-init
 # - Install WordPress core and database (ddev project-wp)
 # - Refresh database from hosting provider
 # - Install theme dependencies and build assets
-# - Restore admin user and open admin with auto-login
+# - Restore admin user and open admin login page
 ```
 
 #### Modular Commands

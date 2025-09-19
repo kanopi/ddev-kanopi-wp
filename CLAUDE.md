@@ -55,7 +55,7 @@ The add-on uses a **modular command approach** where `project-init` orchestrates
 - `ddev theme-create-block <name>`: Create new WordPress block with template
 - `ddev theme-activate`: Activate configured theme
 - `ddev wp-restore-admin-user`: Create/restore admin user with configured credentials
-- `ddev wp-open [service]`: Open site or admin in browser with auto-login (enhanced from open)
+- `ddev wp-open [service]`: Open site or admin in browser (simplified using ddev launch)
 
 ### Migration and Database Commands
 - `ddev db-prep-migrate`: Create secondary database for migrations
