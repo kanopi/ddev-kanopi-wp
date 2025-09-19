@@ -64,8 +64,6 @@ ddev start -y
 ddev project-lefthook
 
 # Add SSH keys for remote access.
-echo -e "\n${key} ${yellow} Adding SSH keys.${NC} ${key}"
-echo -e "${green}${divider}${NC}"
 ddev project-auth
 
 # Install Composer dependencies (if composer.json exists).
@@ -78,17 +76,14 @@ fi
 # Configure WordPress.
 ddev project-wp
 
-# Get the database from hosting provider (if configured).
-echo -e "\n${lightning} ${yellow} Refreshing database from hosting provider.${NC} ${lightning}"
-echo -e "${green}${divider}${NC}"
+# Get the database from hosting provider.
 ddev db-refresh
 
 # Install theme.
 ddev theme-install
 
-# Activate theme and restore admin user.
-echo -e "\n${lock} ${yellow} Restoring admin user and logging you in.${NC} ${lock}"
-echo -e "${green}${divider}${NC}"
+# Install activate.
+ddev theme-activate
 
 # Restore admin user
 ddev wp-restore-admin-user
@@ -99,6 +94,7 @@ ddev wp-open admin
 # Complete
 echo -e "\n${party} ${yellow} WordPress development environment ready!${NC} ${reverseparty}"
 echo -e "Visit ${yellow}${DDEV_PRIMARY_URL}${NC} in a web browser."
+
 echo -e "\nDevelopment commands:"
 echo -e "Run ${yellow}${theme_dev_command}${NC} to start theme development with file watching."
 echo -e "Run ${yellow}${theme_build_command}${NC} to build production assets."
