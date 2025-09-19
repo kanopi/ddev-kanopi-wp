@@ -205,22 +205,42 @@ write_config_var() {
     # Set the variable in DDEV's web environment
     ddev config --web-environment-add "${var_name}=${var_value}"
 
-    # Escape special characters for sed
-    local escaped_value=$(echo "$var_value" | sed 's/[[\.*^$()+?{|]/\\&/g')
+    # Use a temporary file to rewrite the config file safely
+    local temp_file=$(mktemp)
+    local found_var=false
 
-    # Check if variable already exists as export
-    if grep -q "^export $var_name=" "$config_file"; then
-        # Update existing variable
-        sed -i.bak "s/^export $var_name=.*/export $var_name=\"$escaped_value\"/" "$config_file"
-    else
-        # Add new variable before load_kanopi_config function
-        sed -i.bak "/^load_kanopi_config() {/i\\
-export $var_name=\"$escaped_value\"\\
-" "$config_file"
+    # Read the original file line by line
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [[ $line =~ ^export[[:space:]]+${var_name}= ]]; then
+            # Replace existing variable
+            printf 'export %s="%s"\n' "$var_name" "$var_value" >> "$temp_file"
+            found_var=true
+        else
+            printf '%s\n' "$line" >> "$temp_file"
+        fi
+    done < "$config_file"
+
+    # If variable wasn't found, add it before the load_kanopi_config function
+    if [ "$found_var" = false ]; then
+        local temp_file2=$(mktemp)
+        local added_var=false
+
+        while IFS= read -r line || [ -n "$line" ]; do
+            if [[ $line =~ ^load_kanopi_config\(\)[[:space:]]*\{ ]] && [ "$added_var" = false ]; then
+                # Add the new variable before the function
+                printf 'export %s="%s"\n' "$var_name" "$var_value" >> "$temp_file2"
+                printf '%s\n' "$line" >> "$temp_file2"
+                added_var=true
+            else
+                printf '%s\n' "$line" >> "$temp_file2"
+            fi
+        done < "$temp_file"
+
+        mv "$temp_file2" "$temp_file"
     fi
 
-    # Remove backup file
-    rm -f "${config_file}.bak"
+    # Replace the original file
+    mv "$temp_file" "$config_file"
 }
 
 # Update configuration
