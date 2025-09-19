@@ -40,6 +40,13 @@ WP_THEME_SLUG=$(printenv THEMENAME 2>/dev/null || echo "struts")
 
 echo "Activating theme: $WP_THEME_SLUG"
 
+# Check if WordPress is installed before trying to activate theme
+if ! wp core is-installed --path="${DOCROOT_PATH}" --allow-root >/dev/null 2>&1; then
+    echo "⚠️  WordPress not installed - skipping theme activation"
+    echo "   Run 'ddev project-wp' to install WordPress first"
+    exit 0
+fi
+
 # Activate the theme with proper path
 wp theme activate "$WP_THEME_SLUG" --path="${DOCROOT_PATH}" --allow-root
 
