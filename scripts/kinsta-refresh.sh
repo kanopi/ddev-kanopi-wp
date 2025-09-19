@@ -95,7 +95,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to Kinsta...${NC}"
-    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -p "${SSH_PORT}" "${SSH_CONNECTION}" "echo 'SSH connection successful'" 2>/dev/null; then
+    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "echo 'SSH connection successful'" 2>/dev/null; then
         echo -e "${red}Error: Cannot connect to Kinsta via SSH${NC}"
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your SSH key is properly configured with Kinsta${NC}"
@@ -111,7 +111,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     
     # Export database on remote server
     REMOTE_DBFILE="${KINSTA_SSH_USER}.sql"
-    if ssh -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${REMOTE_PATH}; wp db export ${REMOTE_DBFILE} --allow-root"; then
+    if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${REMOTE_PATH}; wp db export ${REMOTE_DBFILE} --allow-root"; then
         echo -e "${green}Database exported successfully on remote server.${NC}"
     else
         echo -e "${red}Failed to export database on remote server${NC}"
@@ -119,7 +119,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     fi
     
     echo -e "${yellow}Downloading Database...${NC}"
-    if rsync -arv -e "ssh -p ${SSH_PORT}" --progress "${SSH_CONNECTION}:${REMOTE_PATH}/${REMOTE_DBFILE}" "${DBFILE}"; then
+    if rsync -arv -e "ssh -o StrictHostKeyChecking=no -p ${SSH_PORT}" --progress "${SSH_CONNECTION}:${REMOTE_PATH}/${REMOTE_DBFILE}" "${DBFILE}"; then
         echo -e "${green}Database downloaded successfully!${NC}"
     else
         echo -e "${red}Failed to download database${NC}"
@@ -127,7 +127,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     fi
     
     echo -e "${yellow}Database downloaded. Removing remote db file...${NC}"
-    ssh -p "${SSH_PORT}" "${SSH_CONNECTION}" "rm ${REMOTE_PATH}/${REMOTE_DBFILE}" || echo "Warning: Could not remove remote database file"
+    ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "rm ${REMOTE_PATH}/${REMOTE_DBFILE}" || echo "Warning: Could not remove remote database file"
 fi
 
 echo -e "${yellow}Importing Database...${NC}"
