@@ -107,15 +107,6 @@ echo -e "\n ${construction} ${yellow} Compiling theme assets. ${NC} ${constructi
 echo -e "${green}${divider}${NC}"
 npm run build || echo "npm run build"
 
-# Activate the custom theme (if configured and WordPress is available)
-if [ -f "${DOCROOT}/index.php" ]; then
-  THEME_SLUG=$(printenv THEMENAME 2>/dev/null || echo "struts")
-  echo "Activating theme: ${THEME_SLUG}"
-  wp theme activate "${THEME_SLUG}" --path="${DOCROOT_PATH}" --allow-root 2>/dev/null && echo "✅ Theme '${THEME_SLUG}' activated successfully" || echo "⚠️  Theme activation skipped (theme not found or WordPress not accessible)"
-else
-  echo "⚠️  Theme activation skipped (WordPress not found at ${DOCROOT}/index.php)"
-fi
-
 # Completion message
 echo -e "\n ${party} ${yellow} Theme setup complete! ${NC} ${reverseparty}"
 echo -e "To start watching for file changes, run: ${yellow}${watch_command}${NC}"
