@@ -1,0 +1,8 @@
+# Python dependencies for MkDocs documentation
+# Used for:
+# - Local development: pip install -r requirements.txt
+# - GitHub Actions: Automated docs deployment to GitHub Pages
+# - Contributor onboarding: Consistent dependency versions
+
+mkdocs-material>=9.0.0
+mkdocs-git-revision-date-localized-plugin>=1.2.0

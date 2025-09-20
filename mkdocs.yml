@@ -1,0 +1,82 @@
+site_name: DDEV Kanopi WordPress Add-on
+site_description: Comprehensive DDEV add-on for WordPress development with multi-provider hosting support
+site_url: https://kanopi.github.io/ddev-kanopi-wp/
+repo_url: https://github.com/kanopi/ddev-kanopi-wp
+repo_name: kanopi/ddev-kanopi-wp
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - toc.follow
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: installation.md
+    - Configuration: configuration.md
+    - wp-config Setup: wp-config-setup.md
+  - Commands:
+    - Command Reference: commands.md
+    - Database Operations: database-operations.md
+    - Theme Development: theme-development.md
+    - Testing: testing.md
+  - Hosting Providers:
+    - Provider Setup: hosting-providers.md
+    - Pantheon: providers/pantheon.md
+    - WPEngine: providers/wpengine.md
+    - Kinsta: providers/kinsta.md
+  - Advanced:
+    - Environment Variables: environment-variables.md
+    - Troubleshooting: troubleshooting.md
+    - Contributing: contributing.md
+  - Project Integration:
+    - README Updates: readme-updates.md
+    - Creating Pull Requests: pull-requests.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/kanopi/ddev-kanopi-wp
+  generator: false
+
+copyright: Copyright &copy; 2025 Kanopi Studios
