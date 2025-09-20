@@ -111,11 +111,29 @@ if [ "$EXPORT_DATABASE" = true ]; then
     
     # Export database on remote server
     REMOTE_DBFILE="${KINSTA_SSH_USER}.sql"
-    if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${REMOTE_PATH}; wp db export ${REMOTE_DBFILE} --allow-root"; then
+
+    # Ensure REMOTE_PATH starts with / for absolute path
+    if [[ ! "$REMOTE_PATH" = /* ]]; then
+        REMOTE_PATH="/${REMOTE_PATH}"
+    fi
+
+    # Try to cd to the path and run wp db export, with fallback if path doesn't exist
+    echo -e "${yellow}Attempting to access remote path: ${REMOTE_PATH}${NC}"
+    if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${REMOTE_PATH} && pwd && wp db export ${REMOTE_DBFILE} --allow-root"; then
         echo -e "${green}Database exported successfully on remote server.${NC}"
     else
-        echo -e "${red}Failed to export database on remote server${NC}"
-        exit 1
+        echo -e "${yellow}Primary path failed, trying parent directory...${NC}"
+        PARENT_PATH=$(dirname "$REMOTE_PATH")
+        echo -e "${yellow}Trying parent path: ${PARENT_PATH}${NC}"
+        if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${PARENT_PATH} && pwd && wp db export ${REMOTE_DBFILE} --path=${REMOTE_PATH} --allow-root"; then
+            echo -e "${green}Database exported successfully from parent directory.${NC}"
+            # Update REMOTE_PATH for download step
+            REMOTE_PATH="${PARENT_PATH}"
+        else
+            echo -e "${red}Failed to export database on remote server${NC}"
+            echo -e "${red}Tried paths: ${REMOTE_PATH} and ${PARENT_PATH}${NC}"
+            exit 1
+        fi
     fi
     
     echo -e "${yellow}Downloading Database...${NC}"
