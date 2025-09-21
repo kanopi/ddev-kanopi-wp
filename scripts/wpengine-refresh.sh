@@ -74,7 +74,14 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
     
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to WPEngine...${NC}"
-    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes "$WPENGINE_SSH" "echo 'SSH connection successful'" 2>/dev/null; then
+
+    # Build SSH command with key if specified
+    SSH_CMD="ssh -o ConnectTimeout=10 -o BatchMode=yes"
+    if [ -n "${WPENGINE_SSH_KEY:-}" ] && [ -f "${WPENGINE_SSH_KEY}" ]; then
+        SSH_CMD="$SSH_CMD -i ${WPENGINE_SSH_KEY}"
+    fi
+
+    if ! $SSH_CMD "$WPENGINE_SSH" "echo 'SSH connection successful'" 2>/dev/null; then
         echo -e "${red}Error: Cannot connect to WPEngine via SSH${NC}"
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your SSH key is properly configured with WPEngine${NC}"
@@ -84,7 +91,14 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
     fi
     
     echo -e "${green}SSH connection successful. Downloading backup...${NC}"
-    if rsync -avzh --progress "$WPENGINE_SSH:$WPENGINE_BACKUP_PATH" "$DB_DUMP"; then
+
+    # Build rsync command with SSH key if specified
+    RSYNC_CMD="rsync -avzh --progress"
+    if [ -n "${WPENGINE_SSH_KEY:-}" ] && [ -f "${WPENGINE_SSH_KEY}" ]; then
+        RSYNC_CMD="$RSYNC_CMD -e 'ssh -i ${WPENGINE_SSH_KEY}'"
+    fi
+
+    if eval "$RSYNC_CMD \"$WPENGINE_SSH:$WPENGINE_BACKUP_PATH\" \"$DB_DUMP\""; then
         # Update timestamp to mark as fresh
         touch -d "1 second ago" "$DB_DUMP"
         echo -e "${green}Backup downloaded successfully!${NC}"
