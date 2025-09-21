@@ -61,14 +61,18 @@ post_install_actions:
   #ddev-description: WordPress configuration setup
   echo ""
   echo "📦 WordPress configuration complete - all settings now use environment variables"
-  
+
+  # Get the actual docroot from DDEV configuration
+  DOCROOT=$(ddev exec printenv DDEV_DOCROOT | tr -d '\r' || echo "web")
+  WP_CONFIG_PATH="../../${DOCROOT}/wp-config.php"
+
   # Add ddev-managed settings to wp-config.php
-  if [ -f "../../web/wp-config.php" ]; then
+  if [ -f "$WP_CONFIG_PATH" ]; then
     # Check if the ddev settings snippet is already present
-    if ! grep -q "wp-config-ddev.php" "../../web/wp-config.php"; then
+    if ! grep -q "wp-config-ddev.php" "$WP_CONFIG_PATH"; then
       # Create a temporary file with the new content
       {
-        head -n 1 "../../web/wp-config.php"  # <?php line
+        head -n 1 "$WP_CONFIG_PATH"  # <?php line
         echo ""
         echo "// Added for ddev-managed settings in wp-config-ddev.php."
         echo "\$ddev_settings = dirname(__FILE__) . '/wp-config-ddev.php';"
@@ -76,15 +80,15 @@ post_install_actions:
         echo "  require_once(\$ddev_settings);"
         echo "}"
         echo ""
-        tail -n +2 "../../web/wp-config.php"  # Rest of the file
-      } > "../../web/wp-config.php.tmp"
-      mv "../../web/wp-config.php.tmp" "../../web/wp-config.php"
+        tail -n +2 "$WP_CONFIG_PATH"  # Rest of the file
+      } > "${WP_CONFIG_PATH}.tmp"
+      mv "${WP_CONFIG_PATH}.tmp" "$WP_CONFIG_PATH"
       echo "📝 Added ddev-managed settings to wp-config.php"
     else
       echo "📝 ddev-managed settings already present in wp-config.php"
     fi
   else
-    echo "⚠️  wp-config.php not found at web/wp-config.php"
+    echo "⚠️  wp-config.php not found at ${DOCROOT}/wp-config.php"
   fi
 
 - |
@@ -93,12 +97,15 @@ post_install_actions:
   echo ""
   echo "🔧 Checking for Pantheon mu-plugins that need to be disabled in DDEV..."
 
-  PANTHEON_LOADER="../web/wp-content/mu-plugins/pantheon-mu-loader.php"
+  # Use the same docroot variable from previous step
+  DOCROOT=$(ddev exec printenv DDEV_DOCROOT | tr -d '\r' || echo "web")
+  PANTHEON_LOADER="../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-loader.php"
+
   if [ -f "$PANTHEON_LOADER" ]; then
     # Check if the loader tries to load pantheon-mu-plugin
     if grep -q "pantheon-mu-plugin/pantheon.php" "$PANTHEON_LOADER"; then
       # Check if the actual plugin directory exists
-      if [ ! -d "../web/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
+      if [ ! -d "../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
         echo "📝 Found Pantheon mu-plugin loader but plugin directory missing"
         echo "   Disabling to prevent PHP fatal errors in DDEV environment..."
         mv "$PANTHEON_LOADER" "${PANTHEON_LOADER}.disabled"
@@ -212,9 +219,10 @@ removal_actions:
   rm -rf scripts 2>/dev/null || true
   
   # Restore Pantheon mu-plugin loader if it was disabled during installation
-  PANTHEON_LOADER_DISABLED="../web/wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
+  DOCROOT=$(ddev exec printenv DDEV_DOCROOT | tr -d '\r' 2>/dev/null || echo "web")
+  PANTHEON_LOADER_DISABLED="../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
   if [ -f "$PANTHEON_LOADER_DISABLED" ]; then
-    PANTHEON_LOADER="../web/wp-content/mu-plugins/pantheon-mu-loader.php"
+    PANTHEON_LOADER="../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-loader.php"
     mv "$PANTHEON_LOADER_DISABLED" "$PANTHEON_LOADER"
     echo "✅ Restored Pantheon mu-plugin loader (was disabled during add-on installation)"
   fi
