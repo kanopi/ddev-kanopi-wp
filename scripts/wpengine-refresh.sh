@@ -38,7 +38,7 @@ fi
 WPENGINE_INSTALL=${ENVIRONMENT:-$HOSTING_SITE}
 WPENGINE_SSH="$WPENGINE_INSTALL@$WPENGINE_INSTALL.ssh.wpengine.net"
 WPENGINE_PATH="/home/wpe-user/sites/$WPENGINE_INSTALL"
-WPENGINE_BACKUP_PATH="$WPENGINE_PATH/wp-content/mysql.sql"
+WPENGINE_BACKUP_PATH="$WPENGINE_PATH/wp-content/db.sql"
 DB_DUMP="/tmp/wpengine_${WPENGINE_INSTALL}.sql"
 
 echo -e "${green}Using WPEngine install: ${WPENGINE_INSTALL}${NC}"
