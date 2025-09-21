@@ -77,8 +77,20 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
 
     # Build SSH command with key if specified
     SSH_CMD="ssh -o ConnectTimeout=10 -o BatchMode=yes"
-    if [ -n "${WPENGINE_SSH_KEY:-}" ] && [ -f "${WPENGINE_SSH_KEY}" ]; then
-        SSH_CMD="$SSH_CMD -i ${WPENGINE_SSH_KEY}"
+    if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
+        # Convert host path to container path if needed
+        CONTAINER_SSH_KEY="${WPENGINE_SSH_KEY}"
+        if [[ "$WPENGINE_SSH_KEY" == "/Users/"* ]]; then
+            # Map host path to container path
+            KEYNAME=$(basename "$WPENGINE_SSH_KEY")
+            CONTAINER_SSH_KEY="$HOME/.ssh/$KEYNAME"
+        fi
+
+        if [ -f "${CONTAINER_SSH_KEY}" ]; then
+            SSH_CMD="$SSH_CMD -i ${CONTAINER_SSH_KEY}"
+        else
+            echo -e "${yellow}Warning: SSH key not found at ${CONTAINER_SSH_KEY}${NC}"
+        fi
     fi
 
     if ! $SSH_CMD "$WPENGINE_SSH" "echo 'SSH connection successful'" 2>/dev/null; then
@@ -94,8 +106,11 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
 
     # Build rsync command with SSH key if specified
     RSYNC_CMD="rsync -avzh --progress"
-    if [ -n "${WPENGINE_SSH_KEY:-}" ] && [ -f "${WPENGINE_SSH_KEY}" ]; then
-        RSYNC_CMD="$RSYNC_CMD -e 'ssh -i ${WPENGINE_SSH_KEY}'"
+    if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
+        # Use the same container key path we determined above
+        if [ -n "${CONTAINER_SSH_KEY:-}" ] && [ -f "${CONTAINER_SSH_KEY}" ]; then
+            RSYNC_CMD="$RSYNC_CMD -e 'ssh -i ${CONTAINER_SSH_KEY}'"
+        fi
     fi
 
     if eval "$RSYNC_CMD \"$WPENGINE_SSH:$WPENGINE_BACKUP_PATH\" \"$DB_DUMP\""; then
