@@ -110,15 +110,15 @@ post_install_actions:
     # Check if table prefix is already configured
     if ! grep -q "\$table_prefix.*WP_PREFIX" "$WP_CONFIG_PATH"; then
       echo "📝 Adding table prefix configuration to wp-config.php..."
-      # Add table prefix configuration after the custom values section
-      sed -i.bak "/Add any custom values between this line and the \"stop editing\" line/a\\
-\\
-// Configure WordPress table prefix from environment variable\\
-if (!isset(\$table_prefix)) {\\
-    \$table_prefix = getenv('WP_PREFIX') ?: 'wp_';\\
-}\\
-" "$WP_CONFIG_PATH"
-      rm -f "${WP_CONFIG_PATH}.bak" 2>/dev/null || true
+      # Create the table prefix configuration lines
+      echo "" > /tmp/table_prefix_config.txt
+      echo "// Configure WordPress table prefix from environment variable" >> /tmp/table_prefix_config.txt
+      echo "if (!isset(\$table_prefix)) {" >> /tmp/table_prefix_config.txt
+      echo "    \$table_prefix = getenv('WP_PREFIX') ?: 'wp_';" >> /tmp/table_prefix_config.txt
+      echo "}" >> /tmp/table_prefix_config.txt
+      # Insert after the custom values line
+      sed -i.bak '/Add any custom values between this line and the "stop editing" line/r /tmp/table_prefix_config.txt' "$WP_CONFIG_PATH"
+      rm -f "${WP_CONFIG_PATH}.bak" /tmp/table_prefix_config.txt 2>/dev/null || true
       echo "✅ Table prefix configuration added to wp-config.php"
     else
       echo "📝 Table prefix configuration already present in wp-config.php"
