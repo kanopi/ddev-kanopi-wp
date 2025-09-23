@@ -105,25 +105,6 @@ post_install_actions:
     echo "⚠️  wp-config.php not found at ${DOCROOT}/wp-config.php"
   fi
 
-  # Add table prefix configuration to wp-config.php
-  if [ -f "$WP_CONFIG_PATH" ]; then
-    # Check if table prefix is already configured
-    if ! grep -q "\$table_prefix.*WP_PREFIX" "$WP_CONFIG_PATH"; then
-      echo "📝 Adding table prefix configuration to wp-config.php..."
-      # Create the table prefix configuration lines
-      echo "" > /tmp/table_prefix_config.txt
-      echo "// Configure WordPress table prefix from environment variable" >> /tmp/table_prefix_config.txt
-      echo "if (!isset(\$table_prefix)) {" >> /tmp/table_prefix_config.txt
-      echo "    \$table_prefix = getenv('WP_PREFIX') ?: 'wp_';" >> /tmp/table_prefix_config.txt
-      echo "}" >> /tmp/table_prefix_config.txt
-      # Insert after the custom values line
-      sed -i.bak '/Add any custom values between this line and the "stop editing" line/r /tmp/table_prefix_config.txt' "$WP_CONFIG_PATH"
-      rm -f "${WP_CONFIG_PATH}.bak" /tmp/table_prefix_config.txt 2>/dev/null || true
-      echo "✅ Table prefix configuration added to wp-config.php"
-    else
-      echo "📝 Table prefix configuration already present in wp-config.php"
-    fi
-  fi
 
 - |
   #ddev-description: Handle Pantheon mu-plugins compatibility
@@ -289,18 +270,6 @@ removal_actions:
     echo "✅ Restored Pantheon mu-plugin loader (was disabled during add-on installation)"
   fi
 
-  # Remove table prefix configuration from wp-config.php
-  WP_CONFIG_PATH="../${DOCROOT}/wp-config.php"
-  if [ -f "$WP_CONFIG_PATH" ]; then
-    if grep -q "\$table_prefix.*WP_PREFIX" "$WP_CONFIG_PATH"; then
-      echo "✅ Removing table prefix configuration from wp-config.php"
-      # Remove the table prefix configuration block
-      sed -i.bak "/Configure WordPress table prefix from environment variable/,/^}$/d" "$WP_CONFIG_PATH"
-      # Remove empty lines
-      sed -i.bak '/^$/N;/^\n$/d' "$WP_CONFIG_PATH"
-      rm -f "${WP_CONFIG_PATH}.bak" 2>/dev/null || true
-    fi
-  fi
 
   # Clean up gitignore
   if [ -f ../../.gitignore ]; then
