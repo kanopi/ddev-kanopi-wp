@@ -1,4 +1,4 @@
-name: Test DDEV Kanopi WordPress Add-on
+name: Bats test
 
 on:
   push:
