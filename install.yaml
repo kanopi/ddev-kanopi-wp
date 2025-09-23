@@ -105,6 +105,22 @@ post_install_actions:
     echo "⚠️  wp-config.php not found at ${DOCROOT}/wp-config.php"
   fi
 
+  # Update wp-config-ddev.php to use WP_PREFIX environment variable
+  WP_CONFIG_DDEV_PATH="../../${DOCROOT}/wp-config-ddev.php"
+  if [ -f "$WP_CONFIG_DDEV_PATH" ]; then
+    # Check if the fix is already applied
+    if ! grep -q "getenv.*WP_PREFIX" "$WP_CONFIG_DDEV_PATH"; then
+      echo "📝 Updating wp-config-ddev.php to use WP_PREFIX environment variable..."
+      sed -i.bak "s/\$table_prefix = 'wp_';/\$table_prefix = getenv( 'WP_PREFIX' ) ?: 'wp_';/" "$WP_CONFIG_DDEV_PATH"
+      rm -f "${WP_CONFIG_DDEV_PATH}.bak" 2>/dev/null || true
+      echo "✅ wp-config-ddev.php updated to use WP_PREFIX"
+    else
+      echo "📝 wp-config-ddev.php already uses WP_PREFIX environment variable"
+    fi
+  else
+    echo "📝 wp-config-ddev.php not found (will be created later by DDEV)"
+  fi
+
 - |
   #ddev-description: Handle Pantheon mu-plugins compatibility
   # Disable Pantheon mu-plugins that conflict with DDEV environment
@@ -268,7 +284,17 @@ removal_actions:
     mv "$PANTHEON_LOADER_DISABLED" "$PANTHEON_LOADER"
     echo "✅ Restored Pantheon mu-plugin loader (was disabled during add-on installation)"
   fi
-  
+
+  # Restore original wp-config-ddev.php table prefix
+  WP_CONFIG_DDEV_PATH="../${DOCROOT}/wp-config-ddev.php"
+  if [ -f "$WP_CONFIG_DDEV_PATH" ]; then
+    if grep -q "getenv.*WP_PREFIX" "$WP_CONFIG_DDEV_PATH"; then
+      echo "✅ Restoring wp-config-ddev.php table prefix to default"
+      sed -i.bak "s/\$table_prefix = getenv( 'WP_PREFIX' ) ?: 'wp_';/\$table_prefix = 'wp_';/" "$WP_CONFIG_DDEV_PATH"
+      rm -f "${WP_CONFIG_DDEV_PATH}.bak" 2>/dev/null || true
+    fi
+  fi
+
   # Clean up gitignore
   if [ -f ../../.gitignore ]; then
     grep -v "settings.ddev.redis.php\|settings.ddev.solr.php" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
