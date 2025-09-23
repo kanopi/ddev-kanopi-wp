@@ -79,6 +79,9 @@ ddev project-wp
 # Get the database from hosting provider.
 ddev db-refresh
 
+# Create admin user.
+ddev wp-restore-admin-user
+
 # Install theme.
 ddev theme-install
 

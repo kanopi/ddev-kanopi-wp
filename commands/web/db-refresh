@@ -12,6 +12,7 @@ green='\033[0;32m'
 yellow='\033[1;33m'
 red='\033[0;31m'
 NC='\033[0m'
+user_command='ddev wp-restore-admin-user'
 
 # Parse command line arguments
 FORCE_BACKUP=false
@@ -120,12 +121,5 @@ else
   exit 1
 fi
 
-# Restore admin user after database refresh
-echo -e "${yellow}Restoring WordPress admin user...${NC}"
-if command -v wp-restore-admin-user >/dev/null 2>&1; then
-    wp-restore-admin-user
-else
-    echo -e "${yellow}wp-restore-admin-user command not available, skipping admin user restoration${NC}"
-fi
-
 echo -e "\n${green}Database refresh completed successfully!${NC}"
+echo -e "\n${green}Run ${yellow}${user_command}${green} to add the default admin user.${NC}"
