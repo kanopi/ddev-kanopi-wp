@@ -238,10 +238,10 @@ removal_actions:
 
   # Remove specific script files
   echo "🔧 Removing script files..."
-  rm -f scripts/kinsta-refresh.sh 2>/dev/null || true
+  rm -f scripts/refresh-kinsta.sh 2>/dev/null || true
   rm -f scripts/load-config.sh 2>/dev/null || true
-  rm -f scripts/pantheon-refresh.sh 2>/dev/null || true
-  rm -f scripts/wpengine-refresh.sh 2>/dev/null || true
+  rm -f scripts/refresh-pantheon.sh 2>/dev/null || true
+  rm -f scripts/refresh-wpengine.sh 2>/dev/null || true
 
   # Remove directory structure
   rm -rf config 2>/dev/null || true

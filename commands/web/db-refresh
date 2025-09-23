@@ -106,15 +106,15 @@ fi
 if [[ "$HOSTING_PROVIDER" == "pantheon" ]]; then
   echo -e "${green}Using Pantheon refresh script...${NC}"
   # Call the Pantheon-specific refresh script
-  bash .ddev/scripts/pantheon-refresh.sh "$ENVIRONMENT" "$FORCE_BACKUP"
+  bash .ddev/scripts/refresh-pantheon.sh "$ENVIRONMENT" "$FORCE_BACKUP"
 elif [[ "$HOSTING_PROVIDER" == "wpengine" ]]; then
   echo -e "${green}Using WPEngine refresh script...${NC}"
   # Call the WPEngine-specific refresh script
-  bash .ddev/scripts/wpengine-refresh.sh "$ENVIRONMENT" "$FORCE_BACKUP"
+  bash .ddev/scripts/refresh-wpengine.sh "$ENVIRONMENT" "$FORCE_BACKUP"
 elif [[ "$HOSTING_PROVIDER" == "kinsta" ]]; then
   echo -e "${green}Using Kinsta refresh script...${NC}"
   # Call the Kinsta-specific refresh script
-  bash .ddev/scripts/kinsta-refresh.sh "$ENVIRONMENT" "$FORCE_BACKUP"
+  bash .ddev/scripts/refresh-kinsta.sh "$ENVIRONMENT" "$FORCE_BACKUP"
 else
   echo -e "${red}Hosting platform '$HOSTING_PROVIDER' not supported${NC}"
   echo -e "${yellow}Supported platforms: pantheon, wpengine, kinsta${NC}"
