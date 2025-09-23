@@ -114,6 +114,7 @@ echo "Theme Path: ${THEME:-not set}"
 echo "Theme Name: ${THEMENAME:-not set}"
 echo "WordPress Admin User: ${WP_ADMIN_USER:-not set}"
 echo "WordPress Admin Email: ${WP_ADMIN_EMAIL:-not set}"
+echo "WordPress DB Prefix: ${WP_PREFIX:-not set}"
 echo ""
 
 # Get hosting provider
@@ -186,6 +187,12 @@ if [ "$WP_ADMIN_PASS" != "$WP_ADMIN_PASS_CONFIRM" ]; then
 fi
 
 prompt_input "WordPress admin email" "${WP_ADMIN_EMAIL:-admin@example.com}" WP_ADMIN_EMAIL
+
+# Get WordPress database prefix
+echo ""
+echo "🗄️ Database Configuration:"
+echo "--------------------------"
+prompt_input "WordPress database table prefix" "${WP_PREFIX:-wp_}" WP_PREFIX
 
 # Get migration settings (optional, Pantheon only)
 if [[ "$HOST_PROVIDER" == "pantheon" ]]; then
@@ -281,6 +288,10 @@ echo "Setting WordPress admin configuration..."
 write_config_var "WP_ADMIN_USER" "$WP_ADMIN_USER"
 write_config_var "WP_ADMIN_PASS" "$WP_ADMIN_PASS"
 write_config_var "WP_ADMIN_EMAIL" "$WP_ADMIN_EMAIL"
+
+# Write database configuration
+echo "Setting database configuration..."
+write_config_var "WP_PREFIX" "$WP_PREFIX"
 
 # Write migration settings if provided (Pantheon only)
 if [[ "$HOST_PROVIDER" == "pantheon" ]] && [ -n "$MIGRATE_SOURCE" ]; then

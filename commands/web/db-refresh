@@ -120,4 +120,12 @@ else
   exit 1
 fi
 
+# Restore admin user after database refresh
+echo -e "${yellow}Restoring WordPress admin user...${NC}"
+if command -v wp-restore-admin-user >/dev/null 2>&1; then
+    wp-restore-admin-user
+else
+    echo -e "${yellow}wp-restore-admin-user command not available, skipping admin user restoration${NC}"
+fi
+
 echo -e "\n${green}Database refresh completed successfully!${NC}"

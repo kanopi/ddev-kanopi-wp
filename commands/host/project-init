@@ -85,9 +85,6 @@ ddev theme-install
 # Install activate.
 ddev theme-activate
 
-# Restore admin user
-ddev wp-restore-admin-user
-
 # Generate login link
 ddev wp-open admin
 

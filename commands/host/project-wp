@@ -82,7 +82,7 @@ if [ "$CORE_CHECK_PASSED" = "false" ]; then
   # Only create config if it doesn't exist
   if [ ! -f "${LOCAL_PATH}/wp-config.php" ] && [ ! -f "${LOCAL_PATH}/wp-config-ddev.php" ]; then
     echo "📝 Creating WordPress configuration file..."
-    ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=${DOCROOT_PATH} --allow-root"
+    ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=${DOCROOT_PATH} --dbprefix='${WP_PREFIX:-wp_}' --allow-root"
   fi
 else
   echo "📝 WordPress core files found in docroot: ${LOCAL_PATH}"
@@ -114,7 +114,7 @@ if [ "$WP_CORE_EXISTS" = "true" ]; then
     # Make sure wp-config.php exists first
     if [ ! -f "${LOCAL_PATH}/wp-config.php" ] && [ ! -f "${LOCAL_PATH}/wp-config-ddev.php" ]; then
       echo "📝 Creating WordPress configuration file..."
-      ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=${DOCROOT_PATH} --allow-root"
+      ddev exec "wp config create --dbname=db --dbuser=db --dbpass=db --dbhost=db --path=${DOCROOT_PATH} --dbprefix='${WP_PREFIX:-wp_}' --allow-root"
     fi
 
     # Install WordPress

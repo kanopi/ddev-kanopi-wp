@@ -110,6 +110,7 @@ teardown() {
     ddev config --web-environment-add="THEMENAME=testtheme"
     ddev config --web-environment-add="WP_ADMIN_USER=admin"
     ddev config --web-environment-add="WP_ADMIN_EMAIL=admin@example.com"
+    ddev config --web-environment-add="WP_PREFIX=wp_"
 
     # Restart to apply environment variable changes
     ddev restart
@@ -122,6 +123,7 @@ teardown() {
     ddev exec printenv THEMENAME | grep -q "testtheme"
     ddev exec printenv WP_ADMIN_USER | grep -q "admin"
     ddev exec printenv WP_ADMIN_EMAIL | grep -q "admin"
+    ddev exec printenv WP_PREFIX | grep -q "wp_"
 }
 
 @test "interactive installation wizard" {
@@ -138,6 +140,7 @@ teardown() {
     ddev config --web-environment-add="HOSTING_PROVIDER=pantheon"
     ddev config --web-environment-add="HOSTING_SITE=test-site-123"
     ddev config --web-environment-add="WP_ADMIN_USER=admin"
+    ddev config --web-environment-add="WP_PREFIX=wp_"
 
     # Restart to apply environment variable changes
     ddev restart
@@ -146,6 +149,7 @@ teardown() {
     ddev exec printenv HOSTING_PROVIDER | grep -q "pantheon"
     ddev exec printenv HOSTING_SITE | grep -q "test-site-123"
     ddev exec printenv WP_ADMIN_USER | grep -q "admin"
+    ddev exec printenv WP_PREFIX | grep -q "wp_"
 }
 
 @test "block template functionality" {

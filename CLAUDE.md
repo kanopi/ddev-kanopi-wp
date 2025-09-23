@@ -54,7 +54,7 @@ The add-on uses a **modular command approach** where `project-init` orchestrates
 ### WordPress-Specific Commands
 - `ddev theme-create-block <name>`: Create new WordPress block with template
 - `ddev theme-activate`: Activate configured theme
-- `ddev wp-restore-admin-user`: Create/restore admin user with configured credentials
+- `ddev wp-restore-admin-user`: Create/restore admin user with configured credentials (automatically called after `ddev db-refresh`)
 - `ddev wp-open [service]`: Open site or admin in browser (simplified using ddev launch)
 
 ### Migration and Database Commands
@@ -101,6 +101,7 @@ Variables are stored in two locations:
 - `WP_ADMIN_USER`: WordPress admin username
 - `WP_ADMIN_PASS`: WordPress admin password
 - `WP_ADMIN_EMAIL`: WordPress admin email
+- `WP_PREFIX`: WordPress database table prefix (default: `wp_`)
 
 ### Provider-Specific Variables
 
@@ -132,6 +133,7 @@ The `ddev db-refresh` command includes intelligent backup management:
 - Uses `-f` flag to force new backup creation
 - Supports any provider environment
 - Includes automatic theme activation and admin user restoration after refresh
+- Automatically restores WordPress admin user credentials after database import
 
 ## Command Development Guidelines
 
