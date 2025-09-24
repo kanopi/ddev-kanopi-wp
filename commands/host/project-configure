@@ -352,13 +352,36 @@ if [ "$WP_PREFIX" != "wp_" ]; then
     if [ -f "$WP_CONFIG_DDEV_PATH" ]; then
         if ! grep -q "getenv.*WP_PREFIX" "$WP_CONFIG_DDEV_PATH"; then
             echo "  Updating table prefix configuration in wp-config-ddev.php..."
-            # Replace the hardcoded 'wp_' with environment variable lookup
-            sed -i.bak "s/\$table_prefix = 'wp_';/\$table_prefix = getenv('WP_PREFIX') ?: 'wp_';/" "$WP_CONFIG_DDEV_PATH"
+            # Use Python for reliable text processing (avoids sed corruption issues)
+            WP_CONFIG_DDEV_PATH="$WP_CONFIG_DDEV_PATH" python3 << 'EOF'
+import re
+import os
 
-            # Remove the #ddev-generated comment lines to prevent DDEV from overwriting
-            sed -i.bak2 '/^.*#ddev-generated.*$/d' "$WP_CONFIG_DDEV_PATH"
+# Get the file path from environment
+wp_config_path = os.environ.get('WP_CONFIG_DDEV_PATH')
 
-            rm -f "${WP_CONFIG_DDEV_PATH}.bak" "${WP_CONFIG_DDEV_PATH}.bak2" 2>/dev/null || true
+# Read the file
+with open(wp_config_path, 'r') as f:
+    content = f.read()
+
+# Replace table prefix line
+content = re.sub(
+    r"(\s*)\$table_prefix = 'wp_';",
+    r"\1\$table_prefix = getenv('WP_PREFIX') ?: 'wp_';",
+    content
+)
+
+# Remove ddev-generated lines
+content = re.sub(r'.*#ddev-generated.*\n', '', content)
+content = re.sub(r'.*ddev manages this file and may delete or overwrite the file unless this comment is removed.*\n', '', content)
+
+# Fix any escaped dollar signs
+content = content.replace('\\$table_prefix', '$table_prefix')
+
+# Write back to file
+with open(wp_config_path, 'w') as f:
+    f.write(content)
+EOF
             echo "  ✅ Table prefix configuration updated in wp-config-ddev.php and marked as user-managed"
         else
             echo "  ✅ Table prefix configuration already present in wp-config-ddev.php"
