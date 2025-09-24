@@ -354,8 +354,12 @@ if [ "$WP_PREFIX" != "wp_" ]; then
             echo "  Updating table prefix configuration in wp-config-ddev.php..."
             # Replace the hardcoded 'wp_' with environment variable lookup
             sed -i.bak "s/\$table_prefix = 'wp_';/\$table_prefix = getenv('WP_PREFIX') ?: 'wp_';/" "$WP_CONFIG_DDEV_PATH"
-            rm -f "${WP_CONFIG_DDEV_PATH}.bak" 2>/dev/null || true
-            echo "  ✅ Table prefix configuration updated in wp-config-ddev.php"
+
+            # Remove the #ddev-generated comment lines to prevent DDEV from overwriting
+            sed -i.bak2 '/^.*#ddev-generated.*$/d' "$WP_CONFIG_DDEV_PATH"
+
+            rm -f "${WP_CONFIG_DDEV_PATH}.bak" "${WP_CONFIG_DDEV_PATH}.bak2" 2>/dev/null || true
+            echo "  ✅ Table prefix configuration updated in wp-config-ddev.php and marked as user-managed"
         else
             echo "  ✅ Table prefix configuration already present in wp-config-ddev.php"
         fi
