@@ -232,8 +232,8 @@ removal_actions:
   
   # Remove specific config files
   echo "🔧 Removing config files..."
-  rm -f config/nginx/nginx-common.conf 2>/dev/null || true
   rm -f config/nginx/nginx-site.conf 2>/dev/null || true
+  rm -f config/nginx/nginx-site-main.conf 2>/dev/null || true
   rm -f config/wp/block-template/block.json 2>/dev/null || true
 
   # Remove specific script files

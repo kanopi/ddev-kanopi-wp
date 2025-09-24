@@ -140,13 +140,19 @@ The `ddev db-refresh` command includes intelligent backup management:
 
 ## Asset Proxy System
 
-The add-on includes an intelligent asset proxy system that automatically serves missing uploads and files from your hosting provider:
+The add-on includes an intelligent nginx-based asset proxy system that automatically serves missing uploads and files from your hosting provider:
 
 ### How It Works:
 - **Local First**: Always tries to serve files locally from `wp-content/uploads/`
-- **Automatic Fallback**: If file doesn't exist locally, proxies from remote hosting provider
+- **Nginx Proxy**: If file doesn't exist locally, nginx directly proxies from remote hosting provider using `proxy_pass`
 - **Provider Support**: Works with Pantheon, WPEngine, and Kinsta
 - **Transparent**: No configuration needed - works automatically after setup
+
+### Technical Implementation:
+- **Complete nginx Configuration**: Uses `nginx-site-main.conf` template to override DDEV's default WordPress configuration
+- **Template-Based**: `PROXY_URL_PLACEHOLDER` and `HOST_PLACEHOLDER` are replaced during `ddev project-configure`
+- **Native nginx Performance**: Uses nginx's built-in `proxy_pass` directive for optimal performance
+- **Configuration Location**: Creates `.ddev/nginx_full/nginx-site.conf` to take full control of nginx configuration
 
 ### Configuration:
 - **Automatic**: `PROXY_URL` is automatically configured based on your hosting provider during `ddev project-configure`
@@ -155,6 +161,7 @@ The add-on includes an intelligent asset proxy system that automatically serves 
 - **Kinsta**: `https://env-username-environment.kinsta.cloud` (e.g., `https://env-outandequalorg-build.kinsta.cloud`)
 
 ### Benefits:
+- ✅ **Native nginx Performance**: Direct proxy without PHP processing overhead
 - ✅ **Faster Development**: No need to download all uploads from production
 - ✅ **Automatic Updates**: New uploads appear automatically without syncing
 - ✅ **Bandwidth Efficient**: Only downloads files when actually needed
@@ -314,7 +321,10 @@ While maintaining consistency, respect platform differences:
 ## Testing Notes
 - Always test changes to install.yaml thoroughly across all providers
 - Test multi-provider scenarios to ensure compatibility
-- Validate nginx proxy configuration for each hosting platform
+- Validate nginx proxy configuration for each hosting platform:
+  - Test that `nginx-site-main.conf` template properly replaces placeholders
+  - Verify proxy functionality with missing uploads from each provider
+  - Confirm that complete nginx configuration overrides DDEV's default
 - Run integration tests before major releases
 - Tests pre-configure environment variables to avoid interactive prompts
 - Test changes in both add-ons when making cross-repository updates

@@ -399,22 +399,35 @@ if [ -n "$PROXY_URL" ]; then
     mkdir -p .ddev/nginx
 
     # Extract hostname from PROXY_URL for Host header
-    PROXY_HOST=$(echo "$PROXY_URL" | sed 's|https\?://||' | sed 's|/.*||')
+    PROXY_HOST=$(echo "$PROXY_URL" | sed 's|https\://||' | sed 's|http://||' | sed 's|/.*||')
 
     # Process nginx configuration template - use the current add-on source if available
-    NGINX_TEMPLATE=""
+    NGINX_MAIN_TEMPLATE=""
+    NGINX_SNIPPET_TEMPLATE=""
 
-    # Try to find the template in various locations
-    if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
-        NGINX_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf"
-    elif [ -f "/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
-        NGINX_TEMPLATE="/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf"
+    # Try to find the templates in various locations
+    if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site-main.conf" ]; then
+        NGINX_MAIN_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site-main.conf"
+    elif [ -f "/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site-main.conf" ]; then
+        NGINX_MAIN_TEMPLATE="/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site-main.conf"
     fi
 
-    if [ -n "$NGINX_TEMPLATE" ]; then
+    if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
+        NGINX_SNIPPET_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf"
+    elif [ -f "/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
+        NGINX_SNIPPET_TEMPLATE="/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf"
+    fi
+
+    if [ -n "$NGINX_MAIN_TEMPLATE" ]; then
+        # Create complete nginx configuration to override DDEV's default
         sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g" \
-            "$NGINX_TEMPLATE" > ".ddev/nginx/nginx-site.conf"
-        echo "  ✅ Nginx proxy configuration created"
+            "$NGINX_MAIN_TEMPLATE" > ".ddev/nginx_full/nginx-site.conf"
+        echo "  ✅ Complete nginx proxy configuration created"
+    elif [ -n "$NGINX_SNIPPET_TEMPLATE" ]; then
+        # Fallback to snippet approach
+        sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g" \
+            "$NGINX_SNIPPET_TEMPLATE" > ".ddev/nginx/nginx-site.conf"
+        echo "  ✅ Nginx proxy snippet created"
     else
         echo "  ⚠️  Nginx template not found - proxy configuration not updated"
     fi
