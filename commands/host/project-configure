@@ -343,21 +343,8 @@ fi
 if [ "$WP_PREFIX" != "wp_" ]; then
     echo "Configuring wp-config.php for custom table prefix..."
 
-    # Determine docroot based on hosting provider
-    case "${HOST_PROVIDER}" in
-        "pantheon")
-            DOCROOT="web"
-            ;;
-        "wpengine")
-            DOCROOT="${DOCROOT:-web}"
-            ;;
-        "kinsta")
-            DOCROOT="public"
-            ;;
-        *)
-            DOCROOT="web"
-            ;;
-    esac
+    # Get actual docroot from DDEV configuration
+    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
 
     WP_CONFIG_PATH="${DOCROOT}/wp-config.php"
 
