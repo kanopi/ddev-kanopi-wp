@@ -339,44 +339,28 @@ if [[ "$HOST_PROVIDER" == "pantheon" ]] && [ -n "$MIGRATE_SOURCE" ]; then
     write_config_var "MIGRATE_DB_ENV" "$MIGRATE_ENV"
 fi
 
-# Configure wp-config.php to use custom table prefix if needed
+# Configure wp-config-ddev.php to use custom table prefix if needed
 if [ "$WP_PREFIX" != "wp_" ]; then
-    echo "Configuring wp-config.php for custom table prefix..."
+    echo "Configuring wp-config-ddev.php for custom table prefix..."
 
     # Get actual docroot from DDEV configuration
     DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
 
-    WP_CONFIG_PATH="${DOCROOT}/wp-config.php"
+    WP_CONFIG_DDEV_PATH="${DOCROOT}/wp-config-ddev.php"
 
-    # Check if wp-config.php exists and needs table prefix configuration
-    if [ -f "$WP_CONFIG_PATH" ]; then
-        if ! grep -q "\$table_prefix.*WP_PREFIX" "$WP_CONFIG_PATH"; then
-            echo "  Adding table prefix configuration to wp-config.php..."
-            # Create the table prefix configuration lines
-            echo "" > /tmp/table_prefix_config.txt
-            echo "// Configure WordPress table prefix from environment variable" >> /tmp/table_prefix_config.txt
-            echo "if (!isset(\$table_prefix)) {" >> /tmp/table_prefix_config.txt
-            echo "    \$table_prefix = getenv('WP_PREFIX') ?: 'wp_';" >> /tmp/table_prefix_config.txt
-            echo "}" >> /tmp/table_prefix_config.txt
-            # Insert after the custom values line
-            if grep -q "Add any custom values between this line and the" "$WP_CONFIG_PATH"; then
-                sed -i.bak '/Add any custom values between this line and the "stop editing" line/r /tmp/table_prefix_config.txt' "$WP_CONFIG_PATH"
-            else
-                # Fallback: add before the ABSPATH line
-                sed -i.bak '/ABSPATH.*dirname/i\
-// Configure WordPress table prefix from environment variable\
-if (!isset($table_prefix)) {\
-    $table_prefix = getenv('\''WP_PREFIX'\'') ?: '\''wp_'\'';\
-}\
-' "$WP_CONFIG_PATH"
-            fi
-            rm -f "${WP_CONFIG_PATH}.bak" /tmp/table_prefix_config.txt 2>/dev/null || true
-            echo "  ✅ Table prefix configuration added to wp-config.php"
+    # Check if wp-config-ddev.php exists and needs table prefix configuration
+    if [ -f "$WP_CONFIG_DDEV_PATH" ]; then
+        if ! grep -q "getenv.*WP_PREFIX" "$WP_CONFIG_DDEV_PATH"; then
+            echo "  Updating table prefix configuration in wp-config-ddev.php..."
+            # Replace the hardcoded 'wp_' with environment variable lookup
+            sed -i.bak "s/\$table_prefix = 'wp_';/\$table_prefix = getenv('WP_PREFIX') ?: 'wp_';/" "$WP_CONFIG_DDEV_PATH"
+            rm -f "${WP_CONFIG_DDEV_PATH}.bak" 2>/dev/null || true
+            echo "  ✅ Table prefix configuration updated in wp-config-ddev.php"
         else
-            echo "  ✅ Table prefix configuration already present in wp-config.php"
+            echo "  ✅ Table prefix configuration already present in wp-config-ddev.php"
         fi
     else
-        echo "  💡 wp-config.php not found - will be configured when WordPress is installed"
+        echo "  💡 wp-config-ddev.php not found - will be configured when WordPress is installed"
     fi
 fi
 
