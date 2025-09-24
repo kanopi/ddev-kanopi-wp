@@ -102,6 +102,7 @@ Variables are stored in two locations:
 - `WP_ADMIN_PASS`: WordPress admin password
 - `WP_ADMIN_EMAIL`: WordPress admin email
 - `WP_PREFIX`: WordPress database table prefix (default: `wp_`)
+- `PROXY_URL`: Proxy URL for missing uploads/assets (automatically configured based on hosting provider)
 
 ### Provider-Specific Variables
 
@@ -120,6 +121,8 @@ Variables are stored in two locations:
 - `REMOTE_PORT`: SSH port number
 - `REMOTE_USER`: SSH username
 - `REMOTE_PATH`: Remote path on server (e.g., `/www/somepath/public`)
+- `KINSTA_USERNAME`: Kinsta account username (e.g., `outandequalorg`)
+- `HOSTING_ENV`: Environment name (e.g., `build`, `staging`, `live`)
 
 ### Configuration Command
 Use `ddev project-configure` to set up all variables through an interactive wizard that collects only the variables needed for your chosen hosting provider.
@@ -134,6 +137,28 @@ The `ddev db-refresh` command includes intelligent backup management:
 - Supports any provider environment
 - Includes automatic theme activation and admin user restoration after refresh
 - Automatically restores WordPress admin user credentials after database import
+
+## Asset Proxy System
+
+The add-on includes an intelligent asset proxy system that automatically serves missing uploads and files from your hosting provider:
+
+### How It Works:
+- **Local First**: Always tries to serve files locally from `wp-content/uploads/`
+- **Automatic Fallback**: If file doesn't exist locally, proxies from remote hosting provider
+- **Provider Support**: Works with Pantheon, WPEngine, and Kinsta
+- **Transparent**: No configuration needed - works automatically after setup
+
+### Configuration:
+- **Automatic**: `PROXY_URL` is automatically configured based on your hosting provider during `ddev project-configure`
+- **Pantheon**: `https://dev-sitename.pantheonsite.io` (uses configured environment)
+- **WPEngine**: `https://sitename.wpengine.com` (uses install name)
+- **Kinsta**: `https://env-username-environment.kinsta.cloud` (e.g., `https://env-outandequalorg-build.kinsta.cloud`)
+
+### Benefits:
+- ✅ **Faster Development**: No need to download all uploads from production
+- ✅ **Automatic Updates**: New uploads appear automatically without syncing
+- ✅ **Bandwidth Efficient**: Only downloads files when actually needed
+- ✅ **Cross-Platform**: Works with all supported hosting providers
 
 ## Command Development Guidelines
 
