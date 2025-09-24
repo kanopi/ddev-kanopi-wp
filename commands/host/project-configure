@@ -104,6 +104,8 @@ case "${HOSTING_PROVIDER:-not set}" in
         echo "Kinsta Remote Port: ${REMOTE_PORT:-not set}"
         echo "Kinsta Remote User: ${REMOTE_USER:-not set}"
         echo "Kinsta Remote Path: ${REMOTE_PATH:-not set}"
+        echo "Kinsta Username: ${KINSTA_USERNAME:-not set}"
+        echo "Kinsta Environment: ${HOSTING_ENV:-not set}"
         ;;
     *)
         echo "(Provider-specific settings will appear after selecting a provider)"
@@ -115,6 +117,7 @@ echo "Theme Name: ${THEMENAME:-not set}"
 echo "WordPress Admin User: ${WP_ADMIN_USER:-not set}"
 echo "WordPress Admin Email: ${WP_ADMIN_EMAIL:-not set}"
 echo "WordPress DB Prefix: ${WP_PREFIX:-not set}"
+echo "Proxy URL: ${PROXY_URL:-not set}"
 echo ""
 
 # Get hosting provider
@@ -156,6 +159,11 @@ case "$HOST_PROVIDER" in
         prompt_input "Remote Port (e.g., 12345)" "${REMOTE_PORT}" REMOTE_PORT
         prompt_input "Remote User (e.g., yourusername)" "${REMOTE_USER}" REMOTE_USER
         prompt_input "Remote Path (e.g., /www/somethingsomething/public)" "${REMOTE_PATH:-public}" REMOTE_PATH
+        echo ""
+        echo "🌐 Kinsta Site URL Configuration:"
+        prompt_input "Kinsta Username (e.g., outandequalorg)" "${KINSTA_USERNAME}" KINSTA_USERNAME
+        prompt_input "Environment name (e.g., build, staging, live)" "${HOSTING_ENV:-build}" HOSTING_ENV
+        echo "💡 This creates URLs like: https://env-${KINSTA_USERNAME:-username}-${HOSTING_ENV:-build}.kinsta.cloud/"
         echo "💡 Kinsta uses SSH keys for authentication."
         ;;
 esac
@@ -275,6 +283,8 @@ case "$HOST_PROVIDER" in
         write_config_var "REMOTE_PORT" "$REMOTE_PORT"
         write_config_var "REMOTE_USER" "$REMOTE_USER"
         write_config_var "REMOTE_PATH" "$REMOTE_PATH"
+        write_config_var "KINSTA_USERNAME" "$KINSTA_USERNAME"
+        write_config_var "HOSTING_ENV" "$HOSTING_ENV"
         ;;
 esac
 
@@ -292,6 +302,35 @@ write_config_var "WP_ADMIN_EMAIL" "$WP_ADMIN_EMAIL"
 # Write database configuration
 echo "Setting database configuration..."
 write_config_var "WP_PREFIX" "$WP_PREFIX"
+
+# Set proxy URL for nginx based on hosting provider
+echo "Setting proxy configuration..."
+case "$HOST_PROVIDER" in
+    "pantheon")
+        PROXY_URL="https://${HOSTING_ENV:-dev}-${HOSTING_SITE}.pantheonsite.io"
+        ;;
+    "wpengine")
+        PROXY_URL="https://${HOSTING_SITE}.wpengine.com"
+        ;;
+    "kinsta")
+        # Kinsta URL structure: https://env-username-environment.kinsta.cloud/
+        if [ -n "$KINSTA_USERNAME" ] && [ -n "$HOSTING_ENV" ]; then
+            PROXY_URL="https://env-${KINSTA_USERNAME}-${HOSTING_ENV}.kinsta.cloud"
+        else
+            PROXY_URL=""
+        fi
+        ;;
+    *)
+        PROXY_URL=""
+        ;;
+esac
+
+if [ -n "$PROXY_URL" ]; then
+    write_config_var "PROXY_URL" "$PROXY_URL"
+    echo "  Proxy URL configured: $PROXY_URL"
+else
+    echo "  No proxy URL configured for provider: $HOST_PROVIDER"
+fi
 
 # Write migration settings if provided (Pantheon only)
 if [[ "$HOST_PROVIDER" == "pantheon" ]] && [ -n "$MIGRATE_SOURCE" ]; then
