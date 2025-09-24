@@ -391,6 +391,35 @@ EOF
     fi
 fi
 
+# Configure nginx proxy if PROXY_URL is set
+if [ -n "$PROXY_URL" ]; then
+    echo "Configuring nginx proxy..."
+
+    # Create nginx directory if it doesn't exist
+    mkdir -p .ddev/nginx
+
+    # Extract hostname from PROXY_URL for Host header
+    PROXY_HOST=$(echo "$PROXY_URL" | sed 's|https\?://||' | sed 's|/.*||')
+
+    # Process nginx configuration template - use the current add-on source if available
+    NGINX_TEMPLATE=""
+
+    # Try to find the template in various locations
+    if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
+        NGINX_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf"
+    elif [ -f "/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
+        NGINX_TEMPLATE="/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf"
+    fi
+
+    if [ -n "$NGINX_TEMPLATE" ]; then
+        sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g" \
+            "$NGINX_TEMPLATE" > ".ddev/nginx/nginx-site.conf"
+        echo "  ✅ Nginx proxy configuration created"
+    else
+        echo "  ⚠️  Nginx template not found - proxy configuration not updated"
+    fi
+fi
+
 echo ""
 echo -e "🎉 ${green}Configuration complete!${NC}"
 echo ""
