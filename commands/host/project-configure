@@ -419,10 +419,15 @@ if [ -n "$PROXY_URL" ]; then
     fi
 
     if [ -n "$NGINX_MAIN_TEMPLATE" ]; then
+        # Get the actual docroot from DDEV configuration
+        DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
+
         # Create complete nginx configuration to override DDEV's default
-        sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g" \
-            "$NGINX_MAIN_TEMPLATE" > ".ddev/nginx_full/nginx-site.conf"
-        echo "  ✅ Complete nginx proxy configuration created"
+        # First remove #ddev-generated marker, then do all replacements
+        sed '1s/^#ddev-generated$//' "$NGINX_MAIN_TEMPLATE" | \
+            sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g; s|/var/www/html/public|/var/www/html/$DOCROOT|g" \
+            > ".ddev/nginx_full/nginx-site.conf"
+        echo "  ✅ Complete nginx proxy configuration created (docroot: $DOCROOT)"
     elif [ -n "$NGINX_SNIPPET_TEMPLATE" ]; then
         # Fallback to snippet approach
         sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g" \
