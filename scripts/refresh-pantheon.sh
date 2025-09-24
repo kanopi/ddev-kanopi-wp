@@ -118,22 +118,6 @@ LOCAL_DOMAIN="${DDEV_SITENAME}.ddev.site"
 
 wp search-replace "$BASE_DOMAIN" "$LOCAL_DOMAIN" --url="$BASE_DOMAIN" --all-tables --allow-root
 
-# Flush rewrite rules
-echo -e "${yellow}Flushing rewrite rules...${NC}"
-wp rewrite flush --allow-root
-
-# Deactivate problematic plugins
-echo -e "${yellow}Deactivating problematic plugins...${NC}"
-wp plugin deactivate wp-health --allow-root 2>/dev/null || true
-
-# Activate theme
-echo -e "${yellow}Activating theme...${NC}"
-ddev theme:activate
-
-# Restore admin user
-echo -e "${yellow}Restoring admin user...${NC}"
-ddev restore-admin-user
-
 echo -e "${green}${divider}${NC}"
 echo -e "${green}Pantheon database refresh complete!${NC}"
 echo -e "${green}${divider}${NC}"

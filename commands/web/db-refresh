@@ -121,5 +121,17 @@ else
   exit 1
 fi
 
+# Common post-refresh cleanup and setup
+echo -e "\n${yellow}Running post-refresh cleanup and setup...${NC}"
+
+# Flush caches and rewrite rules
+echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
+wp cache flush --allow-root 2>/dev/null || true
+wp rewrite flush --allow-root
+
+# Deactivate problematic plugins
+echo -e "${yellow}Deactivating problematic plugins...${NC}"
+wp plugin deactivate wp-health ithemes-security-pro autoptimize --allow-root --quiet 2>/dev/null || true
+
 echo -e "\n${green}Database refresh completed successfully!${NC}"
-echo -e "\n${green}Run ${yellow}${user_command}${green} to add the default admin user.${NC}"
+echo -e "\n${yellow}Please run: ${green}${user_command}${NC} ${yellow}to load the admin user.${NC}"

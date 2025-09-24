@@ -180,24 +180,8 @@ fi
 echo -e "${yellow}Replacing domains: ${SOURCE_DOMAIN} -> ${LOCAL_DOMAIN}${NC}"
 wp search-replace "$SOURCE_DOMAIN" "$LOCAL_DOMAIN" --all-tables --allow-root
 
-# Standard WordPress cleanup
-echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
-wp cache flush --allow-root 2>/dev/null || true
-wp rewrite flush --allow-root
-
 echo -e "${yellow}Fixing files directory permissions...${NC}"
 chmod -R 755 wp-content/uploads 2>/dev/null || true
-
-echo -e "${yellow}Disabling plugins for local development...${NC}"
-wp plugin deactivate ithemes-security-pro autoptimize wp-health --allow-root --quiet 2>/dev/null || true
-
-# Restore admin user
-echo -e "${yellow}Verifying admin user...${NC}"
-ddev restore-admin-user 2>/dev/null || echo "Admin user restoration command not available"
-
-# Activate theme
-echo -e "${yellow}Activating theme...${NC}"
-ddev theme:activate 2>/dev/null || echo "Theme activation command not available"
 
 echo -e "${green}${divider}${NC}"
 echo -e "${green}Kinsta database refresh complete!${NC}"

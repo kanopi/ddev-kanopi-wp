@@ -181,23 +181,6 @@ else
     fi
 fi
 
-# Standard WordPress cleanup
-echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
-wp cache flush --allow-root
-wp rewrite flush --allow-root
-
-# Deactivate problematic plugins
-echo -e "${yellow}Deactivating problematic plugins...${NC}"
-wp plugin deactivate wp-health --allow-root 2>/dev/null || true
-
-# Activate theme
-echo -e "${yellow}Activating theme...${NC}"
-ddev theme:activate 2>/dev/null || echo "Theme activation command not available"
-
-# Restore admin user
-echo -e "${yellow}Restoring admin user...${NC}"
-ddev restore-admin-user 2>/dev/null || echo "Admin user restoration command not available"
-
 echo -e "${green}${divider}${NC}"
 echo -e "${green}WPEngine database refresh complete!${NC}"
 echo -e "${green}Site URL: ${DDEV_URL}${NC}"
