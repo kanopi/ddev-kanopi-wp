@@ -142,11 +142,8 @@ case "$HOST_PROVIDER" in
         prompt_input "Document root directory (e.g., wp, public, web, or . for application root)" "${DOCROOT:-web}" DOCROOT
         prompt_input "SSH private key path (e.g., ~/.ssh/keyname)" "${WPENGINE_SSH_KEY:-~/.ssh/id_rsa}" WPENGINE_SSH_KEY_RAW
 
-        # Expand tilde to absolute path for DDEV environment
+        # Remove .pub extension if present, but preserve tilde path for local config
         WPENGINE_SSH_KEY="${WPENGINE_SSH_KEY_RAW%.pub}"
-        if [[ "$WPENGINE_SSH_KEY" == "~/"* ]]; then
-            WPENGINE_SSH_KEY="${HOME}${WPENGINE_SSH_KEY:1}"
-        fi
 
         echo "💡 WPEngine only allows one SSH key per account, so we'll use this specific key."
         echo "💡 SSH key path configured: $WPENGINE_SSH_KEY"

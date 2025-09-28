@@ -43,7 +43,7 @@ load_kanopi_config() {
     if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
         export HOSTING_SITE=${HOSTING_SITE:-''}
         export DOCROOT=${DOCROOT:-'web'}  # WPEngine default, but configurable
-        export WPENGINE_SSH_KEY=${WPENGINE_SSH_KEY:-'~/.ssh/id_rsa'}
+        export WPENGINE_SSH_KEY=${WPENGINE_SSH_KEY:-''}
     fi
 
     # Kinsta-specific Configuration

@@ -80,16 +80,25 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
     if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
         # Convert host path to container path if needed
         CONTAINER_SSH_KEY="${WPENGINE_SSH_KEY}"
+
+        # Handle different path formats
         if [[ "$WPENGINE_SSH_KEY" == "/Users/"* ]]; then
             # Map host path to container path
             KEYNAME=$(basename "$WPENGINE_SSH_KEY")
             CONTAINER_SSH_KEY="$HOME/.ssh/$KEYNAME"
+        elif [[ "$WPENGINE_SSH_KEY" == "~/"* ]]; then
+            # Handle tilde paths - convert to container home
+            CONTAINER_SSH_KEY="${WPENGINE_SSH_KEY/\~/$HOME}"
+        elif [[ "$WPENGINE_SSH_KEY" == "~" ]]; then
+            # Handle bare tilde
+            CONTAINER_SSH_KEY="$HOME"
         fi
 
         if [ -f "${CONTAINER_SSH_KEY}" ]; then
             SSH_CMD="$SSH_CMD -i ${CONTAINER_SSH_KEY}"
         else
             echo -e "${yellow}Warning: SSH key not found at ${CONTAINER_SSH_KEY}${NC}"
+            echo -e "${yellow}Please ensure you've run 'ddev project-auth' to load your SSH key${NC}"
         fi
     fi
 
@@ -97,8 +106,11 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
         echo -e "${red}Error: Cannot connect to WPEngine via SSH${NC}"
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your SSH key is properly configured with WPEngine${NC}"
-        echo -e "${red}2. SSH agent is running: ddev auth ssh${NC}"
+        echo -e "${red}2. SSH key is loaded in container: ddev project-auth${NC}"
         echo -e "${red}3. Your key is added to your WPEngine account${NC}"
+        if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
+            echo -e "${red}4. SSH key path is correct: ${WPENGINE_SSH_KEY}${NC}"
+        fi
         exit 1
     fi
     

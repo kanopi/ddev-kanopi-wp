@@ -2,11 +2,9 @@ name: Bats test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
-  schedule:
-    - cron: '25 08 * * *'
   workflow_dispatch:
     inputs:
       debug_enabled:

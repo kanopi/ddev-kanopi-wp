@@ -11,8 +11,21 @@
 source .ddev/scripts/load-config.sh
 load_kanopi_config
 
+# Function to read WPENGINE_SSH_KEY from local config file
+get_wpengine_ssh_key() {
+    local local_config_file=".ddev/config.local.yaml"
+    if [ -f "$local_config_file" ]; then
+        # Extract WPENGINE_SSH_KEY from YAML format: "  - WPENGINE_SSH_KEY=value"
+        grep "^  - WPENGINE_SSH_KEY=" "$local_config_file" | cut -d'=' -f2- || echo ""
+    else
+        echo ""
+    fi
+}
+
 # Use specific SSH key for WPEngine, all keys for others
 if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
+    # For WPEngine, read SSH key from local config file since host commands can't access container env vars
+    WPENGINE_SSH_KEY=$(get_wpengine_ssh_key)
     echo "🔍 WPEngine detected - using specific SSH key: $WPENGINE_SSH_KEY"
 
     # Robust tilde and path expansion
@@ -56,8 +69,10 @@ if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
         echo ""
         echo "   Please check your WPENGINE_SSH_KEY configuration"
         echo "   Run 'ddev project-configure' to update it"
-        echo "   Falling back to loading all SSH keys..."
-        ddev auth ssh
+        echo ""
+        echo "⚠️  For WPEngine, only the specific SSH key can be loaded."
+        echo "⚠️  Please fix your SSH key configuration before proceeding."
+        exit 1
     fi
 else
     echo "Loading all SSH keys for $HOSTING_PROVIDER"
