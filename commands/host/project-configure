@@ -405,17 +405,13 @@ if [ -n "$PROXY_URL" ]; then
     NGINX_MAIN_TEMPLATE=""
     NGINX_SNIPPET_TEMPLATE=""
 
-    # Try to find the templates in various locations
+    # Try to find the templates in the add-on metadata
     if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site-main.conf" ]; then
         NGINX_MAIN_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site-main.conf"
-    elif [ -f "/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site-main.conf" ]; then
-        NGINX_MAIN_TEMPLATE="/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site-main.conf"
     fi
 
     if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
         NGINX_SNIPPET_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf"
-    elif [ -f "/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
-        NGINX_SNIPPET_TEMPLATE="/Users/thejimbirch/Projects/ddev-kanopi-wp/config/nginx/nginx-site.conf"
     fi
 
     if [ -n "$NGINX_MAIN_TEMPLATE" ]; then
