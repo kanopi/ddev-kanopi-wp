@@ -67,7 +67,7 @@ ddev project-init
 | Provider | Authentication | Features |
 |----------|---------------|----------|
 | **[Pantheon](https://kanopi.github.io/ddev-kanopi-wp/providers/pantheon/)** | Machine Token | Terminus integration, multidev support |
-| **[WPEngine](https://kanopi.github.io/ddev-kanopi-wp/providers/wpengine/)** | SSH Key | Nightly backup utilization |
+| **[WPEngine](https://kanopi.github.io/ddev-kanopi-wp/providers/wpengine/)** | SSH Key (local config) | Nightly backup utilization |
 | **[Kinsta](https://kanopi.github.io/ddev-kanopi-wp/providers/kinsta/)** | SSH Key | Direct server access |
 
 ## 📋 Installation Options

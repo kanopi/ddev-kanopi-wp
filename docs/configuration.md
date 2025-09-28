@@ -18,7 +18,7 @@ The configuration wizard collects different information based on your hosting pr
 ## WPEngine Configuration
 
 - Install name (e.g., `my-site`)
-- SSH private key path (e.g., `~/.ssh/id_rsa_wpengine`)
+- SSH private key path (e.g., `~/.ssh/id_rsa_wpengine`) - stored in local config
 - Uses specific SSH key for authentication (WPEngine only allows one key per account)
 
 ## Kinsta Configuration
@@ -62,10 +62,11 @@ ddev project-init
 
 The add-on uses a simplified configuration approach with provider-specific variables managed through `ddev project-configure`.
 
-Variables are stored in two locations:
+Variables are stored in multiple locations:
 
 - **`.ddev/config.yaml`** (web_environment section): For DDEV containers to access via `printenv`
 - **`.ddev/scripts/load-config.sh`**: For command scripts to source directly
+- **`.ddev/config.local.yaml`** (optional): For user-specific variables like SSH keys (git-ignored)
 
 ## Modular Commands
 

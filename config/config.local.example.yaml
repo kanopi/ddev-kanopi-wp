@@ -1,0 +1,14 @@
+#ddev-generated
+# Local configuration template for user-specific settings
+# Copy this file to .ddev/config.local.yaml and customize for your environment
+# This file is included in .gitignore to keep personal settings out of version control
+
+# User-specific environment variables
+# These are merged with the main config.yaml web_environment settings
+web_environment:
+  # WPEngine SSH key path - customize this for your user account
+  # Example: ~/.ssh/your_wpengine_key or /Users/username/.ssh/wpengine_key
+  - WPENGINE_SSH_KEY=/path/to/your/wpengine/ssh/key
+
+  # Add other user-specific variables as needed
+  # - MY_CUSTOM_VAR=my_custom_value

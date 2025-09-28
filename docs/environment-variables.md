@@ -4,9 +4,10 @@ Comprehensive guide to configuration variables used across all hosting providers
 
 ## Configuration Storage
 
-Variables are stored in two locations for maximum compatibility:
+Variables are stored in multiple locations for maximum compatibility:
 - **`.ddev/config.yaml`** (web_environment section): For DDEV containers to access via `printenv`
 - **`.ddev/scripts/load-config.sh`**: For command scripts to source directly
+- **`.ddev/config.local.yaml`** (optional): For user-specific variables like SSH keys (git-ignored)
 
 ## Common Variables (All Providers)
 
@@ -43,12 +44,13 @@ ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
 | `HOSTING_SITE` | WPEngine install name | `mysite` | Yes |
-| `WPENGINE_SSH_KEY` | Path to SSH private key | `~/.ssh/id_rsa_wpengine` | Yes |
+| `WPENGINE_SSH_KEY` | Path to SSH private key (stored in local config) | `~/.ssh/id_rsa_wpengine` | Yes |
 
 #### WPEngine SSH Key Notes
 - WPEngine allows only **one SSH key per account**
-- Specify the exact path to your WPEngine-specific SSH key
+- SSH key path is stored in `.ddev/config.local.yaml` to keep user-specific settings private
 - Key must be added to your WPEngine User Portal
+- Local config file is automatically git-ignored
 
 ### Kinsta Configuration
 
@@ -64,6 +66,42 @@ Common Kinsta path patterns:
 - `/www/sitename_123/public`
 - `/www/sitename_456/public_html`
 - `/www/custom_path/htdocs`
+
+## Local Configuration System
+
+The add-on supports user-specific configuration through `.ddev/config.local.yaml` to keep personal settings separate from project-wide configuration.
+
+### Local Configuration File
+
+**Purpose**: Store user-specific variables like SSH key paths that should not be committed to version control.
+
+**Location**: `.ddev/config.local.yaml` (automatically created by configuration wizard)
+
+**Git Status**: Automatically ignored via `.gitignore`
+
+### Example Local Configuration
+
+```yaml
+#ddev-generated
+# Local configuration for user-specific settings
+# This file is ignored by git to keep personal settings private
+
+web_environment:
+  - WPENGINE_SSH_KEY=/Users/username/.ssh/wpengine_key
+```
+
+### Template File
+
+A template is provided at `config/config.local.example.yaml` showing the expected format:
+
+```yaml
+#ddev-generated
+# Local configuration template for user-specific settings
+# Copy this file to .ddev/config.local.yaml and customize for your environment
+
+web_environment:
+  - WPENGINE_SSH_KEY=/path/to/your/wpengine/ssh/key
+```
 
 ## Configuration Management
 

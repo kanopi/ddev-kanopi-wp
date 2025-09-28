@@ -260,6 +260,50 @@ write_config_var() {
     mv "$temp_file" "$config_file"
 }
 
+# Function to write user-specific variables to local config file
+write_local_config_var() {
+    local var_name="$1"
+    local var_value="$2"
+    local local_config_file=".ddev/config.local.yaml"
+
+    echo "  Writing $var_name to local config file..."
+
+    # Create or update the local config file
+    if [ ! -f "$local_config_file" ]; then
+        # Create new local config file from template
+        cat > "$local_config_file" << EOF
+#ddev-generated
+# Local configuration for user-specific settings
+# This file is ignored by git to keep personal settings private
+
+web_environment:
+  - ${var_name}=${var_value}
+EOF
+    else
+        # Check if the variable already exists in the file
+        if grep -q "^  - ${var_name}=" "$local_config_file"; then
+            # Update existing variable
+            sed -i.bak "s|^  - ${var_name}=.*|  - ${var_name}=${var_value}|" "$local_config_file"
+            rm -f "${local_config_file}.bak"
+        else
+            # Add new variable to existing web_environment section
+            if grep -q "^web_environment:" "$local_config_file"; then
+                # Insert after web_environment: line
+                sed -i.bak "/^web_environment:/a\\
+  - ${var_name}=${var_value}" "$local_config_file"
+                rm -f "${local_config_file}.bak"
+            else
+                # Add web_environment section
+                echo "" >> "$local_config_file"
+                echo "web_environment:" >> "$local_config_file"
+                echo "  - ${var_name}=${var_value}" >> "$local_config_file"
+            fi
+        fi
+    fi
+
+    echo "  ✅ $var_name saved to $local_config_file (user-specific)"
+}
+
 # Update configuration
 echo ""
 echo "💾 Updating configuration in .ddev/scripts/load-config.sh and DDEV environment..."
@@ -276,7 +320,8 @@ case "$HOST_PROVIDER" in
     "wpengine")
         write_config_var "HOSTING_SITE" "$HOSTING_SITE"
         write_config_var "DOCROOT" "$DOCROOT"
-        write_config_var "WPENGINE_SSH_KEY" "$WPENGINE_SSH_KEY"
+        # Write WPENGINE_SSH_KEY to local config file instead of global config
+        write_local_config_var "WPENGINE_SSH_KEY" "$WPENGINE_SSH_KEY"
         ;;
     "kinsta")
         write_config_var "REMOTE_HOST" "$REMOTE_HOST"
@@ -440,6 +485,9 @@ echo ""
 echo "📁 Settings saved in:"
 echo "   • .ddev/scripts/load-config.sh (for command scripts)"
 echo "   • .ddev/config.yaml web_environment (for DDEV containers)"
+if [[ "$HOST_PROVIDER" == "wpengine" ]]; then
+    echo "   • .ddev/config.local.yaml (for user-specific settings like SSH keys)"
+fi
 echo ""
 echo -e "${yellow}Next steps:${NC}"
 
