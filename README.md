@@ -11,6 +11,9 @@ A comprehensive DDEV add-on that provides Kanopi's battle-tested workflow for Wo
 ## 🚀 Quick Start
 
 ```bash
+# Intialize a project
+ddev config --project-type=wordpress 
+
 # Install the add-on
 ddev add-on get kanopi/ddev-kanopi-wp
 
@@ -82,7 +85,7 @@ ddev restart
 ### New Projects
 ```bash
 # Initialize DDEV
-ddev config --project-type=wordpress --docroot=public # or web or wp...
+ddev config --project-type=wordpress
 
 # Install add-on
 ddev add-on get kanopi/ddev-kanopi-wp
