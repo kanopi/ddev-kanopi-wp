@@ -10,113 +10,128 @@ red='\033[0;31m'
 NC='\033[0m'
 divider='===================================================\n'
 
-# Parameters from main refresh command
-ENVIRONMENT=${1:-dev}
-FORCE_REFRESH=${2:-false}
+DOCROOT_PATH="${DDEV_APPROOT=}/${DDEV_DOCROOT}"
 
+# Parse command line arguments
+FORCE_BACKUP=false
+# Get hostingenv from environment, default to 'dev' if not set
+ENVIRONMENT="$PANTHEON_ENV"
+if [ -z "$ENVIRONMENT" ]; then
+  ENVIRONMENT="dev"
+fi
+
+for arg in "$@"; do
+  case $arg in
+    --force|-f)
+      FORCE_BACKUP=true
+      shift
+      ;;
+    *)
+      # Skip DDEV internal parameters (like "2") and set environment if valid
+      if [ "$arg" != "2" ] && [ -z "$ENVIRONMENT_SET" ]; then
+        ENVIRONMENT="$arg"
+        ENVIRONMENT_SET=true
+      fi
+      shift
+      ;;
+  esac
+done
+
+cd ${DDEV_APPROOT}
+
+# Ensure terminus authentication before any terminus operations
+echo -e "\n${yellow} Authenticating with Terminus... ${NC}"
+# Get TERMINUS_MACHINE_TOKEN from environment
+TERMINUS_MACHINE_TOKEN=$(printenv TERMINUS_MACHINE_TOKEN 2>/dev/null)
+if [ -z "${TERMINUS_MACHINE_TOKEN:-}" ]; then
+  echo -e "${red}TERMINUS_MACHINE_TOKEN environment variable is not set in the web container. Please configure it in your global ddev config.${NC}"
+  exit 1
+fi
+
+# Authenticate with terminus using the machine token
+if ! terminus auth:login --machine-token="${TERMINUS_MACHINE_TOKEN}"; then
+  echo -e "${red}Failed to authenticate with Terminus. Please check your TERMINUS_MACHINE_TOKEN.${NC}"
+  exit 1
+fi
+echo -e "${green}Successfully authenticated with Terminus.${NC}"
+
+
+echo -e "\n${yellow} Get database from Pantheon environment: ${ENVIRONMENT}. ${NC}"
 echo -e "${green}${divider}${NC}"
-echo -e "${green}Refreshing database from Pantheon ${ENVIRONMENT} environment${NC}"
-if [[ "$FORCE_REFRESH" == "true" ]]; then
-  echo -e "${yellow}Force refresh enabled - will create new backup${NC}"
-fi
-echo -e "${green}${divider}${NC}"
+# Extract site name from PANTHEON_SITE environment variable or fall back to DDEV project name.
+SITE_NAME="${PANTHEON_SITE:-$DDEV_PROJECT}"
 
-# Get configuration from environment variables
-PANTHEON_SITE=$(printenv HOSTING_SITE 2>/dev/null)
-PANTHEON_TOKEN="${TERMINUS_MACHINE_TOKEN:-}"
-
-# Check required configuration
-if [ -z "$PANTHEON_SITE" ]; then
-    echo -e "${red}HOSTING_SITE environment variable not set. Check .ddev/config.yaml web_environment section.${NC}"
-    exit 1
+# Set the site environment for backup operations.
+if [ "$ENVIRONMENT" != "dev" ]; then
+  SITE_ENV="${SITE_NAME}.${ENVIRONMENT}"
+  PULL_ENV_FLAG="--environment=project=${SITE_NAME}.${ENVIRONMENT}"
+else
+  SITE_ENV="${SITE_NAME}.dev"
+  PULL_ENV_FLAG=""
 fi
 
-if [ -z "$PANTHEON_TOKEN" ]; then
-    echo -e "${red}TERMINUS_MACHINE_TOKEN is not set globally.${NC}"
-    echo -e "${yellow}Please run: ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token${NC}"
-    exit 1
-fi
+echo -e "\nChecking for database backup on ${SITE_ENV}..."
 
-DOCROOT="${DOCROOT:-web}"
-cd "/var/www/html/${DOCROOT}"
-
-# Set the site environment for backup operations
-SITE_ENV="${PANTHEON_SITE}.${ENVIRONMENT}"
-
-# Check if terminus is available
-if ! command -v terminus &> /dev/null; then
-    echo -e "${yellow}Installing Terminus...${NC}"
-    curl -O https://raw.githubusercontent.com/pantheon-systems/terminus-installer/master/builds/installer.phar && php installer.phar install
-fi
-
-# Authenticate with Pantheon if needed
-echo -e "${yellow}Authenticating with Terminus...${NC}"
-if [ -n "$PANTHEON_TOKEN" ]; then
-    if ! terminus auth:login --machine-token="$PANTHEON_TOKEN"; then
-        echo -e "${red}Failed to authenticate with Terminus. Please check your TERMINUS_MACHINE_TOKEN.${NC}"
-        exit 1
-    fi
-    echo -e "${green}Successfully authenticated with Terminus.${NC}"
-fi
-
-echo "Checking for database backup on ${SITE_ENV}..."
-
-# Check if there's a database backup and get its timestamp
+# Check if there's a database backup and get its timestamp.
 LATEST_BACKUP_TIMESTAMP=$(terminus backup:list ${SITE_ENV} --element=database --format=list --field=date 2>/dev/null | head -1)
 
-# Calculate current time and 12-hour threshold
+# Calculate current time and 12-hour threshold.
 CURRENT_TIME=$(date +%s)
 TWELVE_HOURS_AGO=$((CURRENT_TIME - 43200))  # 12 hours = 43200 seconds
 
 CREATE_NEW_BACKUP=false
 
 # Check if force flag is set
-if [ "$FORCE_REFRESH" = true ]; then
-    echo -e "${yellow}Force flag detected. Creating new backup regardless of age.${NC}"
-    CREATE_NEW_BACKUP=true
+if [ "$FORCE_BACKUP" = true ]; then
+  echo -e "${yellow}Force flag detected. Creating new backup regardless of age.${NC}"
+  CREATE_NEW_BACKUP=true
 elif [ -z "$LATEST_BACKUP_TIMESTAMP" ]; then
-    echo -e "${yellow}No database backup found.${NC}"
-    CREATE_NEW_BACKUP=true
+  echo -e "${yellow}No database backup found.${NC}"
+  CREATE_NEW_BACKUP=true
 else
-    # Extract integer part of timestamp for comparison
-    BACKUP_TIME=${LATEST_BACKUP_TIMESTAMP%.*}
-    
-    if [ "$BACKUP_TIME" -lt "$TWELVE_HOURS_AGO" ]; then
-        BACKUP_AGE_HOURS=$(( (CURRENT_TIME - BACKUP_TIME) / 3600 ))
-        echo -e "${yellow}Latest backup is ${BACKUP_AGE_HOURS} hours old (older than 12 hours).${NC}"
-        CREATE_NEW_BACKUP=true
-    else
-        BACKUP_AGE_HOURS=$(( (CURRENT_TIME - BACKUP_TIME) / 3600 ))
-        echo -e "${green}Recent backup found (${BACKUP_AGE_HOURS} hours old): ${LATEST_BACKUP_TIMESTAMP}${NC}"
-    fi
+  # Extract integer part of timestamp for comparison
+  BACKUP_TIME=${LATEST_BACKUP_TIMESTAMP%.*}
+
+  if [ "$BACKUP_TIME" -lt "$TWELVE_HOURS_AGO" ]; then
+    BACKUP_AGE_HOURS=$(( (CURRENT_TIME - BACKUP_TIME) / 3600 ))
+    echo -e "${yellow}Latest backup is ${BACKUP_AGE_HOURS} hours old (older than 12 hours).${NC}"
+    CREATE_NEW_BACKUP=true
+  else
+    BACKUP_AGE_HOURS=$(( (CURRENT_TIME - BACKUP_TIME) / 3600 ))
+    echo -e "${green}Recent backup found (${BACKUP_AGE_HOURS} hours old): ${LATEST_BACKUP_TIMESTAMP}${NC}"
+  fi
 fi
 
 if [ "$CREATE_NEW_BACKUP" = true ]; then
-    echo -e "${yellow}Creating new backup for ${SITE_ENV}...${NC}"
-    if terminus backup:create ${SITE_ENV} --element=database -y; then
-        echo -e "${green}Backup created successfully.${NC}"
-        # Wait a moment for the backup to be processed
-        echo "Waiting for backup to complete..."
-        sleep 10
-    else
-        echo -e "${red}Failed to create backup for ${SITE_ENV}. Exiting.${NC}"
-        exit 1
-    fi
+  echo -e "${yellow}Creating new backup for ${SITE_ENV}...${NC}"
+  if terminus backup:create ${SITE_ENV} --element=database -y; then
+    echo -e "${green}Backup created successfully.${NC}"
+    # Wait a moment for the backup to be processed
+    echo "Waiting for backup to complete..."
+    sleep 10
+  else
+    echo -e "${red}Failed to create backup for ${SITE_ENV}. Exiting.${NC}"
+    exit 1
+  fi
 fi
 
-# Get the backup URL
-DB_BACKUP_URL=$(terminus backup:get ${SITE_ENV} --element=database)
+# Now download the database backup using terminus
+echo -e "\nDownloading database backup from ${SITE_ENV}..."
+DB_DUMP="/tmp/pantheon_backup.${SITE_ENV}.sql.gz"
+terminus backup:get ${SITE_ENV} --element=database --to=${DB_DUMP}
 
-# Download and import database
-curl -o /tmp/database.sql.gz "$DB_BACKUP_URL"
-gunzip /tmp/database.sql.gz
-wp db import /tmp/database.sql --allow-root
+echo -e "\nReset DB"
+cd ${DDEV_DOCROOT}
+wp db reset --yes --skip-plugins --skip-themes
 
-echo -e "${yellow}Running search and replace for local domains...${NC}"
-BASE_DOMAIN="${ENVIRONMENT}-${PANTHEON_SITE}.pantheonsite.io"
-LOCAL_DOMAIN="${DDEV_SITENAME}.ddev.site"
+echo -e "\nImport db"
+gunzip -c $DB_DUMP | sed 's/DEFINER=`[^`]*`@`[^`]*`//g' | wp db import -
 
-wp search-replace "$BASE_DOMAIN" "$LOCAL_DOMAIN" --url="$BASE_DOMAIN" --all-tables --allow-root
+## Update urls in main tables
+MYSQL_CONNECTION_DETAILS="-h db -pdb -u db db"
+OPTIONHOME=$(mysql $MYSQL_CONNECTION_DETAILS -N -B -e "SELECT option_value FROM wp_options WHERE option_name='home';")
+echo -e "\nUpdating ${OPTIONHOME} to ${DDEV_PRIMARY_URL}"
+wp search-replace "$OPTIONHOME" "$DDEV_PRIMARY_URL" --skip-columns=guid
 
 echo -e "${green}${divider}${NC}"
 echo -e "${green}Pantheon database refresh complete!${NC}"
