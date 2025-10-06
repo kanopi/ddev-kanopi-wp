@@ -437,42 +437,41 @@ fi
 if [ -n "$PROXY_URL" ]; then
     echo "Configuring nginx proxy..."
 
-    # Create nginx directory if it doesn't exist
-    mkdir -p .ddev/nginx
+    # Get the actual docroot from DDEV configuration
+    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
 
-    # Extract hostname from PROXY_URL for Host header
-    PROXY_HOST=$(echo "$PROXY_URL" | sed 's|https\://||' | sed 's|http://||' | sed 's|/.*||')
+    # Check if nginx_full/nginx-site.conf exists
+    if [ -f ".ddev/nginx_full/nginx-site.conf" ]; then
+        # Extract hosting domain and environment from PROXY_URL
+        # Example: https://dev-sitename.pantheonsite.io -> domain=pantheonsite.io, env=dev
+        PROXY_HOST=$(echo "$PROXY_URL" | sed 's|https\://||' | sed 's|http://||' | sed 's|/.*||')
 
-    # Process nginx configuration template - use the current add-on source if available
-    NGINX_MAIN_TEMPLATE=""
-    NGINX_SNIPPET_TEMPLATE=""
+        # Determine hosting domain based on provider
+        case "$HOST_PROVIDER" in
+            "pantheon")
+                HOSTING_DOMAIN="pantheonsite.io"
+                ;;
+            "wpengine")
+                HOSTING_DOMAIN="wpengine.com"
+                ;;
+            "kinsta")
+                HOSTING_DOMAIN="kinsta.cloud"
+                ;;
+            *)
+                HOSTING_DOMAIN=""
+                ;;
+        esac
 
-    # Try to find the templates in the add-on metadata
-    if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site-main.conf" ]; then
-        NGINX_MAIN_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site-main.conf"
-    fi
+        # Update the nginx configuration with actual values
+        sed -i.bak \
+            -e "s|HOSTING_ENV-HOSTING_SITE.HOSTING_DOMAIN|$PROXY_HOST|g" \
+            -e "s|/var/www/html/web|/var/www/html/$DOCROOT|g" \
+            ".ddev/nginx_full/nginx-site.conf"
+        rm -f ".ddev/nginx_full/nginx-site.conf.bak"
 
-    if [ -f ".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf" ]; then
-        NGINX_SNIPPET_TEMPLATE=".ddev/addon-metadata/ddev-kanopi-wp/config/nginx/nginx-site.conf"
-    fi
-
-    if [ -n "$NGINX_MAIN_TEMPLATE" ]; then
-        # Get the actual docroot from DDEV configuration
-        DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
-
-        # Create complete nginx configuration to override DDEV's default
-        # First remove #ddev-generated marker, then do all replacements
-        sed '1s/^#ddev-generated$//' "$NGINX_MAIN_TEMPLATE" | \
-            sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g; s|/var/www/html/public|/var/www/html/$DOCROOT|g" \
-            > ".ddev/nginx_full/nginx-site.conf"
-        echo "  ✅ Complete nginx proxy configuration created (docroot: $DOCROOT)"
-    elif [ -n "$NGINX_SNIPPET_TEMPLATE" ]; then
-        # Fallback to snippet approach
-        sed "s|PROXY_URL_PLACEHOLDER|$PROXY_URL|g; s|HOST_PLACEHOLDER|$PROXY_HOST|g" \
-            "$NGINX_SNIPPET_TEMPLATE" > ".ddev/nginx/nginx-site.conf"
-        echo "  ✅ Nginx proxy snippet created"
+        echo "  ✅ Nginx proxy configuration updated (docroot: $DOCROOT, proxy: $PROXY_HOST)"
     else
-        echo "  ⚠️  Nginx template not found - proxy configuration not updated"
+        echo "  ⚠️  .ddev/nginx_full/nginx-site.conf not found - proxy configuration not updated"
     fi
 fi
 

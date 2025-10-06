@@ -4,6 +4,8 @@ name: ddev-kanopi-wp
 project_files:
 - commands/
 - config/
+- php
+- nginx_full
 - scripts/
 
 # DDEV version constraint
