@@ -76,7 +76,7 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
     echo -e "${yellow}Testing SSH connectivity to WPEngine...${NC}"
 
     # Build SSH command with key if specified
-    SSH_CMD="ssh -o ConnectTimeout=10 -o BatchMode=yes"
+    SSH_CMD="ssh -o ConnectTimeout=10"
     if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
         # Convert host path to container path if needed
         CONTAINER_SSH_KEY="${WPENGINE_SSH_KEY}"
@@ -102,7 +102,7 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
         fi
     fi
 
-    if ! $SSH_CMD "$WPENGINE_SSH" "echo 'SSH connection successful'" 2>/dev/null; then
+    if ! $SSH_CMD "$WPENGINE_SSH" "echo 'SSH connection successful'"; then
         echo -e "${red}Error: Cannot connect to WPEngine via SSH${NC}"
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your SSH key is properly configured with WPEngine${NC}"

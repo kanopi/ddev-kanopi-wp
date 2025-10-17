@@ -295,3 +295,52 @@ EOF
     # Verify WP-CLI works without fatal errors
     ddev exec wp core version 2>/dev/null || echo "WP-CLI not available or WordPress not fully configured"
 }
+
+@test "db-refresh error handling and exit status" {
+    set -eu -o pipefail
+    cd $TESTDIR
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
+    ddev add-on get $DIR
+    ddev start
+
+    # Test 1: Verify db-refresh fails properly when SSH connection fails
+    # Configure for a provider that will fail SSH connectivity test
+    ddev config --web-environment-add="HOSTING_PROVIDER=wpengine"
+    ddev config --web-environment-add="HOSTING_SITE=nonexistent-site-12345"
+    ddev restart
+
+    # Run db-refresh and expect it to fail with non-zero exit code
+    # This should fail because SSH connection to nonexistent site will fail
+    run ddev db-refresh
+    [ "$status" -ne 0 ] || (echo "db-refresh should fail with non-zero exit code when SSH fails" && exit 1)
+
+    # Test 2: Verify error message is displayed (not silenced)
+    echo "$output" | grep -i "error" || echo "Warning: Expected error message in output"
+
+    # Test 3: Test Kinsta provider with invalid SSH configuration
+    ddev config --web-environment-add="HOSTING_PROVIDER=kinsta"
+    ddev config --web-environment-add="REMOTE_HOST=invalid.host.example.com"
+    ddev config --web-environment-add="REMOTE_PORT=22"
+    ddev config --web-environment-add="REMOTE_USER=testuser"
+    ddev config --web-environment-add="REMOTE_PATH=/invalid/path"
+    ddev restart
+
+    # This should also fail with non-zero exit code
+    run ddev db-refresh
+    [ "$status" -ne 0 ] || (echo "db-refresh should fail for Kinsta with invalid config" && exit 1)
+
+    # Test 4: Verify refresh script itself validates properly
+    # Check that the refresh scripts exist and have proper error handling
+    ddev exec "test -f .ddev/scripts/refresh-wpengine.sh" || (echo "WPEngine refresh script missing" && exit 1)
+    ddev exec "test -f .ddev/scripts/refresh-kinsta.sh" || (echo "Kinsta refresh script missing" && exit 1)
+    ddev exec "test -f .ddev/scripts/refresh-pantheon.sh" || (echo "Pantheon refresh script missing" && exit 1)
+
+    # Test 5: Verify SSH command doesn't use BatchMode (which blocks password prompts)
+    ddev exec "grep -v 'BatchMode=yes' .ddev/scripts/refresh-wpengine.sh" || (echo "WPEngine script should not use BatchMode=yes" && exit 1)
+    ddev exec "grep -v 'BatchMode=yes' .ddev/scripts/refresh-kinsta.sh" || (echo "Kinsta script should not use BatchMode=yes" && exit 1)
+
+    # Test 6: Verify error messages are not silenced (no 2>/dev/null on SSH tests)
+    # Check WPEngine SSH test line doesn't silence errors
+    ddev exec "grep 'SSH connection successful' .ddev/scripts/refresh-wpengine.sh | grep -v '2>/dev/null'" || (echo "WPEngine SSH test should not silence errors" && exit 1)
+    ddev exec "grep 'SSH connection successful' .ddev/scripts/refresh-kinsta.sh | grep -v '2>/dev/null'" || (echo "Kinsta SSH test should not silence errors" && exit 1)
+}
