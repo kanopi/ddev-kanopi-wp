@@ -95,7 +95,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to Kinsta...${NC}"
-    if ! ssh -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "echo 'SSH connection successful'" 2>/dev/null; then
+    if ! ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "echo 'SSH connection successful'"; then
         echo -e "${red}Error: Cannot connect to Kinsta via SSH${NC}"
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your SSH key is properly configured with Kinsta${NC}"
