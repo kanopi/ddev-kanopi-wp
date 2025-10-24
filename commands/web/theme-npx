@@ -4,7 +4,7 @@
 ## Description: Runs NPX commands on the theme.
 ## Usage: theme-npx <command> [args...]
 ## Example: ddev theme-npx webpack --watch
-## Aliases: theme:npx
+## Aliases: theme:npx, npx
 
 # Abort if anything fails
 set -e

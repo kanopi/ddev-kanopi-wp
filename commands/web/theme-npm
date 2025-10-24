@@ -5,7 +5,7 @@
 ## Usage: theme-npm [flags] [args]
 ## Example: ddev theme-npm install
 ##          ddev theme-npm run build
-## Aliases: theme:npm
+## Aliases: theme:npm, npm
 
 # Abort if anything fails
 set -e
