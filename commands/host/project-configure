@@ -40,18 +40,18 @@ prompt_input() {
     local prompt="$1"
     local default="$2"
     local var_name="$3"
-    
+
     if [ -n "$default" ]; then
         echo -n "$prompt [$default]: "
     else
         echo -n "$prompt: "
     fi
-    
+
     read -r input
     if [ -z "$input" ] && [ -n "$default" ]; then
         input="$default"
     fi
-    
+
     eval "$var_name='$input'"
 }
 
@@ -60,16 +60,16 @@ select_option() {
     local prompt="$1"
     shift
     local options=("$@")
-    
+
     printf "%s\n" "$prompt" >&2
     for i in "${!options[@]}"; do
         printf "  %d. %s\n" "$((i+1))" "${options[i]}" >&2
     done
     printf "Select option [1]: " >&2
-    
+
     read -r choice
     choice=${choice:-1}
-    
+
     if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#options[@]}" ]; then
         echo "${options[$((choice-1))]}"
     else
@@ -140,13 +140,10 @@ case "$HOST_PROVIDER" in
         echo "-------------------------"
         prompt_input "Install name (e.g., my-site)" "${HOSTING_SITE}" HOSTING_SITE
         prompt_input "Document root directory (e.g., wp, public, web, or . for application root)" "${DOCROOT:-web}" DOCROOT
-        prompt_input "SSH private key path (e.g., ~/.ssh/keyname)" "${WPENGINE_SSH_KEY:-~/.ssh/id_rsa}" WPENGINE_SSH_KEY_RAW
-
-        # Remove .pub extension if present, but preserve tilde path for local config
-        WPENGINE_SSH_KEY="${WPENGINE_SSH_KEY_RAW%.pub}"
+        prompt_input "SSH private key name (e.g., id_rsa, id_ed25519)" "${WPENGINE_SSH_KEY:-id_rsa}" WPENGINE_SSH_KEY
 
         echo "💡 WPEngine only allows one SSH key per account, so we'll use this specific key."
-        echo "💡 SSH key path configured: $WPENGINE_SSH_KEY"
+        echo "💡 SSH key name configured: $WPENGINE_SSH_KEY"
         echo "💡 Document root configured: $DOCROOT"
         ;;
     "kinsta")
