@@ -352,7 +352,7 @@ case "$HOST_PROVIDER" in
         PROXY_URL="https://${HOSTING_ENV:-dev}-${HOSTING_SITE}.pantheonsite.io"
         ;;
     "wpengine")
-        PROXY_URL="https://${HOSTING_SITE}.wpengine.com"
+        PROXY_URL="https://${HOSTING_SITE}.wpenginepowered.com"
         ;;
     "kinsta")
         # Kinsta URL structure: https://env-username-environment.kinsta.cloud/
