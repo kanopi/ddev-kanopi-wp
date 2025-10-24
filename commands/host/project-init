@@ -64,17 +64,10 @@ ddev start -y
 ddev project-lefthook
 
 # Add SSH keys for remote access.
-ddev project-auth
+ddev auth ssh
 
-# Install Composer dependencies (if composer.json exists).
-if [ -f "composer.json" ]; then
-  echo -e "\n${construction} ${yellow} Installing Composer dependencies.${NC} ${construction}\n"
-  echo -e "${green}${divider}${NC}"
-  ddev composer install
-fi
-
-# Configure WordPress.
-ddev project-wp
+# Install composer packages
+ddev composer install
 
 # Get the database from hosting provider.
 ddev db-refresh
