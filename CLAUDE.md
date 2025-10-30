@@ -68,10 +68,11 @@ The add-on uses a **modular command approach** where `project-init` orchestrates
 ## Hosting Provider Support
 
 ### Pantheon
-- **Recommended Docroot**: `web` (set during `ddev config`)
+- **Recommended Docroot**: `web` (recommended for modern sites) or root/empty (legacy sites)
 - **Environments**: dev, test, live, multidev
 - **Authentication**: Terminus machine token
 - **Database**: Automated backup management with age detection
+- **Note**: Root-level WordPress (no webroot subdirectory) is fully supported for older Pantheon sites
 
 ### WPEngine
 - **Recommended Docroot**: `public` (set during `ddev config`)
@@ -110,6 +111,7 @@ Variables are stored in multiple locations:
 #### Pantheon Configuration
 - `HOSTING_SITE`: Pantheon site machine name
 - `HOSTING_ENV`: Default environment for database pulls (dev/test/live)
+- `DOCROOT`: Document root directory (`web` for modern sites, empty string for root-level WordPress on legacy sites)
 - `MIGRATE_DB_SOURCE`: Source site for migrations (optional)
 - `MIGRATE_DB_ENV`: Source environment for migrations (optional)
 

@@ -7,6 +7,7 @@ Full integration with Pantheon hosting including Terminus CLI, automated backup 
 ### Required Variables
 - `HOSTING_SITE` - Pantheon site machine name
 - `HOSTING_ENV` - Default environment for database pulls (dev/test/live)
+- `DOCROOT` - Document root directory (`web` recommended for modern sites, empty for root-level WordPress on legacy sites)
 - `MIGRATE_DB_SOURCE` - Source project for migrations (optional)
 - `MIGRATE_DB_ENV` - Source environment for migrations (optional)
 
@@ -27,7 +28,72 @@ Full integration with Pantheon hosting including Terminus CLI, automated backup 
    # Select Pantheon as provider
    # Enter site machine name
    # Choose default environment
+   # Configure document root (web or leave empty for root)
    ```
+
+## WordPress Installation Location
+
+Pantheon sites can have WordPress installed in different locations:
+
+### Modern Sites (Recommended)
+- **Document root**: `web/`
+- **WordPress core**: `/web/` directory
+- **Configuration during setup**: Enter "web" when prompted for document root
+- **Best for**: New projects, Composer-managed WordPress, clean directory structure
+
+### Legacy Sites (Alternative)
+- **Document root**: Root/application root
+- **WordPress core**: Root directory (no subdirectory)
+- **Configuration during setup**: Leave document root empty or press Enter when prompted
+- **Best for**: Older Pantheon sites, sites migrated from other hosts
+
+### Configuration Examples
+
+**Modern site with web/ subdirectory:**
+```bash
+ddev project-configure
+# When prompted: "Document root directory (web for modern sites, or leave empty for root/legacy sites) [web]:"
+# Enter: web (or press Enter to accept default)
+```
+
+**Legacy site with root-level WordPress:**
+```bash
+ddev project-configure
+# When prompted: "Document root directory (web for modern sites, or leave empty for root/legacy sites) [web]:"
+# Enter: (press Enter without typing anything, or explicitly type empty string)
+```
+
+### Troubleshooting 404 Errors
+
+If you experience 404 errors after setup, verify your document root configuration:
+
+1. **Check your Pantheon site structure**:
+   - Does `wp-config.php` exist in the root directory or in a `web/` subdirectory?
+   - Where are `wp-content/`, `wp-includes/`, and `wp-admin/` located?
+
+2. **Verify DDEV configuration**:
+   ```bash
+   grep '^docroot:' .ddev/config.yaml
+   # Should show: docroot: web (for modern sites)
+   # Or: docroot: "" (for root-level WordPress)
+   ```
+
+3. **Re-run configuration if needed**:
+   ```bash
+   ddev project-configure
+   # Provide the correct document root
+   ddev restart
+   ```
+
+### Migrating Between Configurations
+
+**Existing projects** with `web/` subdirectory continue working without changes. To explicitly update configuration:
+
+```bash
+ddev project-configure
+# Re-enter your settings with correct document root
+ddev restart
+```
 
 ## Features
 

@@ -121,7 +121,12 @@ DB_DUMP="/tmp/pantheon_backup.${SITE_ENV}.sql.gz"
 terminus backup:get ${SITE_ENV} --element=database --to=${DB_DUMP}
 
 echo -e "\nReset DB"
-cd ${DDEV_DOCROOT}
+# Stay in DDEV_APPROOT if DDEV_DOCROOT is empty (root-level WordPress)
+if [ -n "${DDEV_DOCROOT}" ]; then
+  cd ${DDEV_APPROOT}/${DDEV_DOCROOT}
+else
+  cd ${DDEV_APPROOT}
+fi
 wp db reset --yes --skip-plugins --skip-themes
 
 echo -e "\nImport db"

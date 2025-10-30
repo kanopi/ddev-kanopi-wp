@@ -34,6 +34,7 @@ load_kanopi_config() {
     if [[ "${HOSTING_PROVIDER}" == "pantheon" ]]; then
         export HOSTING_SITE=${HOSTING_SITE:-''}
         export HOSTING_ENV=${HOSTING_ENV:-'dev'}
+        export DOCROOT=${DOCROOT:-''}  # Pantheon default is root, but can be configured to 'web'
         # Migration Configuration for Pantheon
         export MIGRATE_DB_SOURCE=${MIGRATE_DB_SOURCE:-''}
         export MIGRATE_DB_ENV=${MIGRATE_DB_ENV:-''}

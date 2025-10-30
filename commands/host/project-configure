@@ -134,6 +134,14 @@ case "$HOST_PROVIDER" in
         echo "--------------------------"
         prompt_input "Site machine name (e.g., my-site)" "${HOSTING_SITE}" HOSTING_SITE
         prompt_input "Default environment (dev/test/live)" "${HOSTING_ENV:-dev}" HOSTING_ENV
+        prompt_input "Document root directory (web for modern sites, or leave empty for root/legacy sites)" "${DOCROOT:-web}" DOCROOT
+
+        # Normalize empty/dot to empty string for root-level WordPress
+        if [ "$DOCROOT" = "." ]; then
+            DOCROOT=""
+        fi
+
+        echo "💡 Document root configured: ${DOCROOT:-[root/application root]}"
         ;;
     "wpengine")
         echo "⚡ WPEngine Configuration:"
@@ -313,6 +321,7 @@ case "$HOST_PROVIDER" in
     "pantheon")
         write_config_var "HOSTING_SITE" "$HOSTING_SITE"
         write_config_var "HOSTING_ENV" "$HOSTING_ENV"
+        write_config_var "DOCROOT" "$DOCROOT"
         ;;
     "wpengine")
         write_config_var "HOSTING_SITE" "$HOSTING_SITE"
@@ -463,13 +472,22 @@ if [ -n "$PROXY_URL" ]; then
         esac
 
         # Update the nginx configuration with actual values
+        # Replace {{DOCROOT}} placeholder with actual docroot value
+        # Handle empty docroot by removing trailing slash
+        if [ -z "$DOCROOT" ]; then
+            NGINX_ROOT="/var/www/html"
+        else
+            NGINX_ROOT="/var/www/html/$DOCROOT"
+        fi
+
         sed -i.bak \
             -e "s|HOSTING_ENV-HOSTING_SITE.HOSTING_DOMAIN|$PROXY_HOST|g" \
-            -e "s|/var/www/html/web|/var/www/html/$DOCROOT|g" \
+            -e "s|/var/www/html/{{DOCROOT}}|$NGINX_ROOT|g" \
+            -e "s|/var/www/html/web|$NGINX_ROOT|g" \
             ".ddev/nginx_full/nginx-site.conf"
         rm -f ".ddev/nginx_full/nginx-site.conf.bak"
 
-        echo "  ✅ Nginx proxy configuration updated (docroot: $DOCROOT, proxy: $PROXY_HOST)"
+        echo "  ✅ Nginx proxy configuration updated (docroot: ${DOCROOT:-[root]}, proxy: $PROXY_HOST)"
     else
         echo "  ⚠️  .ddev/nginx_full/nginx-site.conf not found - proxy configuration not updated"
     fi
