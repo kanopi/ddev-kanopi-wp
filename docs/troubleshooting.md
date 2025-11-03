@@ -339,30 +339,15 @@ ddev exec chown -R www-data:www-data wp-content/themes/[theme]/assets/
 
 ## Service Integration Issues
 
-### PhpMyAdmin Access
+### Redis Issues
 
-#### Cannot Access PhpMyAdmin
-```bash
-# Check if service is running
-ddev describe
-
-# Restart DDEV services
-ddev restart
-
-# Launch PhpMyAdmin
-ddev phpmyadmin
-```
-
-### Redis/Solr Issues
-
-#### Service Not Available
+#### Redis Service Not Available
 ```bash
 # Check service status
 ddev describe
 
-# Reinstall services if needed
+# Reinstall Redis if needed
 ddev add-on get ddev/ddev-redis
-ddev add-on get ddev/ddev-solr
 ddev restart
 ```
 

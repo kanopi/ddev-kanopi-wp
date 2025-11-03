@@ -24,8 +24,6 @@ health_checks() {
     echo "Checking Docker services..." >&3
     # Check services are running (from DDEV add-ons)
     docker ps | grep "ddev-${PROJNAME}-redis" || echo "Redis service should be running"
-    docker ps | grep "ddev-${PROJNAME}-solr" || echo "Solr service should be running"
-    docker ps | grep "ddev-${PROJNAME}-pma" || echo "PhpMyAdmin service should be running"
     
     echo "Checking custom commands..." >&3
     # Check new modular project commands
@@ -184,9 +182,7 @@ teardown() {
     docker ps | grep "ddev-${PROJNAME}-db"
 
     # Check additional services (allow these to fail gracefully)
-    docker ps | grep "ddev-${PROJNAME}-pma" || echo "PhpMyAdmin service not running"
     docker ps | grep "ddev-${PROJNAME}-redis" || echo "Redis service not running"
-    docker ps | grep "ddev-${PROJNAME}-solr" || echo "Solr service not running"
 }
 
 @test "modular command structure" {

@@ -181,7 +181,7 @@ ddev restart
 
 ### Remove the Add-on
 ```bash
-# Remove the add-on completely (includes Redis, Solr, and all 26 commands)
+# Remove the add-on completely (includes Redis and all 26 commands)
 ddev add-on remove kanopi-wp
 
 # Restart DDEV to apply changes
