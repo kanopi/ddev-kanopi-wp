@@ -31,7 +31,7 @@ I need to create a pull request for adding the ddev-kanopi-wp add-on to this Wor
    - Always consolidate to simplest workflow (avoid redundant ddev start before ddev init)
 5. Include all DDEV-specific elements:
    - Custom commands available (theme, database, hosting integration)
-   - Service integrations (Redis for object caching)
+   - Service integrations (Redis for Pantheon object caching, if applicable)
    - Development workflow improvements
    - Multi-environment support details
 6. Create the actual PR with proper git commands:
@@ -87,7 +87,7 @@ This PR adds DDEV as the primary local development environment using the [ddev-k
 - [x] Critical CSS generation: `ddev critical-install`
 
 ### Service Integration
-- [x] Redis for object caching (auto-configured)
+- [x] Redis for object caching (auto-configured for Pantheon)
 
 ### Documentation Updates
 - [x] Updated README.md with DDEV as primary setup option
@@ -118,7 +118,7 @@ This PR adds DDEV as the primary local development environment using the [ddev-k
 ### ✅ Service Access
 - [ ] WordPress site accessible at `https://[project-name].ddev.site`
 - [ ] Admin accessible via `ddev wp-open admin`
-- [ ] Redis integration functioning
+- [ ] Redis integration functioning (Pantheon only)
 
 ### ✅ Testing Integration
 - [ ] Cypress installs and runs successfully
@@ -300,7 +300,7 @@ New team members will need:
 - [ ] Database operations function correctly
 - [ ] Theme development workflow operational
 - [ ] All custom commands available and working
-- [ ] Services (Redis) accessible
+- [ ] Services (Redis for Pantheon) accessible
 - [ ] Hosting provider integration functional
 ```
 

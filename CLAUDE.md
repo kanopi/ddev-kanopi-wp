@@ -290,7 +290,7 @@ The add-on automatically installs and configures:
 - **Terminus** for Pantheon API access (when using Pantheon)
 - **Theme development tools** (Node.js, NPM)
 - **Critical CSS generation tools**
-- **Redis add-on** for caching
+- **Redis add-on** for Pantheon caching (conditionally installed during `ddev project-configure`)
 - **Multi-provider API tools** for hosting platform integration
 
 ## WordPress-Specific Features

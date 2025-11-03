@@ -339,17 +339,19 @@ ddev exec chown -R www-data:www-data wp-content/themes/[theme]/assets/
 
 ## Service Integration Issues
 
-### Redis Issues
+### Redis Issues (Pantheon Only)
 
 #### Redis Service Not Available
 ```bash
 # Check service status
 ddev describe
 
-# Reinstall Redis if needed
+# Reinstall Redis if needed (Pantheon only - auto-installed during project-configure)
 ddev add-on get ddev/ddev-redis
 ddev restart
 ```
+
+**Note**: Redis is only installed automatically for Pantheon hosting. If you're using WPEngine or Kinsta, Redis is not required.
 
 ## Getting Help
 

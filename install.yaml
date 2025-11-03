@@ -26,21 +26,12 @@ pre_install_actions:
 post_install_actions:  
 
 - |
-  #ddev-description: Install required DDEV add-ons
-  # Install DDEV add-ons with graceful failure handling for CI environments
-  set +e  # Allow commands to fail without stopping the script
+  #ddev-description: DDEV add-on installation
+  # Note: Redis is now installed conditionally in project-configure for Pantheon only
   echo ""
-  echo "📦 Installing Redis add-on..."
-  if ddev add-on get ddev/ddev-redis 2>&1; then
-    echo "✅ Redis add-on installed successfully"
-  else
-    echo "⚠️  Redis add-on installation failed (likely GitHub API rate limit in CI)"
-    echo "   You can install it manually later with: ddev add-on get ddev/ddev-redis"
-  fi
-  set -e  # Re-enable strict error checking
+  echo "📦 DDEV add-on installation"
+  echo "   Redis will be installed automatically for Pantheon during project-configure"
   echo ""
-  echo "Ignore DDEV add-on settings files"
-  echo "settings.ddev.redis.php" >> ../.gitignore
 
 - |
   #ddev-description: WordPress configuration setup
@@ -285,7 +276,7 @@ removal_actions:
   
   echo ""
   echo "✅ Kanopi WordPress Add-on removed successfully!"
-  echo "   • Redis add-on uninstalled"
+  echo "   • Redis add-on uninstalled (if installed)"
   echo "   • All 26 custom commands removed"
   echo "   • Nginx proxy configuration removed"
   echo "   • Environment variables preserved (remove manually if needed)"
