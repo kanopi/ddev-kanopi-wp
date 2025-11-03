@@ -10,7 +10,7 @@ Use this prompt with your AI assistant to automatically update your project's RE
 I've added the ddev-kanopi-wp DDEV add-on to this project. Please comprehensively update the README.md to:
 
 1. Add DDEV as the primary setup option before Docksal (mark as 'Recommended')
-2. Include complete DDEV command reference - scan all .ddev/commands/ directories (host, web, solr, redis, etc.)
+2. Include complete DDEV command reference - scan all .ddev/commands/ directories (host, web, etc.)
    and document ALL available commands with accurate descriptions organized by category
 3. Update asset compilation instructions to show both DDEV and Docksal commands
 4. Add DDEV-specific notes in the Important Notes section about virtual host naming
@@ -90,7 +90,7 @@ Include a comprehensive command reference organized by category:
 ### Hosting Provider Integration
 - `ddev pantheon-terminus <command>` - Pantheon Terminus commands
 - `ddev wp-open [admin]` - Open site or admin in browser
-- `ddev phpmyadmin` - Database management interface
+- `ddev describe` - Show all service URLs and connection details
 
 [Complete command list with descriptions and examples]
 ```
@@ -136,7 +136,6 @@ Add DDEV-specific notes about virtual hosts:
 ### DDEV Virtual Hosts
 - **Primary URL**: `https://projectname.ddev.site`
 - **Admin URL**: `https://projectname.ddev.site/wp-admin`
-- **PhpMyAdmin**: `https://projectname.ddev.site:8037`
 - **Custom ports**: Mail capture on port 8026
 
 Access your site using:
@@ -250,7 +249,7 @@ ddev theme-watch            # Start asset compilation
 # During development
 ddev wp-open                # Open site
 ddev wp-open admin          # Open admin
-ddev phpmyadmin            # Database management
+ddev describe               # Show service details
 
 # Before committing
 ddev theme-build           # Build production assets
@@ -283,9 +282,7 @@ Document additional services:
 ```markdown
 ## Integrated Services
 
-- **PhpMyAdmin**: Database management interface
 - **Redis**: Object caching (auto-configured)
-- **Solr**: Search integration (if configured)
 - **Mail Capture**: Development email testing
 ```
 

@@ -63,7 +63,7 @@ The add-on uses a **modular command approach** where `project-init` orchestrates
 - `ddev pantheon-terminus <command>`: Run Terminus commands for Pantheon integration
 
 ### Utility Commands
-- `ddev phpmyadmin`: Launch PhpMyAdmin
+- Standard DDEV utilities available (`ddev describe`, `ddev logs`, etc.)
 
 ## Hosting Provider Support
 

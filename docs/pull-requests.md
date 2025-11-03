@@ -31,7 +31,7 @@ I need to create a pull request for adding the ddev-kanopi-wp add-on to this Wor
    - Always consolidate to simplest workflow (avoid redundant ddev start before ddev init)
 5. Include all DDEV-specific elements:
    - Custom commands available (theme, database, hosting integration)
-   - Service integrations (PhpMyAdmin, Redis, Solr as configured)
+   - Service integrations (Redis for object caching)
    - Development workflow improvements
    - Multi-environment support details
 6. Create the actual PR with proper git commands:
@@ -87,9 +87,7 @@ This PR adds DDEV as the primary local development environment using the [ddev-k
 - [x] Critical CSS generation: `ddev critical-install`
 
 ### Service Integration
-- [x] PhpMyAdmin for database management
 - [x] Redis for object caching (auto-configured)
-- [ ] Solr for search (if applicable)
 
 ### Documentation Updates
 - [x] Updated README.md with DDEV as primary setup option
@@ -120,7 +118,6 @@ This PR adds DDEV as the primary local development environment using the [ddev-k
 ### ✅ Service Access
 - [ ] WordPress site accessible at `https://[project-name].ddev.site`
 - [ ] Admin accessible via `ddev wp-open admin`
-- [ ] PhpMyAdmin accessible via `ddev phpmyadmin`
 - [ ] Redis integration functioning
 
 ### ✅ Testing Integration
@@ -161,9 +158,9 @@ ddev wp-open
 ddev wp-open admin
 # Expected: WordPress admin loads with configured credentials
 
-# Test database management
-ddev phpmyadmin
-# Expected: PhpMyAdmin interface accessible
+# Test database access
+ddev describe
+# Expected: Database connection details shown
 ```
 
 ### Step 3: Theme Development Validation
@@ -246,14 +243,13 @@ ddev auth ssh
 ### Development URLs
 - **Primary Site**: `https://[project-name].ddev.site`
 - **Admin Dashboard**: `https://[project-name].ddev.site/wp-admin`
-- **PhpMyAdmin**: `https://[project-name].ddev.site:8037`
 - **Mail Capture**: `https://[project-name].ddev.site:8026`
 
 ### Quick Access Commands
 ```bash
 ddev wp-open          # Opens primary site
 ddev wp-open admin    # Opens admin dashboard
-ddev phpmyadmin       # Opens database interface
+ddev describe         # Shows all service URLs and connection details
 ```
 
 ## Deploy Notes
@@ -304,7 +300,7 @@ New team members will need:
 - [ ] Database operations function correctly
 - [ ] Theme development workflow operational
 - [ ] All custom commands available and working
-- [ ] Services (PhpMyAdmin, Redis) accessible
+- [ ] Services (Redis) accessible
 - [ ] Hosting provider integration functional
 ```
 

@@ -37,27 +37,10 @@ post_install_actions:
     echo "⚠️  Redis add-on installation failed (likely GitHub API rate limit in CI)"
     echo "   You can install it manually later with: ddev add-on get ddev/ddev-redis"
   fi
-  echo ""
-  echo "📦 Installing Solr add-on..."
-  if ddev add-on get ddev/ddev-solr 2>&1; then
-    echo "✅ Solr add-on installed successfully"
-  else
-    echo "⚠️  Solr add-on installation failed (likely GitHub API rate limit in CI)"
-    echo "   You can install it manually later with: ddev add-on get ddev/ddev-solr"
-  fi
-  echo ""
-  echo "📦 Installing PhpMyAdmin add-on..."
-  if ddev add-on get ddev/ddev-phpmyadmin 2>&1; then
-    echo "✅ PhpMyAdmin add-on installed successfully"
-  else
-    echo "⚠️  PhpMyAdmin add-on installation failed (likely GitHub API rate limit in CI)"
-    echo "   You can install it manually later with: ddev add-on get ddev/ddev-phpmyadmin"
-  fi
   set -e  # Re-enable strict error checking
   echo ""
   echo "Ignore DDEV add-on settings files"
   echo "settings.ddev.redis.php" >> ../.gitignore
-  echo "settings.ddev.solr.php" >> ../.gitignore
 
 - |
   #ddev-description: WordPress configuration setup
@@ -175,26 +158,12 @@ removal_actions:
   
   # Remove DDEV add-ons
   echo "📦 Removing DDEV add-ons..."
-  
+
   # Remove Redis add-on
   if ddev add-on remove ddev-redis 2>/dev/null; then
     echo "✅ Redis add-on removed successfully"
   else
     echo "⚠️ Redis add-on removal failed or not found"
-  fi
-  
-  # Remove Solr add-on
-  if ddev add-on remove ddev-solr 2>/dev/null; then
-    echo "✅ Solr add-on removed successfully"
-  else
-    echo "⚠️ Solr add-on removal failed or not found"
-  fi
-  
-  # Remove PhpMyAdmin add-on
-  if ddev add-on remove ddev-phpmyadmin 2>/dev/null; then
-    echo "✅ PhpMyAdmin add-on removed successfully"
-  else
-    echo "⚠️ PhpMyAdmin add-on removal failed or not found"
   fi
   
   # Remove all custom commands
@@ -275,7 +244,7 @@ removal_actions:
 
   # Clean up gitignore
   if [ -f ../../.gitignore ]; then
-    grep -v "settings.ddev.redis.php\|settings.ddev.solr.php" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
+    grep -v "settings.ddev.redis.php" ../../.gitignore > ../../.gitignore.tmp && mv ../../.gitignore.tmp ../../.gitignore || rm -f ../../.gitignore.tmp
   fi
   
   # Clean up empty directories
@@ -285,7 +254,7 @@ removal_actions:
   
   echo ""
   echo "✅ Kanopi WordPress Add-on removed successfully!"
-  echo "   • Redis, Solr, and PhpMyAdmin add-ons uninstalled"
+  echo "   • Redis add-on uninstalled"
   echo "   • All 26 custom commands removed"
   echo "   • Nginx proxy configuration removed"
   echo "   • Environment variables preserved (remove manually if needed)"

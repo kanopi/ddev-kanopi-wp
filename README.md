@@ -33,7 +33,7 @@ ddev project-init
 - **Block Development** - WordPress block scaffolding and tooling
 - **E2E Testing** - Cypress integration with user management
 - **Performance Tools** - Critical CSS generation and optimization
-- **Service Integration** - PHPMyAdmin, Redis, and Solr support
+- **Service Integration** - Redis support for object caching
 
 ## 📚 Documentation
 

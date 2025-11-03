@@ -129,12 +129,6 @@ ddev pantheon-tickle
 
 ## Database Management Tools
 
-### PhpMyAdmin Access
-```bash
-# Launch PhpMyAdmin for direct database management
-ddev phpmyadmin
-```
-
 ### Command-Line Database Access
 ```bash
 # Access MySQL/MariaDB directly

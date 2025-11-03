@@ -17,7 +17,6 @@ This add-on provides 26+ custom commands organized into functional categories. A
 | `ddev pantheon-testenv <name> [type]` | Host | Create isolated testing environment (fresh or existing) | `ddev pantheon-testenv my-test fresh` | testenv, pantheon:testenv |
 | `ddev pantheon-terminus <command>` | Host | Run Terminus commands for Pantheon integration | `ddev pantheon-terminus site:list` | terminus, pantheon:terminus |
 | `ddev pantheon-tickle` | Web | Keep Pantheon environment awake during long operations | `ddev pantheon-tickle` | tickle, pantheon:tickle |
-| `ddev phpmyadmin` | Host | Launch PhpMyAdmin database interface | `ddev phpmyadmin` | - |
 | `ddev project-auth` | Host | Authorize SSH keys and credentials for hosting providers | `ddev project-auth` | project:auth |
 | `ddev project-configure` | Host | **Interactive setup wizard** (configure project settings) | `ddev project-configure` | configure, project:configure, prc |
 | `ddev project-init` | Host | **Initialize complete development environment** (runs all setup commands) | `ddev project-init` | init, project:init |
@@ -71,9 +70,6 @@ This add-on provides 26+ custom commands organized into functional categories. A
 - `ddev pantheon-terminus <command>` - Pantheon Terminus commands
 - `ddev pantheon-testenv <name>` - Create isolated test environments
 - `ddev pantheon-tickle` - Keep environments awake
-
-### Utilities
-- `ddev phpmyadmin` - Database management interface
 
 ## Command Types
 
