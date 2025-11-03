@@ -126,6 +126,24 @@ echo "----------------------------------"
 HOST_PROVIDER=$(select_option "Select your hosting provider:" "pantheon" "wpengine" "kinsta")
 echo "✓ Selected: $HOST_PROVIDER"
 
+# Install Redis for Pantheon (Pantheon requires Redis for object caching)
+if [[ "$HOST_PROVIDER" == "pantheon" ]]; then
+    echo ""
+    echo "📦 Installing Redis add-on for Pantheon..."
+    set +e  # Allow command to fail gracefully
+    if ddev add-on get ddev/ddev-redis 2>&1; then
+        echo "✅ Redis add-on installed successfully"
+        # Add to gitignore if not already present
+        if [ -f ".gitignore" ]; then
+            grep -q "settings.ddev.redis.php" .gitignore || echo "settings.ddev.redis.php" >> .gitignore
+        fi
+    else
+        echo "⚠️  Redis add-on installation failed (likely GitHub API rate limit)"
+        echo "   You can install it manually later with: ddev add-on get ddev/ddev-redis"
+    fi
+    set -e  # Re-enable strict error checking
+fi
+
 # Get hosting-specific configuration
 echo ""
 case "$HOST_PROVIDER" in

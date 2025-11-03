@@ -282,7 +282,7 @@ Document additional services:
 ```markdown
 ## Integrated Services
 
-- **Redis**: Object caching (auto-configured)
+- **Redis**: Object caching (auto-configured for Pantheon only)
 - **Mail Capture**: Development email testing
 ```
 

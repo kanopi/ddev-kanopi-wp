@@ -19,7 +19,7 @@ This add-on provides:
 - **Database Management**: Smart refresh system with 12-hour backup detection
 - **Theme Development**: Node.js, NPM, and build tools with file watching
 - **Security & Performance**: Nginx configuration with headers and optimization
-- **Services Integration**: Redis for object caching via official DDEV add-on
+- **Services Integration**: Redis for Pantheon object caching (auto-installed for Pantheon)
 - **Environment Configuration**: Clean configuration system using environment variables
 
 ## Quick Start
