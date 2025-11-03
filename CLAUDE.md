@@ -289,9 +289,19 @@ The add-on automatically installs and configures:
 - **Cypress** for E2E testing
 - **Terminus** for Pantheon API access (when using Pantheon)
 - **Theme development tools** (Node.js, NPM)
-- **Critical CSS generation tools**
+- **Critical CSS generation tools** with pre-installed Chromium dependencies
 - **Redis add-on** for Pantheon caching (conditionally installed during `ddev project-configure`)
 - **Multi-provider API tools** for hosting platform integration
+
+### Critical CSS Dependencies
+
+The addon automatically configures `webimage_extra_packages` in `.ddev/config.yaml` to pre-install Chromium and its dependencies. This eliminates the need for `apt-get` installation during `ddev critical-install`, significantly speeding up Critical CSS setup.
+
+**Packages installed:**
+- Chromium (headless browser for Critical CSS generation)
+- 32 Chromium dependencies (libgbm1, libasound2, libatk1.0-0, libc6, libcairo2, libcups2, libdbus-1-3, libexpat1, libfontconfig1, libgcc1, libgconf-2-4, libgdk-pixbuf2.0-0, libglib2.0-0, libgtk-3-0, libnspr4, libpango-1.0-0, libpangocairo-1.0-0, libstdc++6, libx11-6, libx11-xcb1, libxcb1, libxcursor1, libxdamage1, libxext6, libxfixes3, libxi6, libxrandr2, libxrender1, libxss1, libxtst6, libnss3)
+
+These packages are installed once during `ddev start` or `ddev restart` rather than every time `critical-install` runs, providing significant performance improvements.
 
 ## WordPress-Specific Features
 

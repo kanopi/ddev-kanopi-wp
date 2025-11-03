@@ -146,6 +146,73 @@ post_install_actions:
     echo "📝 No Pantheon mu-plugin loader found - no action needed"
   fi
 
+- |
+  #ddev-description: Configure Critical CSS dependencies
+  echo ""
+  echo "📦 Configuring Critical CSS dependencies in config.yaml..."
+
+  # Find config.yaml file
+  CONFIG_FILE=""
+  for path in "../../config.yaml" "../../../config.yaml" "config.yaml" "../config.yaml"; do
+    if [ -f "$path" ]; then
+      CONFIG_FILE="$path"
+      break
+    fi
+  done
+
+  if [ -z "$CONFIG_FILE" ]; then
+    echo "⚠️  Could not find config.yaml - Critical CSS packages not configured"
+  else
+    # Check if webimage_extra_packages already exists
+    if grep -q "^webimage_extra_packages:" "$CONFIG_FILE"; then
+      echo "📝 webimage_extra_packages already exists in config.yaml"
+      echo "   Please manually add Critical CSS dependencies if needed"
+      echo "   See documentation for package list"
+    else
+      # Append webimage_extra_packages to config.yaml
+      cat >> "$CONFIG_FILE" << 'EOF'
+
+# Critical CSS dependencies (added by ddev-kanopi-wp)
+# These packages are required for ddev critical-install and ddev critical-run
+webimage_extra_packages:
+  - libgbm1
+  - libasound2
+  - libatk1.0-0
+  - libc6
+  - libcairo2
+  - libcups2
+  - libdbus-1-3
+  - libexpat1
+  - libfontconfig1
+  - libgcc1
+  - libgconf-2-4
+  - libgdk-pixbuf2.0-0
+  - libglib2.0-0
+  - libgtk-3-0
+  - libnspr4
+  - libpango-1.0-0
+  - libpangocairo-1.0-0
+  - libstdc++6
+  - libx11-6
+  - libx11-xcb1
+  - libxcb1
+  - libxcursor1
+  - libxdamage1
+  - libxext6
+  - libxfixes3
+  - libxi6
+  - libxrandr2
+  - libxrender1
+  - libxss1
+  - libxtst6
+  - libnss3
+  - chromium
+EOF
+      echo "✅ Critical CSS dependencies added to config.yaml"
+      echo "   Run 'ddev restart' after installation to install packages"
+    fi
+  fi
+
 # Explain the installed components
 - |
   echo ""
@@ -228,7 +295,21 @@ removal_actions:
   # Remove directory structure
   rm -rf config 2>/dev/null || true
   rm -rf scripts 2>/dev/null || true
-  
+
+  # Remove Critical CSS dependencies from config.yaml
+  echo "🔧 Removing Critical CSS dependencies from config.yaml..."
+  if [ -f "../../config.yaml" ]; then
+    # Create a temporary file without the Critical CSS section
+    awk '
+      /# Critical CSS dependencies \(added by ddev-kanopi-wp\)/ { skip=1; next }
+      /^webimage_extra_packages:/ && skip { in_packages=1; next }
+      in_packages && /^  - / { next }
+      in_packages && !/^  - / { skip=0; in_packages=0 }
+      !skip { print }
+    ' "../../config.yaml" > "../../config.yaml.tmp" && mv "../../config.yaml.tmp" "../../config.yaml"
+    echo "✅ Critical CSS dependencies removed from config.yaml"
+  fi
+
   # Restore Pantheon mu-plugin loader if it was disabled during installation
   # Find config.yaml file for docroot detection
   CONFIG_FILE=""

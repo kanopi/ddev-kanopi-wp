@@ -41,13 +41,22 @@ FULL_THEME_PATH="/var/www/html/${DOCROOT}/${THEME_PATH}"
 # Abort if anything fails
 set -e
 
-# Critical.
-echo -e "\n ${hospital} ${yellow} Installing tools needed for Critical CSS${NC} ${hospital}"
+# Critical CSS dependencies verification
+echo -e "\n ${hospital} ${yellow} Verifying Critical CSS dependencies${NC} ${hospital}"
 echo -e "${green}${divider}${NC}"
-sudo apt-get --allow-releaseinfo-change update
-sudo apt-get install -yq --no-install-recommends libgbm1 libasound2 libatk1.0-0 libc6 libcairo2 libcups2 libdbus-1-3 libexpat1 libfontconfig1 libgcc1 libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 libgtk-3-0 libnspr4 libpango-1.0-0 libpangocairo-1.0-0 libstdc++6 libx11-6 libx11-xcb1 libxcb1 libxcursor1 libxdamage1 libxext6 libxfixes3 libxi6 libxrandr2 libxrender1 libxss1 libxtst6 libnss3
-# Add this for M chips.
-sudo apt-get install -yq --no-install-recommends chromium
+
+# Check if chromium is installed (indicates webimage_extra_packages are configured)
+if ! command -v chromium &> /dev/null; then
+    echo -e "\n${yellow}Warning: Chromium not found.${NC}"
+    echo -e "Critical CSS packages should be pre-installed via webimage_extra_packages."
+    echo -e "${yellow}Please run 'ddev restart' to install required packages.${NC}"
+    echo ""
+    echo "If issues persist, check that webimage_extra_packages is configured in .ddev/config.yaml"
+    echo "The addon should have added these automatically during installation."
+    exit 1
+fi
+
+echo -e "\n${check} ${green}Critical CSS dependencies verified${NC}"
 
 # Check if theme directory exists
 if [ ! -d "${FULL_THEME_PATH}" ]; then
