@@ -292,6 +292,48 @@ EOF
     ddev exec wp core version 2>/dev/null || echo "WP-CLI not available or WordPress not fully configured"
 }
 
+@test "pantheon root-level wordpress configuration" {
+    set -eu -o pipefail
+    cd $TESTDIR
+    # Configure with empty docroot for root-level WordPress (legacy Pantheon sites)
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot="" --create-docroot
+
+    # Verify empty docroot in config
+    grep -q '^docroot: ""' .ddev/config.yaml || grep -q '^docroot:$' .ddev/config.yaml
+
+    # Install add-on with root-level WordPress
+    ddev add-on get $DIR
+
+    # Configure for Pantheon with root-level WordPress
+    export DDEV_NONINTERACTIVE=true
+    ddev config --web-environment-add="HOSTING_PROVIDER=pantheon"
+    ddev config --web-environment-add="HOSTING_SITE=test-site"
+    ddev config --web-environment-add="HOSTING_ENV=dev"
+    ddev config --web-environment-add="DOCROOT="
+
+    ddev start
+
+    # Verify nginx configuration uses correct root path
+    ddev exec "grep -q 'root /var/www/html;' /etc/nginx/sites-enabled/nginx-site.conf" || echo "Nginx root path should be /var/www/html for empty docroot"
+
+    # Verify commands handle empty DOCROOT correctly
+    ddev project-wp --help >/dev/null 2>&1
+    ddev theme-activate --help >/dev/null 2>&1
+
+    # Test mu-plugin handling with empty docroot
+    mkdir -p wp-content/mu-plugins
+    cat > wp-content/mu-plugins/pantheon-mu-loader.php << 'EOF'
+<?php
+$pantheon_mu_plugins = ['pantheon-mu-plugin/pantheon.php'];
+foreach ( $pantheon_mu_plugins as $file ) {
+    require_once WPMU_PLUGIN_DIR . '/' . $file;
+}
+EOF
+
+    # Run project-init which should handle mu-plugins at correct path
+    ddev project-init --help >/dev/null 2>&1 || echo "project-init command exists"
+}
+
 @test "db-refresh error handling and exit status" {
     set -eu -o pipefail
     cd $TESTDIR

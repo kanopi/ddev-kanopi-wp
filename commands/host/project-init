@@ -33,12 +33,21 @@ refresh_command='ddev db-refresh'
 
 # Handle Pantheon mu-plugin conflicts early (before any wp-cli commands)
 echo -e "\n${construction} ${yellow} Checking for Pantheon mu-plugin conflicts...${NC} ${construction}\n"
-PANTHEON_LOADER="web/wp-content/mu-plugins/pantheon-mu-loader.php"
+
+# Determine the correct path based on whether docroot is configured
+# Check DOCROOT from config.yaml (empty string means root)
+if [ -z "${DOCROOT}" ] || [ "${DOCROOT}" = "." ]; then
+  MU_PLUGINS_PATH="wp-content/mu-plugins"
+else
+  MU_PLUGINS_PATH="${DOCROOT}/wp-content/mu-plugins"
+fi
+
+PANTHEON_LOADER="${MU_PLUGINS_PATH}/pantheon-mu-loader.php"
 if [ -f "$PANTHEON_LOADER" ]; then
   # Check if the loader tries to load pantheon-mu-plugin
   if grep -q "pantheon-mu-plugin/pantheon.php" "$PANTHEON_LOADER"; then
     # Check if the actual plugin directory exists
-    if [ ! -d "web/wp-content/mu-plugins/pantheon-mu-plugin" ]; then
+    if [ ! -d "${MU_PLUGINS_PATH}/pantheon-mu-plugin" ]; then
       echo "📝 Found Pantheon mu-plugin loader but plugin directory missing"
       echo "   Disabling to prevent PHP fatal errors in DDEV environment..."
       mv "$PANTHEON_LOADER" "${PANTHEON_LOADER}.disabled"

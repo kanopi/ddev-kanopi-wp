@@ -15,7 +15,12 @@ load_kanopi_config
 # Determine docroot based on hosting provider
 case "${HOSTING_PROVIDER}" in
     "pantheon")
-        DOCROOT_PATH="/var/www/html/web"
+        # Handle application root case (. or empty)
+        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
+            DOCROOT_PATH="/var/www/html"
+        else
+            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        fi
         ;;
     "wpengine")
         # Use configured DOCROOT from environment, fallback to 'web'
