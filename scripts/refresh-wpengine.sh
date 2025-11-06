@@ -71,60 +71,26 @@ fi
 if [ "$DOWNLOAD_BACKUP" = true ]; then
     echo -e "${yellow}Downloading nightly backup from WPEngine...${NC}"
     echo -e "${yellow}This may take some time. Perhaps make a refreshing beverage.${NC}"
-    
+
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to WPEngine...${NC}"
 
-    # Build SSH command with key if specified
+    # Load SSH key
     SSH_CMD="ssh -o ConnectTimeout=10"
-    if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
-        # Convert host path to container path if needed
-        CONTAINER_SSH_KEY="${WPENGINE_SSH_KEY}"
-
-        # Handle different path formats
-        if [[ "$WPENGINE_SSH_KEY" == "/Users/"* ]]; then
-            # Map host path to container path
-            KEYNAME=$(basename "$WPENGINE_SSH_KEY")
-            CONTAINER_SSH_KEY="$HOME/.ssh/$KEYNAME"
-        elif [[ "$WPENGINE_SSH_KEY" == "~/"* ]]; then
-            # Handle tilde paths - convert to container home
-            CONTAINER_SSH_KEY="${WPENGINE_SSH_KEY/\~/$HOME}"
-        elif [[ "$WPENGINE_SSH_KEY" == "~" ]]; then
-            # Handle bare tilde
-            CONTAINER_SSH_KEY="$HOME"
-        fi
-
-        if [ -f "${CONTAINER_SSH_KEY}" ]; then
-            SSH_CMD="$SSH_CMD -i ${CONTAINER_SSH_KEY}"
-        else
-            echo -e "${yellow}Warning: SSH key not found at ${CONTAINER_SSH_KEY}${NC}"
-            echo -e "${yellow}Please ensure you've run 'ddev project-auth' to load your SSH key${NC}"
-        fi
-    fi
-
-    if ! $SSH_CMD "$WPENGINE_SSH" "echo 'SSH connection successful'"; then
-        echo -e "${red}Error: Cannot connect to WPEngine via SSH${NC}"
-        echo -e "${red}Please ensure:${NC}"
-        echo -e "${red}1. Your SSH key is properly configured with WPEngine${NC}"
-        echo -e "${red}2. SSH key is loaded in container: ddev project-auth${NC}"
-        echo -e "${red}3. Your key is added to your WPEngine account${NC}"
-        if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
-            echo -e "${red}4. SSH key path is correct: ${WPENGINE_SSH_KEY}${NC}"
-        fi
-        exit 1
-    fi
-    
-    echo -e "${green}SSH connection successful. Downloading backup...${NC}"
+    TEMP_KEY="/tmp/temp_key"
+    ssh-add -L | grep "${WPENGINE_SSH_KEY:-id_rsa}" > "$TEMP_KEY"
+    if eval "$SSH_CMD -i ${TEMP_KEY} $WPENGINE_SSH exit"; then
+		echo -e "${green}Connected successfully!${NC}"
+	else
+		echo -e "${red}Please ensure:${NC}"
+		echo -e "${red}1. Your key is added to your WPEngine account${NC}"
+		echo -e "${red}2. SSH key is loaded in container: ddev auth ssh${NC}"
+		echo -e "${red}3. Key name is set in config.local.yml; WPENGINE_SSH_KEY=you_key_name${NC}"
+		exit 1
+	fi
 
     # Build rsync command with SSH key if specified
-    RSYNC_CMD="rsync -avzh --progress"
-    if [ -n "${WPENGINE_SSH_KEY:-}" ]; then
-        # Use the same container key path we determined above
-        if [ -n "${CONTAINER_SSH_KEY:-}" ] && [ -f "${CONTAINER_SSH_KEY}" ]; then
-            RSYNC_CMD="$RSYNC_CMD -e 'ssh -i ${CONTAINER_SSH_KEY}'"
-        fi
-    fi
-
+    RSYNC_CMD="rsync -avzh --progress -e 'ssh -i  ${TEMP_KEY}'"
     if eval "$RSYNC_CMD \"$WPENGINE_SSH:$WPENGINE_BACKUP_PATH\" \"$DB_DUMP\""; then
         # Update timestamp to mark as fresh
         touch -d "1 second ago" "$DB_DUMP"
