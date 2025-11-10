@@ -58,8 +58,8 @@ echo -e "${green}Successfully authenticated with Terminus.${NC}"
 
 echo -e "\n${yellow} Get database from Pantheon environment: ${ENVIRONMENT}. ${NC}"
 echo -e "${green}${divider}${NC}"
-# Extract site name from HOSTING_ENV environment variable or fall back to DDEV project name.
-SITE_NAME="${HOSTING_ENV:-$DDEV_PROJECT}"
+# Extract site name from HOSTING_SITE environment variable or fall back to DDEV project name.
+SITE_NAME="${HOSTING_SITE:-$DDEV_PROJECT}"
 
 # Set the site environment for backup operations.
 if [ "$ENVIRONMENT" != "dev" ]; then
