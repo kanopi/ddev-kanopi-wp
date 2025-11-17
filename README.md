@@ -11,8 +11,8 @@ A comprehensive DDEV add-on that provides Kanopi's battle-tested workflow for Wo
 ## 🚀 Quick Start
 
 ```bash
-# Intialize a project
-ddev config --project-type=wordpress 
+# Intialize a project (adjust docroot/database if needed)
+ddev config --project-type=wordpress --docroot=web --database=mariadb:10.6
 
 # Install the add-on
 ddev add-on get kanopi/ddev-kanopi-wp
@@ -84,8 +84,8 @@ ddev restart
 
 ### New Projects
 ```bash
-# Initialize DDEV
-ddev config --project-type=wordpress
+# Initialize DDEV (Adjust webroot/database as needed)
+ddev config --project-type=wordpress --docroot=web --database=mariadb:10.6
 
 # Install add-on
 ddev add-on get kanopi/ddev-kanopi-wp
