@@ -75,11 +75,104 @@ ddev project-lefthook
 # Add SSH keys for remote access.
 ddev project-auth
 
+# Check for auth.json in project root
+check_auth() {
+  if [ ! -f "auth.json" ]; then
+    echo "⚠️  No auth.json found in project root"
+    echo ""
+    echo "   This file is required for authenticating with private packages:"
+    echo "   - GitHub token (for private repos)"
+    echo "   - ACF Pro credentials"
+    echo "   - Yoast Premium credentials"
+    echo ""
+    echo "   You can retrieve this file from Kanopi's 1Password."
+    echo ""
+    read -p "   Do you want to continue without auth.json? (y/n) " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      echo ""
+      echo "❌ Project initialization cancelled"
+      echo "   Please add auth.json to the project root and run 'ddev project-init' again"
+      exit 1
+    fi
+    echo ""
+    echo "   Continuing with composer install..."
+    echo "   Composer may prompt for credentials interactively."
+    echo ""
+  else
+    echo "✅ Authentication configuration found in project root"
+  fi
+}
+
+# Function to check if autoloader exists
+check_autoloader() {
+  local vendor_path="${MU_PLUGINS_PATH}/vendor/autoload.php"
+  if [ ! -f "$vendor_path" ]; then
+    echo "❌ Error: Composer autoloader not found at $vendor_path"
+    echo "   The autoloader is required for WordPress to run"
+    return 1
+  fi
+  return 0
+}
+
+# Check authentication before composer install
+check_auth
+
 # Install Composer dependencies (if composer.json exists).
 if [ -f "composer.json" ]; then
   echo -e "\n${construction} ${yellow} Installing Composer dependencies.${NC} ${construction}\n"
   echo -e "${green}${divider}${NC}"
-  ddev composer install
+
+  # Increase timeouts for composer
+  export COMPOSER_PROCESS_TIMEOUT=600
+  export COMPOSER_HTTP_TIMEOUT=300
+
+  # Try composer install with retry logic
+  COMPOSER_SUCCESS=false
+  MAX_ATTEMPTS=3
+  ATTEMPT=1
+
+  while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$COMPOSER_SUCCESS" = "false" ]; do
+    if [ $ATTEMPT -gt 1 ]; then
+      echo "⚠️  Composer install attempt $ATTEMPT of $MAX_ATTEMPTS..."
+      echo "   Waiting 5 seconds before retry..."
+      sleep 5
+    fi
+
+    if ddev composer install 2>&1 | tee /tmp/composer-install.log; then
+      # Check if autoloader was created successfully
+      if check_autoloader; then
+        COMPOSER_SUCCESS=true
+        echo "✅ Composer dependencies installed successfully"
+      else
+        echo "⚠️  Composer completed but autoloader not found"
+        ATTEMPT=$((ATTEMPT + 1))
+      fi
+    else
+      echo "⚠️  Composer install failed on attempt $ATTEMPT"
+      ATTEMPT=$((ATTEMPT + 1))
+    fi
+  done
+
+  if [ "$COMPOSER_SUCCESS" = "false" ]; then
+    echo ""
+    echo "❌ Composer install failed after $MAX_ATTEMPTS attempts"
+    echo "   Please check authentication credentials and network connection"
+    echo "   You can manually run: ddev composer install"
+    echo ""
+    echo "   Cannot continue without the autoloader."
+    echo "   Exiting project initialization."
+    exit 1
+  fi
+fi
+
+# Verify autoloader exists before continuing
+if ! check_autoloader; then
+  echo ""
+  echo "❌ Cannot continue without composer autoloader"
+  echo "   Please run: ddev composer install"
+  echo "   Then run: ddev project-init"
+  exit 1
 fi
 
 # Configure WordPress.
