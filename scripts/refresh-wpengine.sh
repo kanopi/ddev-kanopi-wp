@@ -80,7 +80,7 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
     TEMP_KEY="/tmp/temp_key"
     ssh-add -L | grep "${WPENGINE_SSH_KEY:-id_rsa}" > "$TEMP_KEY"
     if eval "$SSH_CMD -i ${TEMP_KEY} $WPENGINE_SSH exit"; then
-		echo -e "${green}Connected successfully!${NC}"
+		echo -e "${green}SSH connection successful.${NC}"
 	else
 		echo -e "${red}Please ensure:${NC}"
 		echo -e "${red}1. Your key is added to your WPEngine account${NC}"
