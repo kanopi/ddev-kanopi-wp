@@ -31,6 +31,12 @@ theme_dev_command='ddev theme-watch'
 theme_build_command='ddev theme-build'
 refresh_command='ddev db-refresh'
 
+# Get docroot from DDEV configuration, default to 'web'
+DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' ' || true)
+
+# Define paths
+MU_PLUGINS_PATH="${DOCROOT}/wp-content/mu-plugins"
+
 #-------------------------- Execution -------------------------------------
 
 echo -e "\n${rocket} ${yellow} Initializing the Project.${NC} ${rocket}"
