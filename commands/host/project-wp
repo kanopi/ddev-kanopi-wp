@@ -18,6 +18,12 @@ construction='\xF0\x9F\x9A\xA7'
 source .ddev/scripts/load-config.sh
 load_kanopi_config
 
+# Get actual docroot from DDEV configuration (overrides hosting provider defaults)
+DDEV_DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' ' || true)
+if [ -n "$DDEV_DOCROOT" ]; then
+    DOCROOT="$DDEV_DOCROOT"
+fi
+
 # Determine docroot based on hosting provider
 case "${HOSTING_PROVIDER}" in
     "pantheon")
