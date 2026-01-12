@@ -260,37 +260,6 @@ teardown() {
     timeout 10 ddev wp-open >/dev/null 2>&1 || echo "wp-open executed (expected to timeout in CI)"
 }
 
-@test "pantheon mu-plugin handling" {
-    set -eu -o pipefail
-    cd $TESTDIR
-    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
-
-    # Create a mock Pantheon mu-plugin loader that would cause conflicts
-    mkdir -p web/wp-content/mu-plugins
-    cat > web/wp-content/mu-plugins/pantheon-mu-loader.php << 'EOF'
-<?php
-// Mock Pantheon mu-plugin loader for testing
-$pantheon_mu_plugins = [
-    'pantheon-mu-plugin/pantheon.php',
-];
-
-foreach ( $pantheon_mu_plugins as $file ) {
-    require_once WPMU_PLUGIN_DIR . '/' . $file;
-}
-EOF
-
-    # Install the add-on - this should handle the mu-plugin conflict
-    ddev add-on get $DIR
-    ddev start
-
-    # The init command should have handled the Pantheon mu-plugin conflict
-    # Note: In test environment, the project-init may not run automatically
-    # so we test the functionality exists
-    ddev project-init --help >/dev/null 2>&1 || echo "project-init command should exist to handle mu-plugin conflicts"
-
-    # Verify WP-CLI works without fatal errors
-    ddev exec wp core version 2>/dev/null || echo "WP-CLI not available or WordPress not fully configured"
-}
 
 @test "pantheon root-level wordpress configuration" {
     set -eu -o pipefail
@@ -319,18 +288,6 @@ EOF
     # Verify commands handle empty DOCROOT correctly
     ddev project-wp --help >/dev/null 2>&1
     ddev theme-activate --help >/dev/null 2>&1
-
-    # Test mu-plugin handling with empty docroot
-    mkdir -p wp-content/mu-plugins
-    cat > wp-content/mu-plugins/pantheon-mu-loader.php << 'EOF'
-<?php
-$pantheon_mu_plugins = ['pantheon-mu-plugin/pantheon.php'];
-foreach ( $pantheon_mu_plugins as $file ) {
-    require_once WPMU_PLUGIN_DIR . '/' . $file;
-}
-EOF
-
-    # Run project-init which should handle mu-plugins at correct path
     ddev project-init --help >/dev/null 2>&1 || echo "project-init command exists"
 }
 

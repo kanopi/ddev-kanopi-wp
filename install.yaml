@@ -91,60 +91,6 @@ post_install_actions:
   fi
 
 
-- |
-  #ddev-description: Handle Pantheon mu-plugins compatibility
-  # Disable Pantheon mu-plugins that conflict with DDEV environment
-  echo ""
-  echo "🔧 Checking for Pantheon mu-plugins that need to be disabled in DDEV..."
-
-  # Use the same docroot from config.yaml since project isn't running yet
-  # Find config.yaml file - it could be at different relative paths depending on install context
-  CONFIG_FILE=""
-  for path in "../../config.yaml" "../../../config.yaml" "config.yaml" "../config.yaml"; do
-    if [ -f "$path" ]; then
-      CONFIG_FILE="$path"
-      break
-    fi
-  done
-
-  if [ -n "$CONFIG_FILE" ]; then
-    DOCROOT=$(grep '^docroot:' "$CONFIG_FILE" 2>/dev/null | cut -d: -f2 | tr -d ' "'\''')
-    # If DOCROOT is empty or not found, default to empty string (root-level WordPress)
-    if [ -z "$DOCROOT" ]; then
-      DOCROOT=""
-    fi
-  else
-    DOCROOT="web"
-  fi
-
-  # Handle empty docroot (root-level WordPress)
-  if [ -z "$DOCROOT" ]; then
-    PANTHEON_LOADER="../wp-content/mu-plugins/pantheon-mu-loader.php"
-    PANTHEON_PLUGIN_DIR="../wp-content/mu-plugins/pantheon-mu-plugin"
-  else
-    PANTHEON_LOADER="../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-loader.php"
-    PANTHEON_PLUGIN_DIR="../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-plugin"
-  fi
-
-  if [ -f "$PANTHEON_LOADER" ]; then
-    # Check if the loader tries to load pantheon-mu-plugin
-    if grep -q "pantheon-mu-plugin/pantheon.php" "$PANTHEON_LOADER"; then
-      # Check if the actual plugin directory exists
-      if [ ! -d "$PANTHEON_PLUGIN_DIR" ]; then
-        echo "📝 Found Pantheon mu-plugin loader but plugin directory missing"
-        echo "   Disabling to prevent PHP fatal errors in DDEV environment..."
-        mv "$PANTHEON_LOADER" "${PANTHEON_LOADER}.disabled"
-        echo "✅ Pantheon mu-plugin loader disabled (renamed to .disabled)"
-        echo "   This prevents 'Failed to open stream' errors when running WP-CLI commands"
-      else
-        echo "📝 Pantheon mu-plugin found and appears complete - leaving enabled"
-      fi
-    else
-      echo "📝 Custom pantheon-mu-loader.php found - leaving as-is"
-    fi
-  else
-    echo "📝 No Pantheon mu-plugin loader found - no action needed"
-  fi
 
 # Explain the installed components
 - |
@@ -228,41 +174,6 @@ removal_actions:
   # Remove directory structure
   rm -rf config 2>/dev/null || true
   rm -rf scripts 2>/dev/null || true
-  
-  # Restore Pantheon mu-plugin loader if it was disabled during installation
-  # Find config.yaml file for docroot detection
-  CONFIG_FILE=""
-  for path in "../../config.yaml" "../../../config.yaml" "config.yaml" "../config.yaml"; do
-    if [ -f "$path" ]; then
-      CONFIG_FILE="$path"
-      break
-    fi
-  done
-
-  if [ -n "$CONFIG_FILE" ]; then
-    DOCROOT=$(grep '^docroot:' "$CONFIG_FILE" 2>/dev/null | cut -d: -f2 | tr -d ' "'\''')
-    # If DOCROOT is empty or not found, default to empty string (root-level WordPress)
-    if [ -z "$DOCROOT" ]; then
-      DOCROOT=""
-    fi
-  else
-    DOCROOT="web"
-  fi
-
-  # Handle empty docroot (root-level WordPress)
-  if [ -z "$DOCROOT" ]; then
-    PANTHEON_LOADER_DISABLED="../wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
-    PANTHEON_LOADER="../wp-content/mu-plugins/pantheon-mu-loader.php"
-  else
-    PANTHEON_LOADER_DISABLED="../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-loader.php.disabled"
-    PANTHEON_LOADER="../${DOCROOT}/wp-content/mu-plugins/pantheon-mu-loader.php"
-  fi
-
-  if [ -f "$PANTHEON_LOADER_DISABLED" ]; then
-    mv "$PANTHEON_LOADER_DISABLED" "$PANTHEON_LOADER"
-    echo "✅ Restored Pantheon mu-plugin loader (was disabled during add-on installation)"
-  fi
-
 
   # Clean up gitignore
   if [ -f ../../.gitignore ]; then
