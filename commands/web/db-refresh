@@ -152,6 +152,8 @@ fi
 # Common post-refresh cleanup and setup
 echo -e "\n${yellow}Running post-refresh cleanup and setup...${NC}"
 
+cd "${DDEV_APPROOT}/${DOCROOT}"
+
 # Flush caches and rewrite rules
 echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
 wp cache flush --allow-root 2>/dev/null || true
