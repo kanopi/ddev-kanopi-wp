@@ -107,6 +107,13 @@ case "${HOSTING_PROVIDER:-not set}" in
         echo "Kinsta Username: ${KINSTA_USERNAME:-not set}"
         echo "Kinsta Environment: ${HOSTING_ENV:-not set}"
         ;;
+    "remote")
+        echo "Remote Host: ${REMOTE_HOST:-not set}"
+        echo "Remote Port: ${REMOTE_PORT:-not set}"
+        echo "Remote User: ${REMOTE_USER:-not set}"
+        echo "Remote Path: ${REMOTE_PATH:-not set}"
+        echo "Remote Domain: ${REMOTE_DOMAIN:-not set}"
+        ;;
     *)
         echo "(Provider-specific settings will appear after selecting a provider)"
         ;;
@@ -123,7 +130,7 @@ echo ""
 # Get hosting provider
 echo "🏛️ Hosting Provider Configuration:"
 echo "----------------------------------"
-HOST_PROVIDER=$(select_option "Select your hosting provider:" "pantheon" "wpengine" "kinsta")
+HOST_PROVIDER=$(select_option "Select your hosting provider:" "pantheon" "wpengine" "kinsta" "remote")
 echo "✓ Selected: $HOST_PROVIDER"
 
 # Install Redis for Pantheon (Pantheon requires Redis for object caching)
@@ -185,6 +192,19 @@ case "$HOST_PROVIDER" in
         prompt_input "Environment name (e.g., build, staging, live)" "${HOSTING_ENV:-build}" HOSTING_ENV
         echo "💡 This creates URLs like: https://env-${KINSTA_USERNAME:-username}-${HOSTING_ENV:-build}.kinsta.cloud/"
         echo "💡 Kinsta uses SSH keys for authentication."
+        ;;
+    "remote")
+        echo "🌐 Remote SSH Configuration:"
+        echo "---------------------------"
+        prompt_input "Remote Host (e.g., ssh.example.com)" "${REMOTE_HOST}" REMOTE_HOST
+        prompt_input "Remote Port (e.g., 22)" "${REMOTE_PORT:-22}" REMOTE_PORT
+        prompt_input "Remote User (e.g., username)" "${REMOTE_USER}" REMOTE_USER
+        prompt_input "Remote Path (e.g., /home/user/public_html)" "${REMOTE_PATH}" REMOTE_PATH
+        echo ""
+        echo "🌐 Domain Configuration:"
+        prompt_input "Remote Domain (e.g., example.com)" "${REMOTE_DOMAIN}" REMOTE_DOMAIN
+        echo "💡 This domain will be replaced with your local DDEV domain."
+        echo "💡 Do not include http:// or https:// - just the domain."
         ;;
 esac
 
@@ -352,6 +372,13 @@ case "$HOST_PROVIDER" in
         write_config_var "KINSTA_USERNAME" "$KINSTA_USERNAME"
         write_config_var "HOSTING_ENV" "$HOSTING_ENV"
         ;;
+    "remote")
+        write_config_var "REMOTE_HOST" "$REMOTE_HOST"
+        write_config_var "REMOTE_PORT" "$REMOTE_PORT"
+        write_config_var "REMOTE_USER" "$REMOTE_USER"
+        write_config_var "REMOTE_PATH" "$REMOTE_PATH"
+        write_config_var "REMOTE_DOMAIN" "$REMOTE_DOMAIN"
+        ;;
 esac
 
 # Write theme variables
@@ -382,6 +409,13 @@ case "$HOST_PROVIDER" in
         # Kinsta URL structure: https://env-username-environment.kinsta.cloud/
         if [ -n "$KINSTA_USERNAME" ] && [ -n "$HOSTING_ENV" ]; then
             PROXY_URL="https://env-${KINSTA_USERNAME}-${HOSTING_ENV}.kinsta.cloud"
+        else
+            PROXY_URL=""
+        fi
+        ;;
+    "remote")
+        if [ -n "$REMOTE_DOMAIN" ]; then
+            PROXY_URL="https://${REMOTE_DOMAIN}"
         else
             PROXY_URL=""
         fi
@@ -538,6 +572,12 @@ case "$HOST_PROVIDER" in
     "kinsta")
         echo "1. 🔑 Ensure your SSH key is set up for Kinsta:"
         echo "   💡 Add your SSH public key in MyKinsta > User Settings > SSH Keys"
+        echo "   💡 The init script will load all your keys"
+        echo ""
+        ;;
+    "remote")
+        echo "1. 🔑 Ensure your SSH key is set up for Remote SSH:"
+        echo "   💡 Add your SSH public key to the remote server's ~/.ssh/authorized_keys"
         echo "   💡 The init script will load all your keys"
         echo ""
         ;;

@@ -54,6 +54,15 @@ load_kanopi_config() {
         export REMOTE_USER=${REMOTE_USER:-''}
         export REMOTE_PATH=${REMOTE_PATH:-'public'}
     fi
+
+    # Remote SSH-specific Configuration
+    if [[ "${HOSTING_PROVIDER}" == "remote" ]]; then
+        export REMOTE_HOST=${REMOTE_HOST:-''}
+        export REMOTE_PORT=${REMOTE_PORT:-'22'}
+        export REMOTE_USER=${REMOTE_USER:-''}
+        export REMOTE_PATH=${REMOTE_PATH:-''}
+        export REMOTE_DOMAIN=${REMOTE_DOMAIN:-''}
+    fi
 }
 
 # Function to update configuration variables in this file

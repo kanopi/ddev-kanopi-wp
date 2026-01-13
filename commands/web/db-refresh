@@ -2,7 +2,7 @@
 #ddev-generated
 
 ## Refresh DB
-## Description: Downloads the database from the hosting provider. Supports Pantheon, WPEngine, and Kinsta platforms.
+## Description: Downloads the database from the hosting provider. Supports Pantheon, WPEngine, Kinsta, and Remote SSH platforms.
 ## Usage: db-refresh [environment id]
 ## Example: ddev db-refresh pr-123
 ## Aliases: refresh,db:refresh
@@ -25,6 +25,8 @@ if [ -z "$ENVIRONMENT" ]; then
     ENVIRONMENT="$HOSTING_SITE"
   elif [[ "$HOSTING_PROVIDER" == "kinsta" ]]; then
     ENVIRONMENT="live"
+  elif [[ "$HOSTING_PROVIDER" == "remote" ]]; then
+    ENVIRONMENT=""  # No environment needed for remote
   else
     ENVIRONMENT="dev"
   fi
@@ -83,6 +85,16 @@ case "${HOSTING_PROVIDER}" in
             exit 1
         fi
         ;;
+    "remote")
+        REMOTE_HOST_VALUE=$(printenv REMOTE_HOST 2>/dev/null || echo "")
+        REMOTE_DOMAIN_VALUE=$(printenv REMOTE_DOMAIN 2>/dev/null || echo "")
+        if [ -n "$REMOTE_HOST_VALUE" ] && [ -n "$REMOTE_DOMAIN_VALUE" ]; then
+            PROVIDER_CONFIGURED=true
+        else
+            echo -e "${red}Error: REMOTE_HOST and REMOTE_DOMAIN not configured for Remote SSH. Run 'ddev project-configure' to set up your Remote SSH configuration.${NC}"
+            exit 1
+        fi
+        ;;
     *)
         # Fallback to old behavior for backward compatibility
         HOSTING_SITE_VALUE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
@@ -124,14 +136,23 @@ elif [[ "$HOSTING_PROVIDER" == "kinsta" ]]; then
     echo -e "${red}Database refresh failed. Please check the error messages above.${NC}"
     exit 1
   fi
+elif [[ "$HOSTING_PROVIDER" == "remote" ]]; then
+  echo -e "${green}Using Remote SSH refresh script...${NC}"
+  # Call the Remote SSH refresh script (no environment parameter)
+  if ! bash .ddev/scripts/refresh-remote.sh "" "$FORCE_BACKUP"; then
+    echo -e "${red}Database refresh failed. Please check the error messages above.${NC}"
+    exit 1
+  fi
 else
   echo -e "${red}Hosting platform '$HOSTING_PROVIDER' not supported${NC}"
-  echo -e "${yellow}Supported platforms: pantheon, wpengine, kinsta${NC}"
+  echo -e "${yellow}Supported platforms: pantheon, wpengine, kinsta, remote${NC}"
   exit 1
 fi
 
 # Common post-refresh cleanup and setup
 echo -e "\n${yellow}Running post-refresh cleanup and setup...${NC}"
+
+cd "${DDEV_APPROOT}/${DOCROOT}"
 
 # Flush caches and rewrite rules
 echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
