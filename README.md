@@ -11,7 +11,10 @@ A comprehensive DDEV add-on that provides Kanopi's battle-tested workflow for Wo
 ## 🚀 Quick Start
 
 ```bash
-# Intialize a project (adjust docroot/database if needed)
+# Intialize a project
+#
+# NOTE: Adjust the docroot/database as needed - for example, to set up
+# a site on WPEngine, the docroot would be 'public'
 ddev config --project-type=wordpress --docroot=web --database=mariadb:10.6
 
 # Install the add-on
@@ -84,7 +87,10 @@ ddev restart
 
 ### New Projects
 ```bash
-# Initialize DDEV (Adjust webroot/database as needed)
+# Intialize DDEV
+#
+# NOTE: Adjust the docroot/database as needed - for example, to set up
+# a site on WPEngine, the docroot would be 'public'
 ddev config --project-type=wordpress --docroot=web --database=mariadb:10.6
 
 # Install add-on
