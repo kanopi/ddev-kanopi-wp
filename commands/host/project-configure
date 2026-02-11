@@ -316,6 +316,8 @@ write_local_config_var() {
 # Local configuration for user-specific settings
 # This file is ignored by git to keep personal settings private
 
+# SSH key path - customize this for your user account
+# Example: ~/.ssh/your_key or /Users/username/.ssh/your_key
 web_environment:
   - ${var_name}=${var_value}
 EOF
