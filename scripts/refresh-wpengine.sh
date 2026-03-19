@@ -83,7 +83,7 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
     else
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your key is added to your WPEngine account${NC}"
-        echo -e "${red}2. SSH key is loaded in container: ddev auth ssh${NC}"
+        echo -e "${red}2. SSH key is loaded in container: ddev project-auth${NC}"
         echo -e "${red}3. Key name is set in config.local.yml; WPENGINE_SSH_KEY=~/.ssh/you_key_name${NC}"
         exit 1
     fi
