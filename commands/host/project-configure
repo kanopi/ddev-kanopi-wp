@@ -498,13 +498,13 @@ if [ -n "$PROXY_URL" ]; then
     echo "Configuring nginx proxy..."
 
     # Get the actual docroot from DDEV configuration
-    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
+    DOCROOT=$(cat .ddev/config.yaml | docker run -i --rm ddev/ddev-utilities yq '.docroot')
 
     # Check if nginx_full/nginx-site.conf exists
     if [ -f ".ddev/nginx_full/nginx-site.conf" ]; then
         # Extract hosting domain and environment from PROXY_URL
         # Example: https://dev-sitename.pantheonsite.io -> domain=pantheonsite.io, env=dev
-        PROXY_HOST=$(echo "$PROXY_URL" | sed 's|https\://||' | sed 's|http://||' | sed 's|/.*||')
+        PROXY_HOST=$(echo "$PROXY_URL" | sed -r 's#https?://##' | sed "s#/##" | sed 's|/.*||')
 
         # Determine hosting domain based on provider
         case "$HOST_PROVIDER" in
@@ -526,9 +526,9 @@ if [ -n "$PROXY_URL" ]; then
         # Replace {{DOCROOT}} placeholder with actual docroot value
         # Handle empty docroot by removing trailing slash
         if [ -z "$DOCROOT" ]; then
-            NGINX_ROOT="/var/www/html"
+            NGINX_ROOT="${DDEV_APPROOT}"
         else
-            NGINX_ROOT="/var/www/html/$DOCROOT"
+            NGINX_ROOT="${DDEV_APPROOT}/$DOCROOT"
         fi
 
         sed -i.bak \

@@ -15,7 +15,7 @@ DEFAULT_THEMENAME="custom/struts"
 DEFAULT_HOSTING_PROVIDER="pantheon"
 
 # Configuration file path
-CONFIG_FILE="/var/www/html/.ddev/scripts/load-config.sh"
+CONFIG_FILE="${DDEV_APPROOT}/.ddev/scripts/load-config.sh"
 
 load_kanopi_config() {
     # WordPress Admin Configuration

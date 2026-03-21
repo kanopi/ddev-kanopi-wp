@@ -70,7 +70,7 @@ case "$HOSTING_PROVIDER" in
     "pantheon")
         echo -e "${yellow}Pulling from Pantheon using refresh script...${NC}"
         # Run Pantheon refresh script with force flag to get fresh backup
-        bash /var/www/html/scripts/pantheon-refresh.sh "$MIGRATE_DB_ENV" "true"
+        bash ${DDEV_APPROOT}/scripts/pantheon-refresh.sh "$MIGRATE_DB_ENV" "true"
         
         # Move the imported database to migration database
         echo -e "${yellow}Moving database to migration database...${NC}"
@@ -80,7 +80,7 @@ case "$HOSTING_PROVIDER" in
     "wpengine")
         echo -e "${yellow}Pulling from WPEngine using refresh script...${NC}"
         # Run WPEngine refresh script with force flag
-        bash /var/www/html/scripts/wpengine-refresh.sh "$MIGRATE_DB_ENV" "true"
+        bash ${DDEV_APPROOT}/scripts/wpengine-refresh.sh "$MIGRATE_DB_ENV" "true"
         
         # Move the imported database to migration database
         echo -e "${yellow}Moving database to migration database...${NC}"
@@ -90,7 +90,7 @@ case "$HOSTING_PROVIDER" in
     "kinsta")
         echo -e "${yellow}Pulling from Kinsta using refresh script...${NC}"
         # Run Kinsta refresh script with force flag
-        bash /var/www/html/scripts/kinsta-refresh.sh "$MIGRATE_DB_ENV" "true"
+        bash ${DDEV_APPROOT}/scripts/kinsta-refresh.sh "$MIGRATE_DB_ENV" "true"
         
         # Move the imported database to migration database
         echo -e "${yellow}Moving database to migration database...${NC}"
