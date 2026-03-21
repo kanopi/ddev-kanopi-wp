@@ -11,6 +11,9 @@ project_files:
 # DDEV version constraint
 ddev_version_constraint: ">= v1.22.0"
 
+dependencies:
+  - ddev/ddev-nvm
+
 # Pre-install actions
 pre_install_actions:
 # Introduction

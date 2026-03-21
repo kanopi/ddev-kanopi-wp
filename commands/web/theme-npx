@@ -10,12 +10,12 @@
 set -e
 
 # Get theme configuration from environment variables
-THEME_PATH=$(printenv THEME 2>/dev/null || echo "")
-DOCROOT=$(printenv DDEV_DOCROOT 2>/dev/null || echo "web")
+THEME_PATH=${THEME:-""}
+DOCROOT=${DOCROOT:-"web"}
 
 # Check if theme is configured and exists
 if [ -n "$THEME_PATH" ]; then
-    FULL_THEME_PATH="/var/www/html/${DOCROOT}/${THEME_PATH}"
+    FULL_THEME_PATH="${DDEV_APPROOT}/${DOCROOT}/${THEME_PATH}"
 
     if [ -d "${FULL_THEME_PATH}" ]; then
         cd "${FULL_THEME_PATH}"
