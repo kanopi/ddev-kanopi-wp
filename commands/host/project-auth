@@ -50,7 +50,8 @@ if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
         # For WPEngine, just copy the key and add to SSH agent
         echo "🔑 Adding WPEngine SSH key to container..."
         ddev exec "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
-        cat "$SSH_KEY_PATH" | ddev exec "cat > ~/.ssh/$(basename "$SSH_KEY_PATH") && chmod 600 ~/.ssh/$(basename "$SSH_KEY_PATH") && ssh-add ~/.ssh/$(basename "$SSH_KEY_PATH")"
+        KEY_NAME=$(basename "$SSH_KEY_PATH")
+        cat "$SSH_KEY_PATH" | ddev exec "cat > ~/.ssh/$KEY_NAME && chmod 600 ~/.ssh/$KEY_NAME && ssh-add ~/.ssh/$KEY_NAME"
 
         echo "✅ Loaded only WPEngine SSH key: $(basename "$SSH_KEY_PATH")"
     else
