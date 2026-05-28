@@ -13,13 +13,7 @@ load_kanopi_config
 
 # Function to read WPENGINE_SSH_KEY from local config file
 get_wpengine_ssh_key() {
-    local local_config_file=".ddev/config.local.yaml"
-    if [ -f "$local_config_file" ]; then
-        # Extract WPENGINE_SSH_KEY from YAML format: "  - WPENGINE_SSH_KEY=value"
-        grep "^  - WPENGINE_SSH_KEY=" "$local_config_file" | cut -d'=' -f2- || echo ""
-    else
-        echo ""
-    fi
+    echo $(ddev utility configyaml --full-yaml 2>/dev/null | docker run -i --rm ddev/ddev-utilities yq '.web_environment[] | select(contains("WPENGINE_SSH_KEY")) | sub("WPENGINE_SSH_KEY=","")')
 }
 
 # Use specific SSH key for WPEngine, all keys for others
