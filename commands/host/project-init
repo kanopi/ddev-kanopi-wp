@@ -34,9 +34,6 @@ refresh_command='ddev db-refresh'
 # Get docroot from DDEV configuration, default to 'web'
 DOCROOT=$(ddev utility configyaml --full-yaml 2>/dev/null | docker run -i --rm ddev/ddev-utilities yq '.docroot')
 
-# Define paths
-MU_PLUGINS_PATH="${DOCROOT}/wp-content/mu-plugins"
-
 #-------------------------- Execution -------------------------------------
 
 echo -e "\n${rocket} ${yellow} Initializing the Project.${NC} ${rocket}"
@@ -80,7 +77,8 @@ check_auth() {
 
 # Function to check if autoloader exists
 check_autoloader() {
-  local vendor_path="${MU_PLUGINS_PATH}/vendor/autoload.php"
+  local vendor_dir=$(ddev composer config vendor-dir)
+  local vendor_path="${vendor_dir}/autoload.php"
   if [ ! -f "$vendor_path" ]; then
     echo "❌ Error: Composer autoloader not found at $vendor_path"
     echo "   The autoloader is required for WordPress to run"
