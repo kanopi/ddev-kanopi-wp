@@ -6,23 +6,19 @@
 ## Example: "ddev db-rebuild"
 ## Aliases: rebuild,db:rebuild
 
-green='\033[0;32m'
-yellow='\033[1;33m'
-NC='\033[0m'
-divider='===================================================\n'
+set -e
 
-# Install dependencies.
+# Colors / divider come from load-config.sh.
+source .ddev/scripts/load-config.sh
+
 echo -e "\n${yellow} Composer install. ${NC}"
 echo -e "${green}${divider}${NC}"
-ddev composer install
+retry_command 3 ddev composer install
 
-# Database.
 ddev db-refresh
 
-echo "Flush WordPress cache"
-ddev exec "wp cache flush --allow-root" 2>/dev/null || echo "Cache flush completed"
-
-echo "Update WordPress database"
-ddev exec "wp core update-db --allow-root" 2>/dev/null || echo "Database update completed"
+# Run cache flush + db update in a single ddev exec to avoid three container round-trips.
+ddev exec "wp cache flush --allow-root 2>/dev/null || echo 'Cache flush completed'; \
+           wp core update-db --allow-root 2>/dev/null || echo 'Database update completed'"
 
 ddev cypress-users

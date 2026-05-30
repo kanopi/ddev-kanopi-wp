@@ -7,54 +7,39 @@
 
 #ddev-generated
 
+set -e
+
 # Load configuration to check hosting provider
 source .ddev/scripts/load-config.sh
 load_kanopi_config
 
-# Function to read WPENGINE_SSH_KEY from local config file
-get_wpengine_ssh_key() {
-    echo $(ddev utility configyaml --full-yaml 2>/dev/null | docker run -i --rm ddev/ddev-utilities yq '.web_environment[] | select(contains("WPENGINE_SSH_KEY")) | sub("WPENGINE_SSH_KEY=","")')
+# Expand a path that may begin with ~ to an absolute path on the host.
+# Stays here (not in load-config.sh) because the web container doesn't have
+# the user's $HOME and never needs to resolve ~/.ssh paths.
+expand_ssh_key_path() {
+    local raw="$1"
+    if [[ "$raw" =~ ^\~/ ]]; then
+        echo "$HOME/${raw:2}"
+    elif [[ "$raw" =~ ^\~$ ]]; then
+        echo "$HOME"
+    else
+        echo "$raw"
+    fi
 }
 
-# Use specific SSH key for WPEngine, all keys for others
 if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
-    # For WPEngine, read SSH key from local config file since host commands can't access container env vars
-    WPENGINE_SSH_KEY=$(get_wpengine_ssh_key)
+    # ddev's container can't read the user's .ssh; pull the configured key name
+    # from the project's config.yaml on the host instead.
+    WPENGINE_SSH_KEY=$(ddev utility configyaml --full-yaml 2>/dev/null \
+      | docker run -i --rm ddev/ddev-utilities yq '.web_environment[] | select(contains("WPENGINE_SSH_KEY")) | sub("WPENGINE_SSH_KEY=","")')
     echo "🔍 WPEngine detected - using specific SSH key: $WPENGINE_SSH_KEY"
 
-    # Robust tilde and path expansion
-    if [[ "$WPENGINE_SSH_KEY" =~ ^\~/ ]]; then
-        # Handle ~/path
-        SSH_KEY_PATH="$HOME/${WPENGINE_SSH_KEY:2}"
-    elif [[ "$WPENGINE_SSH_KEY" =~ ^\~ ]]; then
-        # Handle just ~
-        SSH_KEY_PATH="$HOME"
-    else
-        # Use as-is for absolute paths
-        SSH_KEY_PATH="$WPENGINE_SSH_KEY"
-    fi
-
-    # Remove .pub extension if present
+    SSH_KEY_PATH=$(expand_ssh_key_path "$WPENGINE_SSH_KEY")
     SSH_KEY_PATH="${SSH_KEY_PATH%.pub}"
 
     echo "   Resolved to: $SSH_KEY_PATH"
 
-    # For WPEngine, we need to add the specific key to the host SSH agent first
-    # then use ddev auth ssh to import it into the container
-    echo "🔍 Adding SSH key to host agent..."
-
-    # Check if key exists on host
-    if [ -f "$SSH_KEY_PATH" ]; then
-        echo "✅ SSH key file found on host"
-
-        # For WPEngine, just copy the key and add to SSH agent
-        echo "🔑 Adding WPEngine SSH key to container..."
-        ddev exec "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
-        KEY_NAME=$(basename "$SSH_KEY_PATH")
-        cat "$SSH_KEY_PATH" | ddev exec "cat > ~/.ssh/$KEY_NAME && chmod 600 ~/.ssh/$KEY_NAME && ssh-add ~/.ssh/$KEY_NAME"
-
-        echo "✅ Loaded only WPEngine SSH key: $(basename "$SSH_KEY_PATH")"
-    else
+    if [ ! -f "$SSH_KEY_PATH" ]; then
         echo "⚠️  SSH key not found on host: $SSH_KEY_PATH"
         echo "   Debugging information:"
         echo "   - Original path: $WPENGINE_SSH_KEY"
@@ -66,9 +51,16 @@ if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
         echo "   Run 'ddev project-configure' to update it"
         echo ""
         echo "⚠️  For WPEngine, only the specific SSH key can be loaded."
-        echo "⚠️  Please fix your SSH key configuration before proceeding."
         exit 1
     fi
+
+    echo "✅ SSH key file found on host"
+    echo "🔑 Adding WPEngine SSH key to container..."
+    KEY_NAME=$(basename "$SSH_KEY_PATH")
+    # Single ddev exec chain: prepare ~/.ssh, copy the key in, set perms, ssh-add.
+    cat "$SSH_KEY_PATH" | ddev exec "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat > ~/.ssh/$KEY_NAME && chmod 600 ~/.ssh/$KEY_NAME && ssh-add ~/.ssh/$KEY_NAME"
+
+    echo "✅ Loaded only WPEngine SSH key: $KEY_NAME"
 else
     echo "Loading all SSH keys for $HOSTING_PROVIDER"
     ddev auth ssh

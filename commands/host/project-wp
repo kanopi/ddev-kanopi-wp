@@ -7,84 +7,47 @@
 
 #ddev-generated
 
-# Colors and formatting
-green='\033[0;32m'
-yellow='\033[1;33m'
-NC='\033[0m'
-divider='===================================================\n'
-construction='\xF0\x9F\x9A\xA7'
+# Colors / divider / emojis come from load-config.sh.
 
 # Load configuration to get hosting provider
 source .ddev/scripts/load-config.sh
 load_kanopi_config
 
-# Get actual docroot from DDEV configuration (overrides hosting provider defaults)
-DDEV_DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' ' || true)
-if [ -n "$DDEV_DOCROOT" ]; then
-    DOCROOT="$DDEV_DOCROOT"
-fi
+# resolve_host_docroot returns inherited DOCROOT immediately when set
+# (project-init exports it); falls back to ddev's merged config otherwise.
+DOCROOT=$(resolve_host_docroot)
 
-# Determine docroot based on hosting provider
 case "${HOSTING_PROVIDER}" in
-    "pantheon")
-        # Handle application root case (. or empty)
-        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
-            DOCROOT=""
-            DOCROOT_PATH="/var/www/html"
-            echo "Using application root (no subfolder) for Pantheon"
-        else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
-            echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
-        fi
-        ;;
-    "wpengine")
-        # Use configured DOCROOT from environment, fallback to 'web'
+    "pantheon" | "wpengine")
         DOCROOT="${DOCROOT:-web}"
-        # Handle application root case (. or empty)
         if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
             DOCROOT=""
-            DOCROOT_PATH="/var/www/html"
-            echo "Using application root (no subfolder) for WPEngine"
-        else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
-            echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
         fi
         ;;
     "kinsta")
         DOCROOT="public"
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
-        echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
         ;;
     *)
-        DOCROOT="web"  # Default fallback
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
-        echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
+        DOCROOT="${DOCROOT:-web}"
         ;;
 esac
 
-# Set DOCROOT_PATH for non-WPEngine providers
-if [ -z "$DOCROOT_PATH" ]; then
-    DOCROOT_PATH="/var/www/html/${DOCROOT}"
-fi
+echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
+DOCROOT_PATH="/var/www/html/${DOCROOT}"
+LOCAL_PATH="${DOCROOT:-.}"
 
-# For local file checks, use DOCROOT or "." for application root
-if [ -z "$DOCROOT" ]; then
-    LOCAL_PATH="."
+# Single check for an existing WordPress core in either the docroot or public/.
+wp_core_present() {
+    [ -f "${LOCAL_PATH}/index.php" ] && [ -f "${LOCAL_PATH}/wp-load.php" ] && return 0
+    [ -f "public/wp-config-sample.php" ] && return 0
+    [ -f "public/index.php" ] && return 0
+    return 1
+}
+
+if wp_core_present; then
+    CORE_CHECK_PASSED="true"
 else
-    LOCAL_PATH="${DOCROOT}"
-fi
-
-# Check if WordPress core needs to be installed
-# First check the expected docroot location for WordPress files
-CORE_CHECK_PASSED="false"
-if [ -f "${LOCAL_PATH}/index.php" ] && [ -f "${LOCAL_PATH}/wp-load.php" ]; then
-  CORE_CHECK_PASSED="true"
-fi
-
-# For composer-managed installs, also check if WordPress was moved from another location
-if [ "$CORE_CHECK_PASSED" = "false" ] && [ -f "public/wp-config-sample.php" ]; then
-  echo "📝 Found WordPress core files managed by composer, checking if they need to be moved to docroot..."
-  CORE_CHECK_PASSED="true"
+    CORE_CHECK_PASSED="false"
 fi
 
 # Install WordPress core if needed
@@ -102,18 +65,8 @@ else
   echo "📝 WordPress core files found in docroot: ${LOCAL_PATH}"
 fi
 
-# Install WordPress database (if not already installed)
-# Check if WordPress core files exist in the expected docroot
-WP_CORE_EXISTS="false"
-if [ -f "${LOCAL_PATH}/index.php" ] || [ -f "${LOCAL_PATH}/wp-load.php" ]; then
-  WP_CORE_EXISTS="true"
-elif [ -f "public/index.php" ] || [ -f "public/wp-load.php" ]; then
-  # Check if WordPress exists in public directory (common for composer installs)
-  WP_CORE_EXISTS="true"
-  echo "📝 Found WordPress core files in public directory"
-fi
-
-if [ "$WP_CORE_EXISTS" = "true" ]; then
+# Re-check after potential install above.
+if wp_core_present; then
   # Check if WordPress database is installed
   echo "📝 Checking WordPress database installation status..."
 
