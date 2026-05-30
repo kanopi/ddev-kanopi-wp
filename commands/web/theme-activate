@@ -8,51 +8,22 @@
 
 #ddev-generated
 
-# Load configuration to get hosting provider and docroot
+set -e
+
 source /var/www/html/.ddev/scripts/load-config.sh
 load_kanopi_config
 
-# Determine docroot based on hosting provider
-case "${HOSTING_PROVIDER}" in
-    "pantheon")
-        # Handle application root case (. or empty)
-        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
-            DOCROOT_PATH="/var/www/html"
-        else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
-        fi
-        ;;
-    "wpengine")
-        # Use configured DOCROOT from environment, fallback to 'web'
-        DOCROOT="${DOCROOT:-web}"
-        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
-            DOCROOT_PATH="/var/www/html"
-        else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
-        fi
-        ;;
-    "kinsta")
-        DOCROOT_PATH="/var/www/html/public"
-        ;;
-    *)
-        DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
-        ;;
-esac
-
-# Get theme configuration from environment variables
-WP_THEME_SLUG=$(printenv THEMENAME 2>/dev/null || echo "struts")
+DOCROOT_PATH=$(get_docroot_path)
+WP_THEME_SLUG="${THEMENAME:-struts}"
 
 echo "Activating theme: $WP_THEME_SLUG"
 
-# Check if WordPress is installed before trying to activate theme
 if ! wp core is-installed --path="${DOCROOT_PATH}" --allow-root >/dev/null 2>&1; then
     echo "⚠️  WordPress not installed - skipping theme activation"
     echo "   Run 'ddev project-wp' to install WordPress first"
     exit 0
 fi
 
-# Activate the theme with proper path
 wp theme activate "$WP_THEME_SLUG" --path="${DOCROOT_PATH}" --allow-root
 
 echo "Theme '$WP_THEME_SLUG' activated successfully!"

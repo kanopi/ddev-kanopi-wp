@@ -6,47 +6,29 @@
 ## Example: ddev db-prep-migrate
 ## Aliases: migrate-prep-db,db:prep-migrate
 
-# Abort if anything fails
 set -e
 
-#-------------------------- Helper functions --------------------------------
+# Colors / divider / emojis come from load-config.sh.
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
 
-green='\033[0;32m'
-yellow='\033[1;33m'
-NC='\033[0m'
-
-divider='===================================================\n'
-database_icon='\xF0\x9F\x93\x80'
-down_arrow='\xE2\xAC\x86'
-
-#-------------------------- Settings --------------------------------
-
-# Migration database name
 MIGRATE_DB_NAME="migration"
-
-# Get configuration from environment variables
-MIGRATE_DB_SOURCE=$(printenv MIGRATE_DB_SOURCE 2>/dev/null || echo "")
-MIGRATE_DB_ENV=$(printenv MIGRATE_DB_ENV 2>/dev/null || echo "live")
+MIGRATE_DB_ENV="${MIGRATE_DB_ENV:-live}"
 HOSTING_PROVIDER="${HOSTING_PROVIDER:-pantheon}"
 
-#-------------------------- Execution -------------------------------------
-
-# Ensure the script is running inside the DDEV web container
 if [ -z "$DDEV_HOSTNAME" ]; then
     echo -e "\n ❌ ${yellow} This command must be run inside the DDEV web container. ${NC}"
     echo -e "Use: ${green}ddev db-prep-migrate${NC} instead of running it manually."
     exit 1
 fi
 
-# Step 1: Create the migration database
 echo -e "\n ${database_icon} ${yellow} Creating migration database: ${MIGRATE_DB_NAME} ${NC} ${database_icon}"
 echo -e "${green}${divider}${NC}"
 
 mysql -e "CREATE DATABASE IF NOT EXISTS ${MIGRATE_DB_NAME};"
 echo -e "\n ✅  Migration database '${MIGRATE_DB_NAME}' is ready.\n"
 
-# Step 2: Import the database dump from a remote source
-if [ -z "${MIGRATE_DB_SOURCE}" ]; then
+if [ -z "${MIGRATE_DB_SOURCE:-}" ]; then
     echo -e "\n ❌ ${yellow} MIGRATE_DB_SOURCE environment variable not set ${NC}"
     echo -e "Please set MIGRATE_DB_SOURCE in .ddev/config.yaml web_environment section"
     exit 1
@@ -55,48 +37,23 @@ fi
 echo -e "\n ${down_arrow} ${yellow} Pulling database from ${MIGRATE_DB_SOURCE} (${MIGRATE_DB_ENV}). ${NC} ${down_arrow}"
 echo -e "${green}${divider}${NC}"
 
-# Temporarily set hosting environment variables to migration source for refresh
 ORIGINAL_HOSTING_SITE="${HOSTING_SITE:-}"
 ORIGINAL_HOSTING_ENV="${HOSTING_ENV:-}"
 
-# Override environment variables for migration source
 export HOSTING_SITE="$MIGRATE_DB_SOURCE"
 export HOSTING_ENV="$MIGRATE_DB_ENV"
 
 echo -e "${yellow}Using migration source: ${HOSTING_PROVIDER} ${MIGRATE_DB_SOURCE} (${MIGRATE_DB_ENV})${NC}"
 
-# Use the platform-specific refresh script to get the database
 case "$HOSTING_PROVIDER" in
-    "pantheon")
-        echo -e "${yellow}Pulling from Pantheon using refresh script...${NC}"
-        # Run Pantheon refresh script with force flag to get fresh backup
-        bash /var/www/html/scripts/pantheon-refresh.sh "$MIGRATE_DB_ENV" "true"
-        
-        # Move the imported database to migration database
+    "pantheon"|"wpengine"|"kinsta")
+        echo -e "${yellow}Pulling from ${HOSTING_PROVIDER} using refresh script...${NC}"
+        bash "/var/www/html/.ddev/scripts/refresh-${HOSTING_PROVIDER}.sh" "$MIGRATE_DB_ENV" "true"
+
         echo -e "${yellow}Moving database to migration database...${NC}"
         mysqldump -h db -u db -pdb db | mysql -h db -u db -pdb "${MIGRATE_DB_NAME}"
         ;;
-        
-    "wpengine")
-        echo -e "${yellow}Pulling from WPEngine using refresh script...${NC}"
-        # Run WPEngine refresh script with force flag
-        bash /var/www/html/scripts/wpengine-refresh.sh "$MIGRATE_DB_ENV" "true"
-        
-        # Move the imported database to migration database
-        echo -e "${yellow}Moving database to migration database...${NC}"
-        mysqldump -h db -u db -pdb db | mysql -h db -u db -pdb "${MIGRATE_DB_NAME}"
-        ;;
-        
-    "kinsta")
-        echo -e "${yellow}Pulling from Kinsta using refresh script...${NC}"
-        # Run Kinsta refresh script with force flag
-        bash /var/www/html/scripts/kinsta-refresh.sh "$MIGRATE_DB_ENV" "true"
-        
-        # Move the imported database to migration database
-        echo -e "${yellow}Moving database to migration database...${NC}"
-        mysqldump -h db -u db -pdb db | mysql -h db -u db -pdb "${MIGRATE_DB_NAME}"
-        ;;
-        
+
     *)
         echo -e "\n ❌ ${yellow} Unsupported hosting provider: ${HOSTING_PROVIDER} ${NC}"
         echo -e "Supported providers: pantheon, wpengine, kinsta"
@@ -104,7 +61,6 @@ case "$HOSTING_PROVIDER" in
         ;;
 esac
 
-# Restore original environment variables
 export HOSTING_SITE="$ORIGINAL_HOSTING_SITE"
 export HOSTING_ENV="$ORIGINAL_HOSTING_ENV"
 

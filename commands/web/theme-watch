@@ -7,19 +7,19 @@
 
 #ddev-generated
 
-# Get theme configuration from environment variables
-WP_THEME_RELATIVE_PATH=$(printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
-DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
-THEME_PATH="/var/www/html/${DOCROOT}/${WP_THEME_RELATIVE_PATH}"
+set -e
 
-# Check if theme directory exists
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
+
+THEME_PATH=$(get_full_theme_path)
+
 if [ ! -d "$THEME_PATH" ]; then
     echo "Theme directory not found: $THEME_PATH"
     echo "Please ensure your theme is located at the correct path or update THEME environment variable in .ddev/config.yaml"
     exit 1
 fi
 
-# Check if package.json exists
 if [ ! -f "$THEME_PATH/package.json" ]; then
     echo "package.json not found in theme directory: $THEME_PATH"
     echo "Please ensure your theme has a package.json file with npm scripts configured"
@@ -29,11 +29,13 @@ fi
 echo "Starting development server for theme at: $THEME_PATH"
 cd "$THEME_PATH"
 
-# Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
     echo "Installing npm dependencies..."
-    npm install
+    if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+        npm ci --prefer-offline --no-audit --no-fund --loglevel=warn
+    else
+        npm install --prefer-offline --no-audit --no-fund --loglevel=warn
+    fi
 fi
 
-# Start the development server
 npm run start
