@@ -26,12 +26,12 @@ ddev project-init
 
 ## ✨ Features
 
-- **26+ Custom Commands** - Complete WordPress development workflow
+- **29+ Custom Commands** - Complete WordPress development workflow
 - **Multi-Provider Hosting** - Pantheon, WPEngine, and Kinsta support
 - **Smart Database Refresh** - 12-hour backup age detection
 - **Modern Asset Pipeline** - Webpack with `@wordpress/scripts`
 - **Block Development** - WordPress block scaffolding and tooling
-- **E2E Testing** - Cypress integration with user management
+- **E2E Testing** - Cypress and Playwright integration with user management
 - **Performance Tools** - Critical CSS generation and optimization
 - **Service Integration** - Redis support for Pantheon object caching
 
@@ -63,7 +63,7 @@ ddev project-init
 | `ddev theme-create-block <name>` | Create new WordPress blocks |
 | `ddev wp-open [admin]` | Open site or admin in browser |
 
-[**See all 26+ commands →**](https://kanopi.github.io/ddev-kanopi-wp/commands/)
+[**See all 29+ commands →**](https://kanopi.github.io/ddev-kanopi-wp/commands/)
 
 ## 🌐 Hosting Provider Support
 

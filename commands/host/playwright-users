@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#ddev-generated
+
+## Description: Create Playwright test users in WordPress
+## Usage: playwright-users
+## Example: "ddev playwright-users"
+## Aliases: playwright:users,pwu
+
+# Abort if anything fails
+set -e
+
+echo "Creating test users for Playwright tests..."
+
+ddev exec "wp user create playwright playwright@test.local --role=administrator --user_pass=playwright --allow-root" 2>/dev/null \
+    || ddev exec "wp user update playwright --user_pass=playwright --role=administrator --allow-root" 2>/dev/null
+echo "Created/updated admin user: playwright / playwright"
+
+ddev exec "wp user create playwright-editor playwright-editor@test.local --role=editor --user_pass=playwright --allow-root" 2>/dev/null \
+    || ddev exec "wp user update playwright-editor --user_pass=playwright --role=editor --allow-root" 2>/dev/null
+echo "Created/updated editor user: playwright-editor / playwright"
+
+ddev exec "wp user create playwright-author playwright-author@test.local --role=author --user_pass=playwright --allow-root" 2>/dev/null \
+    || ddev exec "wp user update playwright-author --user_pass=playwright --role=author --allow-root" 2>/dev/null
+echo "Created/updated author user: playwright-author / playwright"
+
+ddev exec "wp user create playwright-subscriber playwright-subscriber@test.local --role=subscriber --user_pass=playwright --allow-root" 2>/dev/null \
+    || ddev exec "wp user update playwright-subscriber --user_pass=playwright --role=subscriber --allow-root" 2>/dev/null
+echo "Created/updated subscriber user: playwright-subscriber / playwright"
+
+echo ""
+echo "=== Test users ready ==="
+echo "Admin:      playwright / playwright"
+echo "Editor:     playwright-editor / playwright"
+echo "Author:     playwright-author / playwright"
+echo "Subscriber: playwright-subscriber / playwright"
