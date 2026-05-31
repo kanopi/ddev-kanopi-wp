@@ -44,6 +44,66 @@ ddev cypress-users
 # Email: admin@example.com (configurable)
 ```
 
+## Playwright E2E Testing
+
+### Setup and Installation
+```bash
+# Install Playwright and browsers (one-time setup per machine)
+ddev playwright-install
+
+# Create test users for role-based testing
+ddev playwright-users
+```
+
+### Running Tests
+```bash
+# Run all tests (headless, all configured browsers)
+ddev playwright-run
+
+# Run interactively with the Playwright UI
+ddev playwright-run --ui
+
+# Run in headed mode (browsers visible)
+ddev playwright-run --headed
+
+# Run a single spec file
+ddev playwright-run tests/e2e/specs/smoke.spec.ts
+
+# Run only Chromium (faster)
+ddev playwright-run --project=chromium
+```
+
+### Playwright Configuration
+
+Playwright is configured at the **project root** (`playwright.config.ts`), not inside a subdirectory. Key settings:
+
+- **Test directory**: `tests/e2e/specs/`
+- **Utilities**: `tests/e2e/utils/` — config, login helper, WordPress fixtures
+- **Auth state**: `tests/e2e/.auth/admin.json` (gitignored — generated at runtime)
+- **Local browsers**: Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
+- **CI browsers**: Chromium only (faster)
+- **Environment**: Reads `BASE_URL` from `.env.playwright` or DDEV's primary URL
+
+### Test User Management
+```bash
+# Create or update all four Playwright test users
+ddev playwright-users
+
+# Users created:
+# playwright        / playwright  (administrator)
+# playwright-editor / playwright  (editor)
+# playwright-author / playwright  (author)
+# playwright-subscriber / playwright (subscriber)
+```
+
+### Viewing Reports
+```bash
+# Open the HTML report from the last run
+npx playwright show-report
+```
+
+---
+
 ## Automated Testing (CI/CD)
 
 ### GitHub Actions Testing

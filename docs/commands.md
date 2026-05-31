@@ -1,6 +1,6 @@
 # Command Reference
 
-This add-on provides 26+ custom commands organized into functional categories. All commands follow a consistent naming convention with aliases for convenience.
+This add-on provides 29+ custom commands organized into functional categories. All commands follow a consistent naming convention with aliases for convenience.
 
 ## Complete Command List
 
@@ -11,6 +11,9 @@ This add-on provides 26+ custom commands organized into functional categories. A
 | `ddev cypress-install` | Host | Install Cypress E2E testing dependencies | `ddev cypress-install` | cyi, cypress-install, install:cypress |
 | `ddev cypress-run <command>` | Host | Run Cypress commands with environment support | `ddev cypress-run open` | cy, cypress, cypress:run, cyr |
 | `ddev cypress-users` | Host | Create default admin user for Cypress testing | `ddev cypress-users` | cyu, cypress:users |
+| `ddev playwright-install` | Host | Install Playwright and browsers for e2e testing | `ddev playwright-install` | pwi, playwright:install |
+| `ddev playwright-run [options]` | Host | Run Playwright e2e tests | `ddev playwright-run --ui` | pwr, playwright:run |
+| `ddev playwright-users` | Host | Create/update Playwright test users in WordPress | `ddev playwright-users` | pwu, playwright:users |
 | `ddev db-prep-migrate` | Web | Create secondary database for migrations | `ddev db-prep-migrate` | migrate-prep-db, db:prep-migrate, db-mpdb |
 | `ddev db-rebuild` | Host | Run composer install followed by database refresh | `ddev db-rebuild` | rebuild, db:rebuild, dbreb |
 | `ddev db-refresh [env] [-f]` | Web | Smart database refresh with 12-hour backup age detection | `ddev db-refresh live -f` | refresh, db:refresh, dbref |
@@ -58,7 +61,10 @@ This add-on provides 26+ custom commands organized into functional categories. A
 ### Testing & Quality Assurance
 - `ddev cypress-install` - Set up Cypress E2E testing
 - `ddev cypress-run <command>` - Execute Cypress tests
-- `ddev cypress-users` - Create test users
+- `ddev cypress-users` - Create Cypress test users
+- `ddev playwright-install` - Install Playwright and browsers at project root
+- `ddev playwright-run [options]` - Run Playwright e2e tests (accepts all `npx playwright test` flags)
+- `ddev playwright-users` - Create/update the four role-scoped Playwright test users
 - `ddev critical-install` - Set up Critical CSS tools
 - `ddev critical-run` - Generate Critical CSS
 
