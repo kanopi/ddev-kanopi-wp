@@ -77,17 +77,16 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
 
     # Load SSH key
     SSH_CMD="ssh -o ConnectTimeout=10"
-    TEMP_KEY="/tmp/temp_key"
-    ssh-add -L | grep "${WPENGINE_SSH_KEY:-id_rsa}" > "$TEMP_KEY"
+    TEMP_KEY="$HOME/.ssh/$(basename ${WPENGINE_SSH:-id_rsa})"
     if eval "$SSH_CMD -i ${TEMP_KEY} $WPENGINE_SSH exit"; then
-		echo -e "${green}SSH connection successful.${NC}"
-	else
-		echo -e "${red}Please ensure:${NC}"
-		echo -e "${red}1. Your key is added to your WPEngine account${NC}"
-		echo -e "${red}2. SSH key is loaded in container: ddev auth ssh${NC}"
-		echo -e "${red}3. Key name is set in config.local.yml; WPENGINE_SSH_KEY=you_key_name${NC}"
-		exit 1
-	fi
+        echo -e "${green}SSH connection successful.${NC}"
+    else
+        echo -e "${red}Please ensure:${NC}"
+        echo -e "${red}1. Your key is added to your WPEngine account${NC}"
+        echo -e "${red}2. SSH key is loaded in container: ddev project-auth${NC}"
+        echo -e "${red}3. Key name is set in config.local.yml; WPENGINE_SSH_KEY=~/.ssh/you_key_name${NC}"
+        exit 1
+    fi
 
     # Build rsync command with SSH key if specified
     RSYNC_CMD="rsync -avzh --progress -e 'ssh -i  ${TEMP_KEY}'"
