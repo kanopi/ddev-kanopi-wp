@@ -9,6 +9,8 @@
 
 #ddev-generated
 
+set -e
+
 SERVICE="${1:-}"
 
 if [ "$SERVICE" = "cms" ] || [ "$SERVICE" = "admin" ]; then

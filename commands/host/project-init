@@ -9,33 +9,18 @@
 
 #-------------------------- Helper functions ------------------------------
 
-green='\033[0;32m'
-yellow='\033[1;33m'
-NC='\033[0m'
-
-divider='===================================================\n'
-check='\xE2\x9C\x85'
-construction='\xF0\x9F\x9A\xA7'
-crossmark='\xE2\x9D\x8C'
-party='\xF0\x9F\x8E\x88 \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x8A'
-reverseparty='\xF0\x9F\x8E\x8A \xF0\x9F\x8E\x89 \xF0\x9F\x8E\x88'
-rocket='\xF0\x9F\x9A\x80'
-lightning='\xE2\x9A\xA1'
-gear='\xEF\xB8\x8F'
-key='\xF0\x9F\x94\x91'
-lock='\xF0\x9F\x94\x92'
-arm='\xF0\x9F\x92\xAA'
+# Colors, divider, and emoji constants are provided by load-config.sh below.
 
 # WordPress-specific commands
 theme_dev_command='ddev theme-watch'
 theme_build_command='ddev theme-build'
 refresh_command='ddev db-refresh'
 
-# Get docroot from DDEV configuration, default to 'web'
-DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' ' || true)
-
-# Define paths
-MU_PLUGINS_PATH="${DOCROOT}/wp-content/mu-plugins"
+# Resolve docroot once from DDEV's merged config (honors .ddev/config.local.yaml
+# and other overrides) and export so child commands inherit it.
+source .ddev/scripts/load-config.sh
+DOCROOT=$(resolve_host_docroot)
+export DOCROOT
 
 #-------------------------- Execution -------------------------------------
 
@@ -80,7 +65,8 @@ check_auth() {
 
 # Function to check if autoloader exists
 check_autoloader() {
-  local vendor_path="${MU_PLUGINS_PATH}/vendor/autoload.php"
+  local vendor_dir=$(ddev composer config vendor-dir)
+  local vendor_path="${vendor_dir}/autoload.php"
   if [ ! -f "$vendor_path" ]; then
     echo "❌ Error: Composer autoloader not found at $vendor_path"
     echo "   The autoloader is required for WordPress to run"
@@ -101,36 +87,17 @@ if [ -f "composer.json" ]; then
   export COMPOSER_PROCESS_TIMEOUT=600
   export COMPOSER_HTTP_TIMEOUT=300
 
-  # Try composer install with retry logic
-  COMPOSER_SUCCESS=false
-  MAX_ATTEMPTS=3
-  ATTEMPT=1
+  # composer install + autoloader check, wrapped so retry_command sees a single unit.
+  composer_install_with_check() {
+    ddev composer install 2>&1 | tee /tmp/composer-install.log
+    check_autoloader
+  }
 
-  while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$COMPOSER_SUCCESS" = "false" ]; do
-    if [ $ATTEMPT -gt 1 ]; then
-      echo "⚠️  Composer install attempt $ATTEMPT of $MAX_ATTEMPTS..."
-      echo "   Waiting 5 seconds before retry..."
-      sleep 5
-    fi
-
-    if ddev composer install 2>&1 | tee /tmp/composer-install.log; then
-      # Check if autoloader was created successfully
-      if check_autoloader; then
-        COMPOSER_SUCCESS=true
-        echo "✅ Composer dependencies installed successfully"
-      else
-        echo "⚠️  Composer completed but autoloader not found"
-        ATTEMPT=$((ATTEMPT + 1))
-      fi
-    else
-      echo "⚠️  Composer install failed on attempt $ATTEMPT"
-      ATTEMPT=$((ATTEMPT + 1))
-    fi
-  done
-
-  if [ "$COMPOSER_SUCCESS" = "false" ]; then
+  if retry_command 3 composer_install_with_check; then
+    echo "✅ Composer dependencies installed successfully"
+  else
     echo ""
-    echo "❌ Composer install failed after $MAX_ATTEMPTS attempts"
+    echo "❌ Composer install failed after 3 attempts"
     echo "   Please check authentication credentials and network connection"
     echo "   You can manually run: ddev composer install"
     echo ""

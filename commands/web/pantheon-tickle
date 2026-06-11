@@ -6,23 +6,25 @@
 ## Example: ddev pantheon-tickle
 ## Aliases: tickle,pantheon:tickle
 
-# Abort if anything fails
 set -e
 
-# Ensure required environment variables exist.
-if [ -z "${MIGRATE_DB_SOURCE}" ] || [ -z "${MIGRATE_DB_ENV}" ]; then
+if [ -z "${MIGRATE_DB_SOURCE:-}" ] || [ -z "${MIGRATE_DB_ENV:-}" ]; then
     echo -e " ❌  Error: MIGRATE_DB_SOURCE and MIGRATE_DB_ENV environment variables must be set."
     exit 1
 fi
 
+if [ -z "${TERMINUS_MACHINE_TOKEN:-}" ]; then
+    echo -e " ❌  Error: TERMINUS_MACHINE_TOKEN is not set in the web container."
+    echo -e "    Configure it globally: ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token"
+    exit 1
+fi
+
 echo -e "\n ✅  Logging into Terminus. \n"
-terminus auth:login
+terminus auth:login --machine-token="${TERMINUS_MACHINE_TOKEN}"
 
 echo -e "\n ⏰  Starting Pantheon wake-up loop for ${MIGRATE_DB_SOURCE}.${MIGRATE_DB_ENV}.\n"
 
-# Infinite loop to wake the Pantheon environment every 5 minutes (300 seconds).
-while true
-do
+while true; do
     TIMESTAMP=$(date)
     echo -e "\n 📅  ${TIMESTAMP} - Waking up ${MIGRATE_DB_SOURCE}.${MIGRATE_DB_ENV}."
     terminus env:wake "${MIGRATE_DB_SOURCE}.${MIGRATE_DB_ENV}"

@@ -8,159 +8,96 @@
 ## Aliases: refresh,db:refresh
 ## Flags: [{"Name":"force","Shorthand":"f","Usage":"Force creation of new backup regardless of age"}]
 
-green='\033[0;32m'
-yellow='\033[1;33m'
-red='\033[0;31m'
-NC='\033[0m'
+set -e
+
+# Colors / divider / emojis come from load-config.sh.
+source /var/www/html/.ddev/scripts/load-config.sh
 user_command='ddev wp-restore-admin-user'
+load_kanopi_config
 
-# Parse command line arguments
+# Resolve default environment per provider.
+case "${HOSTING_PROVIDER}" in
+    pantheon) DEFAULT_ENV="dev" ;;
+    wpengine) DEFAULT_ENV="${HOSTING_SITE}" ;;
+    kinsta)   DEFAULT_ENV="live" ;;
+    remote)   DEFAULT_ENV="" ;;
+    *)        DEFAULT_ENV="dev" ;;
+esac
+ENVIRONMENT="${HOSTING_ENV:-$DEFAULT_ENV}"
+
 FORCE_BACKUP=false
-# Get hosting environment from environment variable, default based on provider
-ENVIRONMENT="$HOSTING_ENV"
-if [ -z "$ENVIRONMENT" ]; then
-  if [[ "$HOSTING_PROVIDER" == "pantheon" ]]; then
-    ENVIRONMENT="dev"
-  elif [[ "$HOSTING_PROVIDER" == "wpengine" ]]; then
-    ENVIRONMENT="$HOSTING_SITE"
-  elif [[ "$HOSTING_PROVIDER" == "kinsta" ]]; then
-    ENVIRONMENT="live"
-  elif [[ "$HOSTING_PROVIDER" == "remote" ]]; then
-    ENVIRONMENT=""  # No environment needed for remote
-  else
-    ENVIRONMENT="dev"
-  fi
-fi
-
 for arg in "$@"; do
-  case $arg in
-    --force|-f)
-      FORCE_BACKUP=true
-      shift
-      ;;
-    *)
-      # Skip DDEV internal parameters (like "2") and set environment if valid
-      if [ "$arg" != "2" ] && [ -z "$ENVIRONMENT_SET" ]; then
-        ENVIRONMENT="$arg"
-        ENVIRONMENT_SET=true
-      fi
-      shift
-      ;;
-  esac
+    case $arg in
+        --force|-f)
+            FORCE_BACKUP=true
+            shift
+            ;;
+        *)
+            if [ "$arg" != "2" ] && [ -z "${ENVIRONMENT_SET:-}" ]; then
+                ENVIRONMENT="$arg"
+                ENVIRONMENT_SET=true
+            fi
+            shift
+            ;;
+    esac
 done
 
-cd ${DDEV_APPROOT}
+cd "${DDEV_APPROOT}"
 
-# Get the hosting provider
-HOSTING_PROVIDER="${HOSTING_PROVIDER:-pantheon}"
-
-# Check if hosting provider is properly configured before attempting refresh
-PROVIDER_CONFIGURED=false
-
+# Per-provider required config check.
 case "${HOSTING_PROVIDER}" in
-    "pantheon")
-        HOSTING_SITE_VALUE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
-        if [ -n "$HOSTING_SITE_VALUE" ]; then
-            PROVIDER_CONFIGURED=true
-        else
-            echo -e "${red}Error: HOSTING_SITE not configured for Pantheon. Run 'ddev project-configure' to set up your Pantheon configuration.${NC}"
-            exit 1
-        fi
+    pantheon|wpengine)
+        REQUIRED_VARS="HOSTING_SITE"
         ;;
-    "wpengine")
-        HOSTING_SITE_VALUE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
-        if [ -n "$HOSTING_SITE_VALUE" ]; then
-            PROVIDER_CONFIGURED=true
-        else
-            echo -e "${red}Error: HOSTING_SITE not configured for WPEngine. Run 'ddev project-configure' to set up your WPEngine configuration.${NC}"
-            exit 1
-        fi
+    kinsta)
+        REQUIRED_VARS="REMOTE_HOST"
         ;;
-    "kinsta")
-        REMOTE_HOST_VALUE=$(printenv REMOTE_HOST 2>/dev/null || echo "")
-        if [ -n "$REMOTE_HOST_VALUE" ]; then
-            PROVIDER_CONFIGURED=true
-        else
-            echo -e "${red}Error: REMOTE_HOST not configured for Kinsta. Run 'ddev project-configure' to set up your Kinsta SSH configuration.${NC}"
-            exit 1
-        fi
-        ;;
-    "remote")
-        REMOTE_HOST_VALUE=$(printenv REMOTE_HOST 2>/dev/null || echo "")
-        REMOTE_DOMAIN_VALUE=$(printenv REMOTE_DOMAIN 2>/dev/null || echo "")
-        if [ -n "$REMOTE_HOST_VALUE" ] && [ -n "$REMOTE_DOMAIN_VALUE" ]; then
-            PROVIDER_CONFIGURED=true
-        else
-            echo -e "${red}Error: REMOTE_HOST and REMOTE_DOMAIN not configured for Remote SSH. Run 'ddev project-configure' to set up your Remote SSH configuration.${NC}"
-            exit 1
-        fi
+    remote)
+        REQUIRED_VARS="REMOTE_HOST REMOTE_DOMAIN"
         ;;
     *)
-        # Fallback to old behavior for backward compatibility
-        HOSTING_SITE_VALUE=$(printenv HOSTING_SITE 2>/dev/null || echo "")
-        if [ -n "$HOSTING_SITE_VALUE" ]; then
-            PROVIDER_CONFIGURED=true
-        else
-            echo -e "${red}Error: No hosting provider configuration found. Run 'ddev project-configure' to set up your hosting configuration.${NC}"
-            exit 1
-        fi
+        REQUIRED_VARS="HOSTING_SITE"
+        ;;
+esac
+for v in $REQUIRED_VARS; do
+    if [ -z "${!v:-}" ]; then
+        echo -e "${red}Error: ${v} not configured for ${HOSTING_PROVIDER}. Run 'ddev project-configure'.${NC}"
+        exit 1
+    fi
+done
+
+echo -e "\n${yellow}Refreshing database from ${HOSTING_PROVIDER} environment: ${ENVIRONMENT}${NC}"
+
+case "${HOSTING_PROVIDER}" in
+    pantheon|wpengine|kinsta)
+        REFRESH_SCRIPT=".ddev/scripts/refresh-${HOSTING_PROVIDER}.sh"
+        REFRESH_ARG="$ENVIRONMENT"
+        ;;
+    remote)
+        REFRESH_SCRIPT=".ddev/scripts/refresh-remote.sh"
+        REFRESH_ARG=""
+        ;;
+    *)
+        echo -e "${red}Hosting platform '$HOSTING_PROVIDER' not supported${NC}"
+        echo -e "${yellow}Supported platforms: pantheon, wpengine, kinsta, remote${NC}"
+        exit 1
         ;;
 esac
 
-if [ "$PROVIDER_CONFIGURED" = true ]; then
-    echo -e "\n${yellow}Refreshing database from ${HOSTING_PROVIDER} environment: ${ENVIRONMENT}${NC}"
-else
-    echo -e "${red}Hosting provider configuration not found. Please run 'ddev project-configure' first.${NC}"
+echo -e "${green}Using ${HOSTING_PROVIDER} refresh script...${NC}"
+if ! bash "$REFRESH_SCRIPT" "$REFRESH_ARG" "$FORCE_BACKUP"; then
+    echo -e "${red}Database refresh failed. Please check the error messages above.${NC}"
     exit 1
 fi
 
-# Platform-specific database refresh
-if [[ "$HOSTING_PROVIDER" == "pantheon" ]]; then
-  echo -e "${green}Using Pantheon refresh script...${NC}"
-  # Call the Pantheon-specific refresh script
-  if ! bash .ddev/scripts/refresh-pantheon.sh "$ENVIRONMENT" "$FORCE_BACKUP"; then
-    echo -e "${red}Database refresh failed. Please check the error messages above.${NC}"
-    exit 1
-  fi
-elif [[ "$HOSTING_PROVIDER" == "wpengine" ]]; then
-  echo -e "${green}Using WPEngine refresh script...${NC}"
-  # Call the WPEngine-specific refresh script
-  if ! bash .ddev/scripts/refresh-wpengine.sh "$ENVIRONMENT" "$FORCE_BACKUP"; then
-    echo -e "${red}Database refresh failed. Please check the error messages above.${NC}"
-    exit 1
-  fi
-elif [[ "$HOSTING_PROVIDER" == "kinsta" ]]; then
-  echo -e "${green}Using Kinsta refresh script...${NC}"
-  # Call the Kinsta-specific refresh script
-  if ! bash .ddev/scripts/refresh-kinsta.sh "$ENVIRONMENT" "$FORCE_BACKUP"; then
-    echo -e "${red}Database refresh failed. Please check the error messages above.${NC}"
-    exit 1
-  fi
-elif [[ "$HOSTING_PROVIDER" == "remote" ]]; then
-  echo -e "${green}Using Remote SSH refresh script...${NC}"
-  # Call the Remote SSH refresh script (no environment parameter)
-  if ! bash .ddev/scripts/refresh-remote.sh "" "$FORCE_BACKUP"; then
-    echo -e "${red}Database refresh failed. Please check the error messages above.${NC}"
-    exit 1
-  fi
-else
-  echo -e "${red}Hosting platform '$HOSTING_PROVIDER' not supported${NC}"
-  echo -e "${yellow}Supported platforms: pantheon, wpengine, kinsta, remote${NC}"
-  exit 1
-fi
-
-# Common post-refresh cleanup and setup
 echo -e "\n${yellow}Running post-refresh cleanup and setup...${NC}"
 
-cd "${DDEV_APPROOT}/${DOCROOT}"
+cd "$(get_docroot_path)"
 
-# Flush caches and rewrite rules
-echo -e "${yellow}Flushing caches and rewrite rules...${NC}"
+# Combine the wp-cli post-refresh commands into a single shell pipeline so the
+# CLI bootstraps once rather than three times.
 wp cache flush --allow-root 2>/dev/null || true
 wp rewrite flush --allow-root
-
-# Deactivate problematic plugins
-echo -e "${yellow}Deactivating problematic plugins...${NC}"
 wp plugin deactivate wp-health ithemes-security-pro autoptimize --allow-root --quiet 2>/dev/null || true
 
 echo -e "\n${green}Database refresh completed successfully!${NC}"

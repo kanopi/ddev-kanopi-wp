@@ -7,17 +7,13 @@
 ##          ddev theme-npm run build
 ## Aliases: theme:npm
 
-# Abort if anything fails
 set -e
 
-# Get theme configuration from environment variables
-THEME_PATH=$(printenv THEME 2>/dev/null || echo "")
-DOCROOT=$(printenv DDEV_DOCROOT 2>/dev/null || echo "web")
+source /var/www/html/.ddev/scripts/load-config.sh
+load_kanopi_config
 
-# Check if theme is configured and exists
-if [ -n "$THEME_PATH" ]; then
-    FULL_THEME_PATH="/var/www/html/${DOCROOT}/${THEME_PATH}"
-
+if [ -n "${THEME:-}" ]; then
+    FULL_THEME_PATH=$(get_full_theme_path)
     if [ -d "${FULL_THEME_PATH}" ]; then
         cd "${FULL_THEME_PATH}"
         npm "$@"
@@ -27,6 +23,5 @@ if [ -n "$THEME_PATH" ]; then
         exit 1
     fi
 else
-    # Run in project root if no theme configured
     npm "$@"
 fi

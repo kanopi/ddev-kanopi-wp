@@ -7,12 +7,9 @@
 
 #ddev-generated
 
-# Colors and formatting
-green='\033[0;32m'
-yellow='\033[1;33m'
-red='\033[0;31m'
-NC='\033[0m'
-divider='===================================================\n'
+# Colors / divider / emojis come from load-config.sh (sourced below).
+# Pre-source it here so the banner uses the shared constants.
+[ -f .ddev/scripts/load-config.sh ] && source .ddev/scripts/load-config.sh
 
 echo -e "\n🔧 ${yellow}Kanopi WordPress DDEV Configuration Wizard${NC} 🔧"
 echo -e "${green}${divider}${NC}"
@@ -441,14 +438,16 @@ if [[ "$HOST_PROVIDER" == "pantheon" ]] && [ -n "$MIGRATE_SOURCE" ]; then
     write_config_var "MIGRATE_DB_ENV" "$MIGRATE_ENV"
 fi
 
+# Resolve docroot once via DDEV's merged config (so overrides in
+# .ddev/config.local.yaml etc. are respected) and reuse for the rest of the wizard.
+ACTUAL_DOCROOT=$(resolve_host_docroot)
+ACTUAL_DOCROOT="${ACTUAL_DOCROOT:-web}"
+
 # Configure wp-config-ddev.php to use custom table prefix if needed
 if [ "$WP_PREFIX" != "wp_" ]; then
     echo "Configuring wp-config-ddev.php for custom table prefix..."
 
-    # Get actual docroot from DDEV configuration
-    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
-
-    WP_CONFIG_DDEV_PATH="${DOCROOT}/wp-config-ddev.php"
+    WP_CONFIG_DDEV_PATH="${ACTUAL_DOCROOT}/wp-config-ddev.php"
 
     # Check if wp-config-ddev.php exists and needs table prefix configuration
     if [ -f "$WP_CONFIG_DDEV_PATH" ]; then
@@ -497,8 +496,8 @@ fi
 if [ -n "$PROXY_URL" ]; then
     echo "Configuring nginx proxy..."
 
-    # Get the actual docroot from DDEV configuration
-    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
+    # Reuse ACTUAL_DOCROOT computed once above.
+    DOCROOT="$ACTUAL_DOCROOT"
 
     # Check if nginx_full/nginx-site.conf exists
     if [ -f ".ddev/nginx_full/nginx-site.conf" ]; then

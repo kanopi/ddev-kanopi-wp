@@ -61,9 +61,10 @@ health_checks() {
     # Check that scripts folder was copied
     [ -d ".ddev/scripts" ] || echo "Missing .ddev/scripts directory"
     [ -f ".ddev/scripts/load-config.sh" ] || echo "Missing load-config.sh configuration loader"
-    [ -f ".ddev/scripts/pantheon-refresh.sh" ] || echo "Missing pantheon-refresh.sh"
-    [ -f ".ddev/scripts/wpengine-refresh.sh" ] || echo "Missing wpengine-refresh.sh"
-    [ -f ".ddev/scripts/kinsta-refresh.sh" ] || echo "Missing kinsta-refresh.sh"
+    [ -f ".ddev/scripts/refresh-pantheon.sh" ] || echo "Missing refresh-pantheon.sh"
+    [ -f ".ddev/scripts/refresh-wpengine.sh" ] || echo "Missing refresh-wpengine.sh"
+    [ -f ".ddev/scripts/refresh-kinsta.sh" ] || echo "Missing refresh-kinsta.sh"
+    [ -f ".ddev/scripts/refresh-remote.sh" ] || echo "Missing refresh-remote.sh"
     
     echo "Checking gitignore..." >&3
     # Check gitignore was updated for add-on settings
