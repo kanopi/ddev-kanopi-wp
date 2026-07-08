@@ -6,9 +6,11 @@
 # User-specific environment variables
 # These are merged with the main config.yaml web_environment settings
 web_environment:
-  # WPEngine SSH key path - customize this for your user account
-  # Example: ~/.ssh/your_wpengine_key or /Users/username/.ssh/wpengine_key
-  - WPENGINE_SSH_KEY=/path/to/your/wpengine/ssh/key
+  # Optional specific SSH key (any provider). When set, only this key is loaded
+  # instead of all your SSH keys. Required for WPEngine (one key per account);
+  # optional for Pantheon, Kinsta, and generic remote hosts.
+  # Example: ~/.ssh/your_key or /Users/username/.ssh/your_key
+  - REMOTE_SSH_KEY=/path/to/your/ssh/key
 
   # Add other user-specific variables as needed
   # - MY_CUSTOM_VAR=my_custom_value

@@ -41,7 +41,7 @@ ddev auth ssh
 ssh your-install@your-install.ssh.wpengine.net
 
 # Verify SSH key configuration
-ddev exec printenv WPENGINE_SSH_KEY
+ddev exec printenv REMOTE_SSH_KEY
 
 # Add SSH key to agent
 ssh-add ~/.ssh/your-wpengine-key

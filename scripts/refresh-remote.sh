@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Remote SSH Database Refresh Script
 ## Called by the main refresh command for generic SSH-based hosting providers
@@ -100,11 +101,17 @@ if [ "$EXPORT_DATABASE" = true ]; then
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to remote host...${NC}"
 
-    # Load SSH key
-    SSH_CMD="ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -p ${SSH_PORT}"
-    TEMP_KEY="/tmp/temp_key"
-    ssh-add -L | grep "${REMOTE_SSH_KEY:-id_rsa}" > "$TEMP_KEY"
-    if eval "$SSH_CMD -i ${TEMP_KEY} ${SSH_CONNECTION} 'echo SSH connection successful'"; then
+    # Use a specific SSH key only if one is configured and present in the
+    # container; otherwise rely on the forwarded SSH agent (ddev auth ssh).
+    SSH_IDENTITY="$(kanopi_ssh_identity_opts)"
+    if [ -n "$SSH_IDENTITY" ]; then
+        echo -e "${green}Using configured SSH key: $(kanopi_ssh_key_file)${NC}"
+    else
+        echo -e "${yellow}No specific SSH key configured; using forwarded SSH agent keys.${NC}"
+    fi
+
+    SSH_CMD="ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_IDENTITY}"
+    if eval "$SSH_CMD ${SSH_CONNECTION} 'echo SSH connection successful'"; then
         echo -e "${green}SSH connection successful.${NC}"
     else
         echo -e "${red}Error: Cannot connect to remote host via SSH${NC}"
@@ -112,7 +119,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
         echo -e "${red}1. Your SSH key is properly configured on the remote server${NC}"
         echo -e "${red}2. SSH agent is running: ddev auth ssh${NC}"
         echo -e "${red}3. Your key is added to the remote server's ~/.ssh/authorized_keys${NC}"
-        echo -e "${red}4. Key name is set in config.local.yml: REMOTE_SSH_KEY=your_key_name${NC}"
+        echo -e "${red}4. Optionally set a specific key in config.local.yaml: REMOTE_SSH_KEY=your_key_name${NC}"
         exit 1
     fi
 
@@ -129,13 +136,13 @@ if [ "$EXPORT_DATABASE" = true ]; then
 
     # Try to cd to the path and run wp db export, with fallback if path doesn't exist
     echo -e "${yellow}Attempting to access remote path: ${REMOTE_PATH}${NC}"
-    if eval "$SSH_CMD -i ${TEMP_KEY} ${SSH_CONNECTION} 'cd ${REMOTE_PATH} && pwd && wp db export ${REMOTE_DBFILE} --allow-root'"; then
+    if eval "$SSH_CMD ${SSH_CONNECTION} 'cd ${REMOTE_PATH} && pwd && wp db export ${REMOTE_DBFILE} --allow-root'"; then
         echo -e "${green}Database exported successfully on remote server.${NC}"
     else
         echo -e "${yellow}Primary path failed, trying parent directory...${NC}"
         PARENT_PATH=$(dirname "$REMOTE_PATH")
         echo -e "${yellow}Trying parent path: ${PARENT_PATH}${NC}"
-        if eval "$SSH_CMD -i ${TEMP_KEY} ${SSH_CONNECTION} 'cd ${PARENT_PATH} && pwd && wp db export ${REMOTE_DBFILE} --path=${REMOTE_PATH} --allow-root'"; then
+        if eval "$SSH_CMD ${SSH_CONNECTION} 'cd ${PARENT_PATH} && pwd && wp db export ${REMOTE_DBFILE} --path=${REMOTE_PATH} --allow-root'"; then
             echo -e "${green}Database exported successfully from parent directory.${NC}"
             # Update REMOTE_PATH for download step
             REMOTE_PATH="${PARENT_PATH}"
@@ -147,8 +154,8 @@ if [ "$EXPORT_DATABASE" = true ]; then
     fi
 
     echo -e "${yellow}Downloading Database...${NC}"
-    # Build rsync command with SSH key
-    RSYNC_CMD="rsync -arv --progress -e 'ssh -o StrictHostKeyChecking=no -p ${SSH_PORT} -i ${TEMP_KEY}'"
+    # Reuse the same SSH identity settings for the download
+    RSYNC_CMD="rsync -arv --progress -e 'ssh -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_IDENTITY}'"
     if eval "$RSYNC_CMD \"${SSH_CONNECTION}:${REMOTE_PATH}/${REMOTE_DBFILE}\" \"${DBFILE}\""; then
         echo -e "${green}Database downloaded successfully!${NC}"
     else
@@ -157,7 +164,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
     fi
 
     echo -e "${yellow}Database downloaded. Removing remote db file...${NC}"
-    eval "$SSH_CMD -i ${TEMP_KEY} ${SSH_CONNECTION} 'rm ${REMOTE_PATH}/${REMOTE_DBFILE}'" || echo "Warning: Could not remove remote database file"
+    eval "$SSH_CMD ${SSH_CONNECTION} 'rm ${REMOTE_PATH}/${REMOTE_DBFILE}'" || echo "Warning: Could not remove remote database file"
 fi
 
 echo -e "${yellow}Importing Database...${NC}"

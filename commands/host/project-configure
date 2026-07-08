@@ -97,7 +97,6 @@ case "${HOSTING_PROVIDER:-not set}" in
     "wpengine")
         echo "WPEngine Site: ${HOSTING_SITE:-not set}"
         echo "WPEngine Docroot: ${DOCROOT:-not set}"
-        echo "WPEngine Key: ${WPENGINE_SSH_KEY:-not set}"
         ;;
     "kinsta")
         echo "Kinsta Remote Host: ${REMOTE_HOST:-not set}"
@@ -119,6 +118,7 @@ case "${HOSTING_PROVIDER:-not set}" in
         ;;
 esac
 
+echo "SSH Key: ${REMOTE_SSH_KEY:-${WPENGINE_SSH_KEY:-not set (all keys loaded)}}"
 echo "Theme Path: ${THEME:-not set}"
 echo "Theme Name: ${THEMENAME:-not set}"
 echo "WordPress Admin User: ${WP_ADMIN_USER:-not set}"
@@ -173,10 +173,7 @@ case "$HOST_PROVIDER" in
         echo "-------------------------"
         prompt_input "Install name (e.g., my-site)" "${HOSTING_SITE}" HOSTING_SITE
         prompt_input "Document root directory (e.g., wp, public, web, or . for application root)" "${DOCROOT:-web}" DOCROOT
-        prompt_input "SSH private key name (e.g., id_rsa, id_ed25519)" "${WPENGINE_SSH_KEY:-id_rsa}" WPENGINE_SSH_KEY
 
-        echo "💡 WPEngine only allows one SSH key per account, so we'll use this specific key."
-        echo "💡 SSH key name configured: $WPENGINE_SSH_KEY"
         echo "💡 Document root configured: $DOCROOT"
         ;;
     "kinsta")
@@ -207,6 +204,27 @@ case "$HOST_PROVIDER" in
         echo "💡 Do not include http:// or https:// - just the domain."
         ;;
 esac
+
+# Optional: pin a specific SSH key (any provider). When set, only this key is
+# loaded instead of all SSH keys. WPEngine requires this since it allows only
+# one key per account; other providers can use it to avoid loading every key.
+echo ""
+echo "🔑 SSH Key Configuration (optional):"
+echo "------------------------------------"
+# Seed the default from an existing value, falling back to the legacy variable.
+REMOTE_SSH_KEY_DEFAULT="${REMOTE_SSH_KEY:-${WPENGINE_SSH_KEY:-}}"
+if [[ "$HOST_PROVIDER" == "wpengine" ]]; then
+    echo "💡 WPEngine only allows one SSH key per account, so a specific key is recommended."
+    REMOTE_SSH_KEY_DEFAULT="${REMOTE_SSH_KEY_DEFAULT:-id_rsa}"
+else
+    echo "💡 Leave blank to load all SSH keys, or specify one key name to load only that key."
+fi
+prompt_input "SSH private key name (e.g., id_rsa, id_ed25519; blank for all keys)" "${REMOTE_SSH_KEY_DEFAULT}" REMOTE_SSH_KEY
+if [ -n "$REMOTE_SSH_KEY" ]; then
+    echo "💡 SSH key configured: $REMOTE_SSH_KEY (only this key will be loaded)"
+else
+    echo "💡 No specific SSH key set — all SSH keys will be loaded."
+fi
 
 # Get theme configuration
 echo ""
@@ -363,8 +381,6 @@ case "$HOST_PROVIDER" in
     "wpengine")
         write_config_var "HOSTING_SITE" "$HOSTING_SITE"
         write_config_var "DOCROOT" "$DOCROOT"
-        # Write WPENGINE_SSH_KEY to local config file instead of global config
-        write_local_config_var "WPENGINE_SSH_KEY" "$WPENGINE_SSH_KEY"
         ;;
     "kinsta")
         write_config_var "REMOTE_HOST" "$REMOTE_HOST"
@@ -382,6 +398,12 @@ case "$HOST_PROVIDER" in
         write_config_var "REMOTE_DOMAIN" "$REMOTE_DOMAIN"
         ;;
 esac
+
+# Write the optional SSH key to the local config file (user-specific, git-ignored).
+# Only written when set, so blank means "load all keys".
+if [ -n "$REMOTE_SSH_KEY" ]; then
+    write_local_config_var "REMOTE_SSH_KEY" "$REMOTE_SSH_KEY"
+fi
 
 # Write theme variables
 echo "Setting theme configuration..."
@@ -550,7 +572,7 @@ echo ""
 echo "📁 Settings saved in:"
 echo "   • .ddev/scripts/load-config.sh (for command scripts)"
 echo "   • .ddev/config.yaml web_environment (for DDEV containers)"
-if [[ "$HOST_PROVIDER" == "wpengine" ]]; then
+if [ -n "$REMOTE_SSH_KEY" ]; then
     echo "   • .ddev/config.local.yaml (for user-specific settings like SSH keys)"
 fi
 echo ""
@@ -567,20 +589,32 @@ case "$HOST_PROVIDER" in
     "wpengine")
         echo "1. 🔑 Ensure your SSH key is set up for WPEngine:"
         echo "   💡 Add your SSH public key to your WPEngine User Portal"
-        echo "   💡 The public key should correspond to: $WPENGINE_SSH_KEY"
-        echo "   💡 The init script will automatically load this specific key"
+        if [ -n "$REMOTE_SSH_KEY" ]; then
+            echo "   💡 The public key should correspond to: $REMOTE_SSH_KEY"
+            echo "   💡 The init script will automatically load this specific key"
+        else
+            echo "   💡 The init script will load all your SSH keys"
+        fi
         echo ""
         ;;
     "kinsta")
         echo "1. 🔑 Ensure your SSH key is set up for Kinsta:"
         echo "   💡 Add your SSH public key in MyKinsta > User Settings > SSH Keys"
-        echo "   💡 The init script will load all your keys"
+        if [ -n "$REMOTE_SSH_KEY" ]; then
+            echo "   💡 The init script will load only the configured key: $REMOTE_SSH_KEY"
+        else
+            echo "   💡 The init script will load all your keys"
+        fi
         echo ""
         ;;
     "remote")
         echo "1. 🔑 Ensure your SSH key is set up for Remote SSH:"
         echo "   💡 Add your SSH public key to the remote server's ~/.ssh/authorized_keys"
-        echo "   💡 The init script will load all your keys"
+        if [ -n "$REMOTE_SSH_KEY" ]; then
+            echo "   💡 The init script will load only the configured key: $REMOTE_SSH_KEY"
+        else
+            echo "   💡 The init script will load all your keys"
+        fi
         echo ""
         ;;
 esac

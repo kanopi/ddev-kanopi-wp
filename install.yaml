@@ -9,7 +9,7 @@ project_files:
 - scripts/
 
 # DDEV version constraint
-ddev_version_constraint: ">= v1.22.0"
+ddev_version_constraint: ">= v1.25.0"
 
 # Pre-install actions
 pre_install_actions:

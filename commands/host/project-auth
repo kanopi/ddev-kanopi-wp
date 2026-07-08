@@ -11,33 +11,70 @@
 source .ddev/scripts/load-config.sh
 load_kanopi_config
 
-# Function to read WPENGINE_SSH_KEY from local config file
-get_wpengine_ssh_key() {
-    local local_config_file=".ddev/config.local.yaml"
-    if [ -f "$local_config_file" ]; then
-        # Extract WPENGINE_SSH_KEY from YAML format: "  - WPENGINE_SSH_KEY=value"
-        grep "^  - WPENGINE_SSH_KEY=" "$local_config_file" | cut -d'=' -f2- || echo ""
-    else
-        echo ""
-    fi
+# Read a web_environment variable from the merged DDEV config. Uses ddev's own
+# config resolution (config.yaml + config.local.yaml) and its bundled yq via the
+# ddev-utilities image, so we don't hand-parse YAML or assume a specific file or
+# indentation. Returns empty (never errors) if this DDEV version lacks the
+# command or the utilities image is unavailable.
+get_config_env_ddev() {
+    local var_name="$1"
+    ddev utility configyaml --full-yaml 2>/dev/null \
+        | docker run -i --rm ddev/ddev-utilities yq \
+            ".web_environment[]? | select(test(\"^${var_name}=\")) | sub(\"^${var_name}=\", \"\")" 2>/dev/null \
+        | head -n1
 }
 
-# Use specific SSH key for WPEngine, all keys for others
-if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
-    # For WPEngine, read SSH key from local config file since host commands can't access container env vars
-    WPENGINE_SSH_KEY=$(get_wpengine_ssh_key)
-    echo "🔍 WPEngine detected - using specific SSH key: $WPENGINE_SSH_KEY"
+# Fallback that reads the variable directly from the local config file. This has
+# no DDEV version, image, or network dependency, so `ddev project-auth` still
+# resolves the key on older DDEV releases or offline setups.
+get_config_env_file() {
+    local var_name="$1"
+    local local_config_file=".ddev/config.local.yaml"
+    [ -f "$local_config_file" ] || return 0
+    grep -E "^[[:space:]]*-[[:space:]]*${var_name}=" "$local_config_file" \
+        | head -n1 | cut -d'=' -f2-
+}
+
+# Read a web_environment variable, preferring ddev's merged config and falling
+# back to a direct read of config.local.yaml.
+get_config_env() {
+    local var_name="$1" value
+    value="$(get_config_env_ddev "$var_name")"
+    if [ -z "$value" ]; then
+        value="$(get_config_env_file "$var_name")"
+    fi
+    printf '%s' "$value"
+}
+
+# Read the project SSH key. Prefers REMOTE_SSH_KEY, falling back to the legacy
+# WPENGINE_SSH_KEY name for projects configured before the rename.
+get_remote_ssh_key() {
+    local key
+    key="$(get_config_env REMOTE_SSH_KEY)"
+    if [ -z "$key" ]; then
+        key="$(get_config_env WPENGINE_SSH_KEY)"
+    fi
+    printf '%s' "$key"
+}
+
+# If the project defines a specific SSH key, load only that key; otherwise load
+# all keys. This is provider-agnostic: WPEngine requires a single key (only one
+# key is allowed per account), but any provider can pin a specific key this way.
+REMOTE_SSH_KEY=$(get_remote_ssh_key)
+
+if [[ -n "$REMOTE_SSH_KEY" ]]; then
+    echo "🔍 Specific SSH key configured - using: $REMOTE_SSH_KEY"
 
     # Robust tilde and path expansion
-    if [[ "$WPENGINE_SSH_KEY" =~ ^\~/ ]]; then
+    if [[ "$REMOTE_SSH_KEY" =~ ^\~/ ]]; then
         # Handle ~/path
-        SSH_KEY_PATH="$HOME/${WPENGINE_SSH_KEY:2}"
-    elif [[ "$WPENGINE_SSH_KEY" =~ ^\~ ]]; then
+        SSH_KEY_PATH="$HOME/${REMOTE_SSH_KEY:2}"
+    elif [[ "$REMOTE_SSH_KEY" =~ ^\~ ]]; then
         # Handle just ~
         SSH_KEY_PATH="$HOME"
     else
         # Use as-is for absolute paths
-        SSH_KEY_PATH="$WPENGINE_SSH_KEY"
+        SSH_KEY_PATH="$REMOTE_SSH_KEY"
     fi
 
     # Remove .pub extension if present
@@ -45,36 +82,44 @@ if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
 
     echo "   Resolved to: $SSH_KEY_PATH"
 
-    # For WPEngine, we need to add the specific key to the host SSH agent first
-    # then use ddev auth ssh to import it into the container
+    # Add the specific key to the host SSH agent first,
+    # then import it into the container.
     echo "🔍 Adding SSH key to host agent..."
 
     # Check if key exists on host
     if [ -f "$SSH_KEY_PATH" ]; then
         echo "✅ SSH key file found on host"
 
-        # For WPEngine, just copy the key and add to SSH agent
-        echo "🔑 Adding WPEngine SSH key to container..."
+        # Copy the key and add it to the SSH agent
+        echo "🔑 Adding SSH key to container..."
         ddev exec "mkdir -p ~/.ssh && chmod 700 ~/.ssh"
         cat "$SSH_KEY_PATH" | ddev exec "cat > ~/.ssh/$(basename "$SSH_KEY_PATH") && chmod 600 ~/.ssh/$(basename "$SSH_KEY_PATH") && ssh-add ~/.ssh/$(basename "$SSH_KEY_PATH")"
 
-        echo "✅ Loaded only WPEngine SSH key: $(basename "$SSH_KEY_PATH")"
+        echo "✅ Loaded only the configured SSH key: $(basename "$SSH_KEY_PATH")"
     else
         echo "⚠️  SSH key not found on host: $SSH_KEY_PATH"
         echo "   Debugging information:"
-        echo "   - Original path: $WPENGINE_SSH_KEY"
+        echo "   - Original path: $REMOTE_SSH_KEY"
         echo "   - Resolved path: $SSH_KEY_PATH"
         echo "   - Files in ~/.ssh/:"
         ls -la ~/.ssh/ 2>/dev/null | grep "$(basename "$SSH_KEY_PATH")" || echo "   Key file not found"
         echo ""
-        echo "   Please check your WPENGINE_SSH_KEY configuration"
+        echo "   Please check your REMOTE_SSH_KEY configuration"
         echo "   Run 'ddev project-configure' to update it"
         echo ""
-        echo "⚠️  For WPEngine, only the specific SSH key can be loaded."
+        echo "⚠️  A specific SSH key (REMOTE_SSH_KEY) is configured but could not be found."
         echo "⚠️  Please fix your SSH key configuration before proceeding."
         exit 1
     fi
 else
+    # WPEngine allows only one SSH key per account, so loading all keys usually
+    # fails authentication. Warn clearly rather than degrading silently.
+    if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
+        echo "⚠️  No specific SSH key resolved for WPEngine (REMOTE_SSH_KEY is empty)."
+        echo "⚠️  WPEngine allows only one key per account, so loading all keys may fail."
+        echo "⚠️  Run 'ddev project-configure' to set REMOTE_SSH_KEY, or add it to .ddev/config.local.yaml."
+        echo ""
+    fi
     echo "Loading all SSH keys for $HOSTING_PROVIDER"
     ddev auth ssh
 fi

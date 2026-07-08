@@ -75,22 +75,28 @@ if [ "$DOWNLOAD_BACKUP" = true ]; then
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to WPEngine...${NC}"
 
-    # Load SSH key
-    SSH_CMD="ssh -o ConnectTimeout=10"
-    TEMP_KEY="/tmp/temp_key"
-    ssh-add -L | grep "${WPENGINE_SSH_KEY:-id_rsa}" > "$TEMP_KEY"
-    if eval "$SSH_CMD -i ${TEMP_KEY} $WPENGINE_SSH exit"; then
+    # Use a specific SSH key only if one is configured and present in the
+    # container; otherwise rely on the forwarded SSH agent (ddev auth ssh).
+    SSH_IDENTITY="$(kanopi_ssh_identity_opts)"
+    if [ -n "$SSH_IDENTITY" ]; then
+        echo -e "${green}Using configured SSH key: $(kanopi_ssh_key_file)${NC}"
+    else
+        echo -e "${yellow}No specific SSH key configured; using forwarded SSH agent keys.${NC}"
+    fi
+
+    SSH_CMD="ssh -o ConnectTimeout=10 ${SSH_IDENTITY}"
+    if eval "$SSH_CMD $WPENGINE_SSH exit"; then
 		echo -e "${green}SSH connection successful.${NC}"
 	else
 		echo -e "${red}Please ensure:${NC}"
 		echo -e "${red}1. Your key is added to your WPEngine account${NC}"
 		echo -e "${red}2. SSH key is loaded in container: ddev auth ssh${NC}"
-		echo -e "${red}3. Key name is set in config.local.yml; WPENGINE_SSH_KEY=you_key_name${NC}"
+		echo -e "${red}3. Key name is set in config.local.yaml; REMOTE_SSH_KEY=your_key_name${NC}"
 		exit 1
 	fi
 
-    # Build rsync command with SSH key if specified
-    RSYNC_CMD="rsync -avzh --progress -e 'ssh -i  ${TEMP_KEY}'"
+    # Download the backup, reusing the same SSH identity settings
+    RSYNC_CMD="rsync -avzh --progress -e 'ssh ${SSH_IDENTITY}'"
     if eval "$RSYNC_CMD \"$WPENGINE_SSH:$WPENGINE_BACKUP_PATH\" \"$DB_DUMP\""; then
         # Update timestamp to mark as fresh
         touch -d "1 second ago" "$DB_DUMP"

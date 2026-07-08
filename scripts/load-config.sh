@@ -30,6 +30,10 @@ load_kanopi_config() {
     # Hosting Provider
     export HOSTING_PROVIDER=${HOSTING_PROVIDER:-$DEFAULT_HOSTING_PROVIDER}
 
+    # Optional specific SSH key (any provider). When set, only this key is loaded
+    # instead of all keys. Falls back to the legacy WPENGINE_SSH_KEY variable.
+    export REMOTE_SSH_KEY=${REMOTE_SSH_KEY:-${WPENGINE_SSH_KEY:-''}}
+
     # Pantheon-specific Configuration
     if [[ "${HOSTING_PROVIDER}" == "pantheon" ]]; then
         export HOSTING_SITE=${HOSTING_SITE:-''}
@@ -44,7 +48,6 @@ load_kanopi_config() {
     if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
         export HOSTING_SITE=${HOSTING_SITE:-''}
         export DOCROOT=${DOCROOT:-'web'}  # WPEngine default, but configurable
-        export WPENGINE_SSH_KEY=${WPENGINE_SSH_KEY:-''}
     fi
 
     # Kinsta-specific Configuration
@@ -63,6 +66,37 @@ load_kanopi_config() {
         export REMOTE_PATH=${REMOTE_PATH:-''}
         export REMOTE_DOMAIN=${REMOTE_DOMAIN:-''}
     fi
+}
+
+# Resolve the container path to the configured SSH key, if any.
+# Echoes the key file path when REMOTE_SSH_KEY is set AND the key file exists in
+# the container (copied there by `ddev project-auth`); echoes nothing otherwise.
+# Never assumes a default key name.
+kanopi_ssh_key_file() {
+    local key="${REMOTE_SSH_KEY:-}"
+    [ -z "$key" ] && return 0
+    # Ignore public-key suffix so we point at the private key.
+    key="${key%.pub}"
+    local candidate
+    # Prefer an explicit existing path, then the key copied into ~/.ssh.
+    for candidate in "$key" "${HOME}/.ssh/$(basename "$key")"; do
+        if [ -f "$candidate" ]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+    return 0
+}
+
+# Echo the ssh "-i <keyfile>" option when a specific key is available, otherwise
+# echo nothing so ssh/rsync fall back to the forwarded SSH agent (ddev auth ssh).
+kanopi_ssh_identity_opts() {
+    local key_file
+    key_file="$(kanopi_ssh_key_file)"
+    if [ -n "$key_file" ]; then
+        printf -- '-i %s' "$key_file"
+    fi
+    return 0
 }
 
 # Function to update configuration variables in this file

@@ -32,7 +32,7 @@ Each provider requires specific configuration during the `ddev project-configure
 - **Recommended Docroot**: `public` (set during `ddev config`)
 - **Authentication**: Specific SSH key (WPEngine allows only one key per account)
 - **Database**: SSH-based backup retrieval using nightly backups
-- **Variables**: `HOSTING_SITE` (install name), `WPENGINE_SSH_KEY` (SSH key path)
+- **Variables**: `HOSTING_SITE` (install name), `REMOTE_SSH_KEY` (SSH key name/path)
 
 ### Kinsta
 - **Recommended Docroot**: `public` (set during `ddev config`)

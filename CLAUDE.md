@@ -78,7 +78,7 @@ The add-on uses a **modular command approach** where `project-init` orchestrates
 - **Recommended Docroot**: `public` (set during `ddev config`)
 - **Authentication**: Specific SSH key (WPEngine allows only one key per account)
 - **Database**: SSH-based backup retrieval using nightly backups
-- **Variables**: `HOSTING_SITE` (install name), `WPENGINE_SSH_KEY` (SSH key path)
+- **Variables**: `HOSTING_SITE` (install name), `REMOTE_SSH_KEY` (SSH key name/path)
 
 ### Kinsta
 - **Recommended Docroot**: `public` (set during `ddev config`)
@@ -117,7 +117,10 @@ Variables are stored in multiple locations:
 
 #### WPEngine Configuration
 - `HOSTING_SITE`: WPEngine install name
-- `WPENGINE_SSH_KEY`: Path to SSH private key for WPEngine access (stored in `.ddev/config.local.yaml` for user privacy)
+- `REMOTE_SSH_KEY`: SSH private key name/path for WPEngine access (stored in `.ddev/config.local.yaml` for user privacy). WPEngine requires this since it allows only one key per account.
+
+#### SSH Key Selection (all providers)
+- `REMOTE_SSH_KEY`: Optional. When set, only this specific SSH key is loaded into the container instead of all keys; when unset/blank, all keys are loaded (`ddev auth ssh`). Works with any provider. Stored in `.ddev/config.local.yaml` (git-ignored). The legacy `WPENGINE_SSH_KEY` variable is still read as a fallback.
 
 #### Kinsta Configuration
 - `REMOTE_HOST`: SSH host (IP address or hostname)
@@ -137,7 +140,7 @@ The add-on supports user-specific configuration through `.ddev/config.local.yaml
 - **Purpose**: Stores user-specific variables like SSH key paths
 - **Git Status**: Automatically ignored to keep personal settings private
 - **Format**: Standard DDEV configuration format with `web_environment` section
-- **Usage**: Created automatically by `ddev project-configure` for WPEngine projects
+- **Usage**: Created automatically by `ddev project-configure` when a specific `REMOTE_SSH_KEY` is set
 
 #### Example Local Configuration
 ```yaml
@@ -146,7 +149,7 @@ The add-on supports user-specific configuration through `.ddev/config.local.yaml
 # This file is ignored by git to keep personal settings private
 
 web_environment:
-  - WPENGINE_SSH_KEY=/Users/username/.ssh/wpengine_key
+  - REMOTE_SSH_KEY=/Users/username/.ssh/wpengine_key
 ```
 
 #### Template File
