@@ -215,10 +215,29 @@ teardown() {
     ddev exec "echo 'export HOSTING_PROVIDER=\"wpengine\"' >> .ddev/scripts/load-config.sh"
     ddev exec "echo 'export HOSTING_SITE=\"test-site\"' >> .ddev/scripts/load-config.sh"
     ddev exec "echo 'export DOCROOT=\"web\"' >> .ddev/scripts/load-config.sh"
-    ddev exec "echo 'export WPENGINE_SSH_KEY=\"~/.ssh/test_key\"' >> .ddev/scripts/load-config.sh"
+    ddev exec "echo 'export REMOTE_SSH_KEY=\"~/.ssh/test_key\"' >> .ddev/scripts/load-config.sh"
 
     # Test that WPEngine configuration loads properly
     ddev exec "source .ddev/scripts/load-config.sh && load_kanopi_config && echo \$HOSTING_PROVIDER" | grep -q "wpengine"
+
+    # Test that the agnostic REMOTE_SSH_KEY variable is exported
+    ddev exec "source .ddev/scripts/load-config.sh && load_kanopi_config && echo \$REMOTE_SSH_KEY" | grep -q "test_key"
+}
+
+@test "legacy WPENGINE_SSH_KEY falls back to REMOTE_SSH_KEY" {
+    set -eu -o pipefail
+    cd $TESTDIR
+    ddev config --project-name=$PROJNAME --project-type=wordpress --docroot=web --create-docroot
+    ddev add-on get $DIR
+    ddev start
+
+    # Simulate an existing project still using the legacy variable name
+    ddev exec "mkdir -p .ddev/scripts"
+    ddev exec "echo 'export HOSTING_PROVIDER=\"wpengine\"' >> .ddev/scripts/load-config.sh"
+    ddev exec "echo 'export WPENGINE_SSH_KEY=\"~/.ssh/legacy_key\"' >> .ddev/scripts/load-config.sh"
+
+    # REMOTE_SSH_KEY should resolve to the legacy WPENGINE_SSH_KEY value
+    ddev exec "source .ddev/scripts/load-config.sh && load_kanopi_config && echo \$REMOTE_SSH_KEY" | grep -q "legacy_key"
 }
 
 @test "configurable docroot for wpengine" {

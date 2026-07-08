@@ -6,7 +6,7 @@ SSH-based integration with WPEngine hosting, including specialized key handling 
 
 ### Required Variables
 - `HOSTING_SITE` - WPEngine install name
-- `WPENGINE_SSH_KEY` - Path to SSH private key for WPEngine access
+- `REMOTE_SSH_KEY` - SSH private key name/path for WPEngine access (WPEngine allows only one key per account). Stored in `.ddev/config.local.yaml`. The legacy `WPENGINE_SSH_KEY` name is still read as a fallback.
 
 ### Setup Process
 
@@ -69,7 +69,7 @@ ddev auth ssh
 ssh -i ~/.ssh/your-wpengine-key your-install@your-install.ssh.wpengine.net
 
 # Verify configuration
-ddev exec printenv WPENGINE_SSH_KEY
+ddev exec printenv REMOTE_SSH_KEY
 ```
 
 ## File Structure

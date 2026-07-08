@@ -44,13 +44,26 @@ ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here
 | Variable | Description | Example | Required |
 |----------|-------------|---------|----------|
 | `HOSTING_SITE` | WPEngine install name | `mysite` | Yes |
-| `WPENGINE_SSH_KEY` | Path to SSH private key (stored in local config) | `~/.ssh/id_rsa_wpengine` | Yes |
+| `REMOTE_SSH_KEY` | SSH private key name/path (stored in local config) | `~/.ssh/id_rsa_wpengine` | Yes |
 
 #### WPEngine SSH Key Notes
-- WPEngine allows only **one SSH key per account**
+- WPEngine allows only **one SSH key per account**, so `REMOTE_SSH_KEY` should be set
 - SSH key path is stored in `.ddev/config.local.yaml` to keep user-specific settings private
 - Key must be added to your WPEngine User Portal
 - Local config file is automatically git-ignored
+- `REMOTE_SSH_KEY` is provider-agnostic — see [SSH Key Selection](#ssh-key-selection)
+
+### SSH Key Selection
+
+| Variable | Description | Example | Required |
+|----------|-------------|---------|----------|
+| `REMOTE_SSH_KEY` | Load only this specific SSH key instead of all keys | `id_ed25519` | No |
+
+- Works with **any provider** (Pantheon, WPEngine, Kinsta, remote)
+- When **set**, only the named key is loaded into the container
+- When **blank/unset**, all of your SSH keys are loaded (`ddev auth ssh`)
+- Stored in `.ddev/config.local.yaml` (git-ignored) since the key is user-specific
+- The legacy `WPENGINE_SSH_KEY` variable is still read as a fallback for existing projects
 
 ### Kinsta Configuration
 
@@ -87,7 +100,7 @@ The add-on supports user-specific configuration through `.ddev/config.local.yaml
 # This file is ignored by git to keep personal settings private
 
 web_environment:
-  - WPENGINE_SSH_KEY=/Users/username/.ssh/wpengine_key
+  - REMOTE_SSH_KEY=/Users/username/.ssh/wpengine_key
 ```
 
 ### Template File
@@ -100,7 +113,7 @@ A template is provided at `config/config.local.example.yaml` showing the expecte
 # Copy this file to .ddev/config.local.yaml and customize for your environment
 
 web_environment:
-  - WPENGINE_SSH_KEY=/path/to/your/wpengine/ssh/key
+  - REMOTE_SSH_KEY=/path/to/your/ssh/key
 ```
 
 ## Configuration Management
@@ -167,7 +180,7 @@ case "$HOSTING_PROVIDER" in
         ;;
     "wpengine")
         echo "Using WPEngine SSH operations"
-        ssh_key="$WPENGINE_SSH_KEY"
+        ssh_key="$REMOTE_SSH_KEY"
         ;;
     "kinsta")
         echo "Using Kinsta SSH configuration"
@@ -257,7 +270,7 @@ case "$HOSTING_PROVIDER" in
         ddev exec printenv TERMINUS_MACHINE_TOKEN
         ;;
     "wpengine")
-        ddev exec printenv WPENGINE_SSH_KEY
+        ddev exec printenv REMOTE_SSH_KEY
         ;;
     "kinsta")
         ddev exec printenv REMOTE_HOST

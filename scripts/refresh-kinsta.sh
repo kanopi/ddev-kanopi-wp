@@ -93,15 +93,25 @@ if [ "$EXPORT_DATABASE" = true ]; then
     rm -rf ${DBFILE} || true
     rm -rf ${DBFILE}.gz || true
     
+    # Use a specific SSH key only if one is configured and present in the
+    # container; otherwise rely on the forwarded SSH agent (ddev auth ssh).
+    SSH_IDENTITY="$(kanopi_ssh_identity_opts)"
+    if [ -n "$SSH_IDENTITY" ]; then
+        echo -e "${green}Using configured SSH key: $(kanopi_ssh_key_file)${NC}"
+    else
+        echo -e "${yellow}No specific SSH key configured; using forwarded SSH agent keys.${NC}"
+    fi
+
     # Test SSH connectivity first
     echo -e "${yellow}Testing SSH connectivity to Kinsta...${NC}"
-    if ! ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "echo 'SSH connection successful'"; then
+    if ! ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -p "${SSH_PORT}" ${SSH_IDENTITY} "${SSH_CONNECTION}" "echo 'SSH connection successful'"; then
         echo -e "${red}Error: Cannot connect to Kinsta via SSH${NC}"
         echo -e "${red}Please ensure:${NC}"
         echo -e "${red}1. Your SSH key is properly configured with Kinsta${NC}"
         echo -e "${red}2. SSH agent is running: ddev auth ssh${NC}"
         echo -e "${red}3. Your key is added to your Kinsta account${NC}"
         echo -e "${red}4. SSH connection details are correct${NC}"
+        echo -e "${red}5. Optionally set a specific key in config.local.yaml: REMOTE_SSH_KEY=your_key_name${NC}"
         exit 1
     fi
     
@@ -119,13 +129,13 @@ if [ "$EXPORT_DATABASE" = true ]; then
 
     # Try to cd to the path and run wp db export, with fallback if path doesn't exist
     echo -e "${yellow}Attempting to access remote path: ${REMOTE_PATH}${NC}"
-    if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${REMOTE_PATH} && pwd && wp db export ${REMOTE_DBFILE} --allow-root"; then
+    if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" ${SSH_IDENTITY} "${SSH_CONNECTION}" "cd ${REMOTE_PATH} && pwd && wp db export ${REMOTE_DBFILE} --allow-root"; then
         echo -e "${green}Database exported successfully on remote server.${NC}"
     else
         echo -e "${yellow}Primary path failed, trying parent directory...${NC}"
         PARENT_PATH=$(dirname "$REMOTE_PATH")
         echo -e "${yellow}Trying parent path: ${PARENT_PATH}${NC}"
-        if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "cd ${PARENT_PATH} && pwd && wp db export ${REMOTE_DBFILE} --path=${REMOTE_PATH} --allow-root"; then
+        if ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" ${SSH_IDENTITY} "${SSH_CONNECTION}" "cd ${PARENT_PATH} && pwd && wp db export ${REMOTE_DBFILE} --path=${REMOTE_PATH} --allow-root"; then
             echo -e "${green}Database exported successfully from parent directory.${NC}"
             # Update REMOTE_PATH for download step
             REMOTE_PATH="${PARENT_PATH}"
@@ -137,15 +147,15 @@ if [ "$EXPORT_DATABASE" = true ]; then
     fi
     
     echo -e "${yellow}Downloading Database...${NC}"
-    if rsync -arv -e "ssh -o StrictHostKeyChecking=no -p ${SSH_PORT}" --progress "${SSH_CONNECTION}:${REMOTE_PATH}/${REMOTE_DBFILE}" "${DBFILE}"; then
+    if rsync -arv -e "ssh -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_IDENTITY}" --progress "${SSH_CONNECTION}:${REMOTE_PATH}/${REMOTE_DBFILE}" "${DBFILE}"; then
         echo -e "${green}Database downloaded successfully!${NC}"
     else
         echo -e "${red}Failed to download database${NC}"
         exit 1
     fi
-    
+
     echo -e "${yellow}Database downloaded. Removing remote db file...${NC}"
-    ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" "${SSH_CONNECTION}" "rm ${REMOTE_PATH}/${REMOTE_DBFILE}" || echo "Warning: Could not remove remote database file"
+    ssh -o StrictHostKeyChecking=no -p "${SSH_PORT}" ${SSH_IDENTITY} "${SSH_CONNECTION}" "rm ${REMOTE_PATH}/${REMOTE_DBFILE}" || echo "Warning: Could not remove remote database file"
 fi
 
 echo -e "${yellow}Importing Database...${NC}"
