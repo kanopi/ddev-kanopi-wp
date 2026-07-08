@@ -9,7 +9,7 @@
 #ddev-generated
 
 # Load configuration with local override support
-source /var/www/html/.ddev/scripts/load-config.sh
+source ${DDEV_APPROOT}/.ddev/scripts/load-config.sh
 load_kanopi_config
 
 echo "Restoring admin user: $WP_ADMIN_USER"
@@ -18,26 +18,26 @@ echo "Restoring admin user: $WP_ADMIN_USER"
 case "${HOSTING_PROVIDER}" in
     "pantheon")
         DOCROOT="web"
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         ;;
     "wpengine")
         # Use configured DOCROOT from environment, fallback to 'web'
         DOCROOT="${DOCROOT:-web}"
         # Handle application root case (. or empty)
         if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
-            DOCROOT_PATH="/var/www/html"
+            DOCROOT_PATH="${DDEV_APPROOT}"
             echo "Using application root (no subfolder) for WordPress"
         else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+            DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         fi
         ;;
     "kinsta")
         DOCROOT="public"
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         ;;
     *)
         DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         ;;
 esac
 

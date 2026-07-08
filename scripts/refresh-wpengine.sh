@@ -11,7 +11,7 @@ NC='\033[0m'
 divider='===================================================\n'
 
 # Load Kanopi configuration
-source /var/www/html/.ddev/scripts/load-config.sh
+source ${DDEV_APPROOT}/.ddev/scripts/load-config.sh
 load_kanopi_config
 
 # Parameters from main refresh command

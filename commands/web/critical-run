@@ -23,11 +23,11 @@ lightning='\xE2\x9A\xA1'
 #-------------------------- Settings --------------------------------
 
 # Get theme configuration from environment variables
-THEME_PATH=$(printenv THEME 2>/dev/null || echo "wp-content/themes/custom/struts")
-DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
+THEME_PATH=${THEME:-"wp-content/themes/custom/struts"}
+DOCROOT=${DOCROOT:-"web"}
 
 # Define full theme path
-FULL_THEME_PATH="/var/www/html/${DOCROOT}/${THEME_PATH}"
+FULL_THEME_PATH="${DDEV_APPROOT}/${DOCROOT}/${THEME_PATH}"
 
 #-------------------------- Execution -------------------------------------
 

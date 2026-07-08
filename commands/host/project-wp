@@ -15,11 +15,11 @@ divider='===================================================\n'
 construction='\xF0\x9F\x9A\xA7'
 
 # Load configuration to get hosting provider
-source .ddev/scripts/load-config.sh
+source ${DDEV_APPROOT}/.ddev/scripts/load-config.sh
 load_kanopi_config
 
 # Get actual docroot from DDEV configuration (overrides hosting provider defaults)
-DDEV_DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' ' || true)
+DDEV_DOCROOT=$(cat ${DDEV_APPROOT}/.ddev/config.yaml | docker run -i --rm ddev/ddev-utilities yq '.docroot')
 if [ -n "$DDEV_DOCROOT" ]; then
     DOCROOT="$DDEV_DOCROOT"
 fi
@@ -30,10 +30,10 @@ case "${HOSTING_PROVIDER}" in
         # Handle application root case (. or empty)
         if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
             DOCROOT=""
-            DOCROOT_PATH="/var/www/html"
+            DOCROOT_PATH="${DDEV_APPROOT}"
             echo "Using application root (no subfolder) for Pantheon"
         else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+            DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
             echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
         fi
         ;;
@@ -43,28 +43,28 @@ case "${HOSTING_PROVIDER}" in
         # Handle application root case (. or empty)
         if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
             DOCROOT=""
-            DOCROOT_PATH="/var/www/html"
+            DOCROOT_PATH="${DDEV_APPROOT}"
             echo "Using application root (no subfolder) for WPEngine"
         else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+            DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
             echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
         fi
         ;;
     "kinsta")
         DOCROOT="public"
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
         ;;
     *)
         DOCROOT="web"  # Default fallback
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
         ;;
 esac
 
 # Set DOCROOT_PATH for non-WPEngine providers
 if [ -z "$DOCROOT_PATH" ]; then
-    DOCROOT_PATH="/var/www/html/${DOCROOT}"
+    DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
 fi
 
 # For local file checks, use DOCROOT or "." for application root

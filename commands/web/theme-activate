@@ -9,34 +9,25 @@
 #ddev-generated
 
 # Load configuration to get hosting provider and docroot
-source /var/www/html/.ddev/scripts/load-config.sh
+source ${DDEV_APPROOT}/.ddev/scripts/load-config.sh
 load_kanopi_config
 
 # Determine docroot based on hosting provider
+DOCROOT=${DOCROOT:-"web"}
 case "${HOSTING_PROVIDER}" in
-    "pantheon")
-        # Handle application root case (. or empty)
-        if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
-            DOCROOT_PATH="/var/www/html"
-        else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
-        fi
-        ;;
-    "wpengine")
+    "pantheon"|"wpengine")
         # Use configured DOCROOT from environment, fallback to 'web'
-        DOCROOT="${DOCROOT:-web}"
         if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
-            DOCROOT_PATH="/var/www/html"
+            DOCROOT_PATH="${DDEV_APPROOT}"
         else
-            DOCROOT_PATH="/var/www/html/${DOCROOT}"
+            DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         fi
         ;;
     "kinsta")
-        DOCROOT_PATH="/var/www/html/public"
+        DOCROOT_PATH="${DDEV_APPROOT}/public"
         ;;
     *)
-        DOCROOT=$(printenv DOCROOT 2>/dev/null || echo "web")
-        DOCROOT_PATH="/var/www/html/${DOCROOT}"
+        DOCROOT_PATH="${DDEV_APPROOT}/${DOCROOT}"
         ;;
 esac
 
