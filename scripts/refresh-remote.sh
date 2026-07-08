@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+#ddev-generated
 
 ## Remote SSH Database Refresh Script
 ## Called by the main refresh command for generic SSH-based hosting providers
