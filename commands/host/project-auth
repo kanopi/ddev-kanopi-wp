@@ -14,13 +14,36 @@ load_kanopi_config
 # Read a web_environment variable from the merged DDEV config. Uses ddev's own
 # config resolution (config.yaml + config.local.yaml) and its bundled yq via the
 # ddev-utilities image, so we don't hand-parse YAML or assume a specific file or
-# indentation.
-get_config_env() {
+# indentation. Returns empty (never errors) if this DDEV version lacks the
+# command or the utilities image is unavailable.
+get_config_env_ddev() {
     local var_name="$1"
     ddev utility configyaml --full-yaml 2>/dev/null \
         | docker run -i --rm ddev/ddev-utilities yq \
             ".web_environment[]? | select(test(\"^${var_name}=\")) | sub(\"^${var_name}=\", \"\")" 2>/dev/null \
         | head -n1
+}
+
+# Fallback that reads the variable directly from the local config file. This has
+# no DDEV version, image, or network dependency, so `ddev project-auth` still
+# resolves the key on older DDEV releases or offline setups.
+get_config_env_file() {
+    local var_name="$1"
+    local local_config_file=".ddev/config.local.yaml"
+    [ -f "$local_config_file" ] || return 0
+    grep -E "^[[:space:]]*-[[:space:]]*${var_name}=" "$local_config_file" \
+        | head -n1 | cut -d'=' -f2-
+}
+
+# Read a web_environment variable, preferring ddev's merged config and falling
+# back to a direct read of config.local.yaml.
+get_config_env() {
+    local var_name="$1" value
+    value="$(get_config_env_ddev "$var_name")"
+    if [ -z "$value" ]; then
+        value="$(get_config_env_file "$var_name")"
+    fi
+    printf '%s' "$value"
 }
 
 # Read the project SSH key. Prefers REMOTE_SSH_KEY, falling back to the legacy
@@ -89,6 +112,14 @@ if [[ -n "$REMOTE_SSH_KEY" ]]; then
         exit 1
     fi
 else
+    # WPEngine allows only one SSH key per account, so loading all keys usually
+    # fails authentication. Warn clearly rather than degrading silently.
+    if [[ "${HOSTING_PROVIDER}" == "wpengine" ]]; then
+        echo "⚠️  No specific SSH key resolved for WPEngine (REMOTE_SSH_KEY is empty)."
+        echo "⚠️  WPEngine allows only one key per account, so loading all keys may fail."
+        echo "⚠️  Run 'ddev project-configure' to set REMOTE_SSH_KEY, or add it to .ddev/config.local.yaml."
+        echo ""
+    fi
     echo "Loading all SSH keys for $HOSTING_PROVIDER"
     ddev auth ssh
 fi
