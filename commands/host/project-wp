@@ -51,7 +51,7 @@ case "${HOSTING_PROVIDER}" in
         fi
         ;;
     "kinsta")
-        DOCROOT="public"
+        DOCROOT="${DOCROOT:-public}"
         DOCROOT_PATH="/var/www/html/${DOCROOT}"
         echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"
         ;;
@@ -82,7 +82,7 @@ if [ -f "${LOCAL_PATH}/index.php" ] && [ -f "${LOCAL_PATH}/wp-load.php" ]; then
 fi
 
 # For composer-managed installs, also check if WordPress was moved from another location
-if [ "$CORE_CHECK_PASSED" = "false" ] && [ -f "public/wp-config-sample.php" ]; then
+if [ "$CORE_CHECK_PASSED" = "false" ] && [ -f "${LOCAL_PATH}/wp-config-sample.php" ]; then
   echo "📝 Found WordPress core files managed by composer, checking if they need to be moved to docroot..."
   CORE_CHECK_PASSED="true"
 fi
