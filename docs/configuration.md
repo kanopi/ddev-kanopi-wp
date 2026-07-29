@@ -48,7 +48,6 @@ ddev project-init
 **`ddev project-init`** performs the following automatically:
 
 - Start DDEV
-- Install Lefthook (git hooks) if configured
 - Set up NVM for Node.js management
 - Add SSH keys for remote access
 - Install Composer dependencies
@@ -75,12 +74,10 @@ The `project-init` command uses a modular approach with individual commands that
 ```bash
 # Individual setup commands (called by project-init)
 ddev project-auth      # Authorize SSH keys for hosting providers
-ddev project-lefthook  # Install and initialize Lefthook git hooks
 ddev project-wp        # Install WordPress core and database if needed
 
 # You can run these individually if needed
 ddev project-auth      # Just setup authentication
-ddev project-lefthook  # Just setup git hooks
 ddev project-wp        # Just install WordPress
 ddev project-configure # Configure project settings interactively
 ```

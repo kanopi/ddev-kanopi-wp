@@ -283,13 +283,6 @@ ddev pantheon-testenv integration-test fresh
 
 ## Continuous Testing
 
-### Pre-commit Hooks
-The add-on includes Lefthook git hooks for:
-- **Code quality checks**
-- **Automated testing** before commits
-- **Asset compilation** verification
-- **Configuration validation**
-
 ### Automated Quality Checks
 - **PHP linting** and code standards
 - **JavaScript/CSS validation**

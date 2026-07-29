@@ -15,7 +15,6 @@ Commands are organized into two categories:
 
 The add-on uses a **modular command approach** where `project-init` orchestrates multiple smaller, focused commands:
 - `project-auth`: Handle SSH key authorization for hosting providers
-- `project-lefthook`: Install and initialize Lefthook git hooks
 - `project-wp`: Install WordPress core and database if needed
 - `project-configure`: Interactive configuration wizard
 
@@ -27,9 +26,8 @@ The add-on uses a **modular command approach** where `project-init` orchestrates
 ## Common Development Commands
 
 ### Essential Commands
-- `ddev project-init`: Complete project initialization with dependencies, Lefthook, NVM, and database refresh
+- `ddev project-init`: Complete project initialization with dependencies, NVM, and database refresh
 - `ddev project-auth`: Authorize SSH keys for hosting providers (called by project-init)
-- `ddev project-lefthook`: Install and initialize Lefthook git hooks (called by project-init)
 - `ddev project-wp`: Install WordPress core and database if needed (called by project-init)
 - `ddev project-configure`: Interactive setup wizard for project configuration
 - `ddev db-refresh [env] [-f]`: Smart database refresh from hosting provider with backup age detection (12-hour threshold)
@@ -287,7 +285,6 @@ This wizard collects provider-specific variables:
 ## Dependencies
 
 The add-on automatically installs and configures:
-- **Lefthook** for git hooks
 - **NVM** for Node.js version management
 - **Cypress** for E2E testing
 - **Terminus** for Pantheon API access (when using Pantheon)
