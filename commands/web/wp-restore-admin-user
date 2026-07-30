@@ -32,7 +32,7 @@ case "${HOSTING_PROVIDER}" in
         fi
         ;;
     "kinsta")
-        DOCROOT="public"
+        DOCROOT="${DOCROOT:-public}"
         DOCROOT_PATH="/var/www/html/${DOCROOT}"
         ;;
     *)
