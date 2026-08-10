@@ -30,7 +30,6 @@ health_checks() {
     ddev project-init --help || echo "project-init command exists or skipped due to conflicts"
     ddev project-configure --help || echo "project-configure command exists or skipped due to conflicts"
     ddev project-auth --help || echo "project-auth command exists or skipped due to conflicts"
-    ddev project-lefthook --help || echo "project-lefthook command exists or skipped due to conflicts"
     ddev project-wp --help || echo "project-wp command exists or skipped due to conflicts"
 
     # Check theme development commands
@@ -195,7 +194,6 @@ teardown() {
     # Test modular project commands exist and can show help
     ddev project-configure --help >/dev/null 2>&1 || echo "project-configure should exist"
     ddev project-auth --help >/dev/null 2>&1 || echo "project-auth should exist"
-    ddev project-lefthook --help >/dev/null 2>&1 || echo "project-lefthook should exist"
     ddev project-wp --help >/dev/null 2>&1 || echo "project-wp should exist"
 
     # Test that aliases work (backwards compatibility)

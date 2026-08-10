@@ -23,7 +23,6 @@ This add-on provides 29+ custom commands organized into functional categories. A
 | `ddev project-auth` | Host | Authorize SSH keys and credentials for hosting providers | `ddev project-auth` | project:auth |
 | `ddev project-configure` | Host | **Interactive setup wizard** (configure project settings) | `ddev project-configure` | configure, project:configure, prc |
 | `ddev project-init` | Host | **Initialize complete development environment** (runs all setup commands) | `ddev project-init` | init, project:init |
-| `ddev project-lefthook` | Host | Install and initialize Lefthook git hooks | `ddev project-lefthook` | project:lefthook |
 | `ddev project-wp` | Host | Install WordPress core and database if needed | `ddev project-wp` | project:wp |
 | `ddev theme-activate` | Web | Activate the custom theme | `ddev theme-activate` | activate-theme, tha, theme:activate |
 | `ddev theme-build` | Web | Build production assets | `ddev theme-build` | production, theme:build, thb, theme-production |
@@ -41,7 +40,6 @@ This add-on provides 29+ custom commands organized into functional categories. A
 - `ddev project-init` - Master command that orchestrates complete setup
 - `ddev project-configure` - Interactive configuration wizard
 - `ddev project-auth` - Set up hosting provider authentication
-- `ddev project-lefthook` - Initialize git hooks
 - `ddev project-wp` - Install WordPress core and database
 
 ### Database Operations
