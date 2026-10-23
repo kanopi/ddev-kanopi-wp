@@ -33,6 +33,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: git-revision-date-localized warns on a shallow clone, and
+          # --strict turns that warning into a failed build.
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v4
