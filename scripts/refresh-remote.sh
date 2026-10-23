@@ -110,7 +110,22 @@ if [ "$EXPORT_DATABASE" = true ]; then
         echo -e "${yellow}No specific SSH key configured; using forwarded SSH agent keys.${NC}"
     fi
 
-    SSH_CMD="ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_IDENTITY}"
+    # Hosts that only accept password auth: when REMOTE_SSHPASS is set (keep it in
+    # the gitignored .ddev/config.local.yaml), wrap ssh/rsync in sshpass.
+    SSH_BIN="ssh"
+    if [ -n "${REMOTE_SSHPASS:-}" ]; then
+        if ! command -v sshpass >/dev/null 2>&1; then
+            echo -e "${red}Error: REMOTE_SSHPASS is set but sshpass is not installed in the web container.${NC}"
+            echo -e "${red}Run: ddev config --webimage-extra-packages=sshpass && ddev restart${NC}"
+            exit 1
+        fi
+        export SSHPASS="${REMOTE_SSHPASS}"
+        SSH_BIN="sshpass -e ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no"
+        SSH_IDENTITY=""
+        echo -e "${green}Using password authentication (sshpass).${NC}"
+    fi
+
+    SSH_CMD="${SSH_BIN} -o ConnectTimeout=10 -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_IDENTITY}"
     if eval "$SSH_CMD ${SSH_CONNECTION} 'echo SSH connection successful'"; then
         echo -e "${green}SSH connection successful.${NC}"
     else
@@ -155,7 +170,7 @@ if [ "$EXPORT_DATABASE" = true ]; then
 
     echo -e "${yellow}Downloading Database...${NC}"
     # Reuse the same SSH identity settings for the download
-    RSYNC_CMD="rsync -arv --progress -e 'ssh -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_IDENTITY}'"
+    RSYNC_CMD="rsync -arv --progress -e '${SSH_BIN} -o StrictHostKeyChecking=no -p ${SSH_PORT} ${SSH_IDENTITY}'"
     if eval "$RSYNC_CMD \"${SSH_CONNECTION}:${REMOTE_PATH}/${REMOTE_DBFILE}\" \"${DBFILE}\""; then
         echo -e "${green}Database downloaded successfully!${NC}"
     else
@@ -172,7 +187,9 @@ echo -e "${yellow}Importing Database...${NC}"
 # Reset and import database
 wp db reset --yes --allow-root
 
-if mysql -h db -u db -pdb db < "${DBFILE}"; then
+# Strip DEFINER clauses: views/triggers in the dump name the remote DB user, and
+# creating them as a different user needs SUPER, which the ddev db user lacks.
+if sed -E 's/DEFINER=`[^`]+`@`[^`]+`//g' "${DBFILE}" | mysql -h db -u db -pdb db; then
     echo -e "${green}Database imported successfully!${NC}"
 else
     echo -e "${red}Failed to import database${NC}"

@@ -40,6 +40,13 @@ Each provider requires specific configuration during the `ddev project-configure
 - **Database**: SSH-based backup retrieval
 - **Variables**: `REMOTE_HOST`, `REMOTE_PORT`, `REMOTE_USER`, `REMOTE_PATH`
 
+### Remote SSH (generic)
+- **Docroot**: whatever `.ddev/config.yaml` sets; `docroot: ""` means the application root
+- **Authentication**: SSH keys, or a password via `REMOTE_SSHPASS` for hosts that don't accept keys
+  (see [Remote SSH Password Authentication](environment-variables.md#remote-ssh-password-authentication))
+- **Database**: `wp db export` over SSH, downloaded with rsync; `DEFINER` clauses are stripped on import
+- **Variables**: `REMOTE_HOST`, `REMOTE_PORT`, `REMOTE_USER`, `REMOTE_PATH`, `REMOTE_DOMAIN`, optional `REMOTE_SSHPASS`
+
 ## Configuration Storage
 
 Variables are stored in two locations:

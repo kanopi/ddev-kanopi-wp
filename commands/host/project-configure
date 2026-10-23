@@ -468,7 +468,7 @@ if [ "$WP_PREFIX" != "wp_" ]; then
     echo "Configuring wp-config-ddev.php for custom table prefix..."
 
     # Get actual docroot from DDEV configuration
-    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
+    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' "'"'" || echo "web")
 
     WP_CONFIG_DDEV_PATH="${DOCROOT}/wp-config-ddev.php"
 
@@ -520,7 +520,7 @@ if [ -n "$PROXY_URL" ]; then
     echo "Configuring nginx proxy..."
 
     # Get the actual docroot from DDEV configuration
-    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' ' || echo "web")
+    DOCROOT=$(grep '^docroot:' .ddev/config.yaml | cut -d: -f2 | tr -d ' "'"'" || echo "web")
 
     # Check if nginx_full/nginx-site.conf exists
     if [ -f ".ddev/nginx_full/nginx-site.conf" ]; then

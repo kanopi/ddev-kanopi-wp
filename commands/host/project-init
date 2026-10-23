@@ -32,10 +32,11 @@ theme_build_command='ddev theme-build'
 refresh_command='ddev db-refresh'
 
 # Get docroot from DDEV configuration, default to 'web'
-DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' ' || true)
+# Strip quotes too: `docroot: ""` (application-root docroot) must become empty, not '""'.
+DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' "'"'" || true)
 
 # Define paths
-MU_PLUGINS_PATH="${DOCROOT}/wp-content/mu-plugins"
+MU_PLUGINS_PATH="${DOCROOT:+${DOCROOT}/}wp-content/mu-plugins"
 
 #-------------------------- Execution -------------------------------------
 
@@ -81,7 +82,9 @@ check_auth() {
 # Function to check if autoloader exists
 check_autoloader() {
   local vendor_path="${MU_PLUGINS_PATH}/vendor/autoload.php"
-  if [ ! -f "$vendor_path" ]; then
+  # Check inside the container, where Composer just wrote it: with Mutagen the
+  # host copy can lag behind and falsely report it missing.
+  if ! ddev exec "test -f '${vendor_path}'" >/dev/null 2>&1; then
     echo "❌ Error: Composer autoloader not found at $vendor_path"
     echo "   The autoloader is required for WordPress to run"
     return 1
@@ -158,8 +161,13 @@ ddev db-refresh
 # Create admin user.
 ddev wp-restore-admin-user
 
-# Install theme.
-ddev theme-install
+# Install theme (only when it has a front-end build to install).
+# THEME is relative to the docroot, like theme-install resolves it.
+if ddev exec "test -f \"${DOCROOT:+${DOCROOT}/}\${THEME}/package.json\"" >/dev/null 2>&1; then
+  ddev theme-install
+else
+  echo -e "${check} No package.json in the theme; skipping theme-install"
+fi
 
 # Install activate.
 ddev theme-activate
