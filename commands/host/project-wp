@@ -19,19 +19,21 @@ source .ddev/scripts/load-config.sh
 load_kanopi_config
 
 # Get actual docroot from DDEV configuration (overrides hosting provider defaults)
-DDEV_DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' ' || true)
+# Strip quotes too: `docroot: ""` (application-root docroot) must become empty, not '""'.
+DDEV_DOCROOT=$(grep '^docroot:' .ddev/config.yaml 2>/dev/null | cut -d: -f2 | tr -d ' "'"'" || true)
 if [ -n "$DDEV_DOCROOT" ]; then
     DOCROOT="$DDEV_DOCROOT"
 fi
 
 # Determine docroot based on hosting provider
 case "${HOSTING_PROVIDER}" in
-    "pantheon")
+    # Generic remote hosts follow the DDEV docroot (empty = application root).
+    "pantheon"|"remote")
         # Handle application root case (. or empty)
         if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
             DOCROOT=""
             DOCROOT_PATH="/var/www/html"
-            echo "Using application root (no subfolder) for Pantheon"
+            echo "Using application root (no subfolder) for hosting provider: $HOSTING_PROVIDER"
         else
             DOCROOT_PATH="/var/www/html/${DOCROOT}"
             echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"

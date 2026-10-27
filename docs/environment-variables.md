@@ -65,6 +65,24 @@ ddev config global --web-environment-add=TERMINUS_MACHINE_TOKEN=your_token_here
 - Stored in `.ddev/config.local.yaml` (git-ignored) since the key is user-specific
 - The legacy `WPENGINE_SSH_KEY` variable is still read as a fallback for existing projects
 
+### Remote SSH Password Authentication
+
+| Variable | Description | Example | Required |
+|----------|-------------|---------|----------|
+| `REMOTE_SSHPASS` | SSH password for the `remote` provider, for hosts that only accept password auth | `s3cret` | No |
+
+- Only used by the generic `remote` provider (`ddev db-refresh`)
+- When **set**, ssh and rsync are wrapped in `sshpass` and key auth is skipped
+- When **blank/unset**, SSH keys are used as before
+- Store it in `.ddev/config.local.yaml` (git-ignored) — never in `.ddev/config.yaml`:
+
+  ```yaml
+  web_environment:
+    - REMOTE_SSHPASS=<password>
+  ```
+
+- `sshpass` must be installed in the web container: `ddev config --webimage-extra-packages=sshpass && ddev restart`
+
 ### Kinsta Configuration
 
 | Variable | Description | Example | Required |

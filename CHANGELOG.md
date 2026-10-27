@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `REMOTE_SSHPASS`: password authentication for the `remote` provider. When set, `db-refresh` wraps
+  ssh/rsync in `sshpass` (and errors clearly if `sshpass` isn't installed in the web container).
+- `ddev/ddev-nvm` is now an add-on dependency. DDEV v1.25+ no longer ships nvm, so `theme-install`
+  failed with `nvm: command not found`.
+
+### Fixed
+- `project-init`, `project-wp` and `project-configure` read `docroot: ""` as the literal `""`, so an
+  application-root docroot broke them: `project-init` looked for `""/wp-content/mu-plugins/vendor/autoload.php`,
+  retried Composer three times and exited before the database refresh.
+- `project-wp` fell back to a `web` docroot for the `remote` provider, so it downloaded a second copy
+  of WordPress into `web/`. It now follows the DDEV docroot like Pantheon and WPEngine.
+- Host commands (`project-wp`, `project-auth`, `project-configure`) always saw the `pantheon` provider:
+  `HOSTING_PROVIDER` and friends live in the web container's environment, not the host's.
+  `load_kanopi_config` now reads unset values from the `web_environment` entries in `.ddev/config.yaml`
+  and `.ddev/config.local.yaml`.
+- `project-init` checks the Composer autoloader inside the container, so Mutagen sync lag on the host
+  can't report it missing.
+- `project-init` skips `theme-install` when the theme has no `package.json`.
+- `refresh-remote.sh` strips `DEFINER` clauses before import. Dumps containing views or triggers
+  failed with `ERROR 1227 ... need SUPER` because the ddev `db` user can't create them as another user.
+
 ## [1.2.13] - 2026-01-13
 
 ### Added

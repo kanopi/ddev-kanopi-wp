@@ -11,6 +11,10 @@ project_files:
 # DDEV version constraint
 ddev_version_constraint: ">= v1.25.0"
 
+# DDEV v1.25+ no longer ships nvm; theme-install and the theme commands need it.
+dependencies:
+- ddev/ddev-nvm
+
 # Pre-install actions
 pre_install_actions:
 # Introduction

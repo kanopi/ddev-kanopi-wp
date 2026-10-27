@@ -17,7 +17,30 @@ DEFAULT_HOSTING_PROVIDER="pantheon"
 # Configuration file path
 CONFIG_FILE="/var/www/html/.ddev/scripts/load-config.sh"
 
+# Read a variable from the web_environment entries in the DDEV config
+# (config.local.yaml wins over config.yaml). Host commands don't inherit the
+# web container's environment, so this is how they see the project's settings.
+kanopi_web_env() {
+    local name="$1" file found value=""
+    for file in .ddev/config.yaml .ddev/config.local.yaml; do
+        [ -f "$file" ] || continue
+        found=$(grep -E "^[[:space:]]*-[[:space:]]*${name}=" "$file" | tail -n 1 \
+            | sed -E "s/^[[:space:]]*-[[:space:]]*${name}=//; s/^[\"']//; s/[\"'][[:space:]]*$//")
+        [ -n "$found" ] && value="$found"
+    done
+    printf '%s' "$value"
+}
+
 load_kanopi_config() {
+    # On the host these are unset (they live in the web container), so pick them
+    # up from the DDEV config before falling back to the defaults below.
+    local var
+    for var in HOSTING_PROVIDER HOSTING_SITE HOSTING_ENV DOCROOT THEME THEMENAME REMOTE_SSH_KEY; do
+        if [ -z "${!var:-}" ]; then
+            printf -v "$var" '%s' "$(kanopi_web_env "$var")"
+        fi
+    done
+
     # WordPress Admin Configuration
     export WP_ADMIN_USER=${WP_ADMIN_USER:-$DEFAULT_WP_ADMIN_USER}
     export WP_ADMIN_PASS=${WP_ADMIN_PASS:-$DEFAULT_WP_ADMIN_PASS}
