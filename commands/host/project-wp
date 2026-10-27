@@ -33,7 +33,7 @@ case "${HOSTING_PROVIDER}" in
         if [ "$DOCROOT" = "." ] || [ -z "$DOCROOT" ]; then
             DOCROOT=""
             DOCROOT_PATH="/var/www/html"
-            echo "Using application root (no subfolder) for Pantheon"
+            echo "Using application root (no subfolder) for hosting provider: $HOSTING_PROVIDER"
         else
             DOCROOT_PATH="/var/www/html/${DOCROOT}"
             echo "Using docroot: $DOCROOT for hosting provider: $HOSTING_PROVIDER"

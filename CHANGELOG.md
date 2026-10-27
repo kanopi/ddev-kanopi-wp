@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retried Composer three times and exited before the database refresh.
 - `project-wp` fell back to a `web` docroot for the `remote` provider, so it downloaded a second copy
   of WordPress into `web/`. It now follows the DDEV docroot like Pantheon and WPEngine.
+- Host commands (`project-wp`, `project-auth`, `project-configure`) always saw the `pantheon` provider:
+  `HOSTING_PROVIDER` and friends live in the web container's environment, not the host's.
+  `load_kanopi_config` now reads unset values from the `web_environment` entries in `.ddev/config.yaml`
+  and `.ddev/config.local.yaml`.
 - `project-init` checks the Composer autoloader inside the container, so Mutagen sync lag on the host
   can't report it missing.
 - `project-init` skips `theme-install` when the theme has no `package.json`.
